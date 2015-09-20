@@ -1,0 +1,9 @@
+importFrom("stats", "IQR", "as.formula", "bw.SJ", "coef", "cov",
+            "dnorm", "lm", "model.frame", "model.matrix",
+            "model.response", "na.omit", "na.pass", "pnorm",
+            "printCoefmat", "pt", "qnorm", "qt", "quantile", "rnorm",
+            "runif", "sd", "var")
+importFrom("utils", "installed.packages")
+import(Formula)
+export(teradial,tenonradial,teradialbc,nptestrts,nptestind,sf)
+useDynLib(npsf)
