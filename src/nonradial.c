@@ -72,7 +72,7 @@ void nonradial(double *yobs, double *xobs, int *m, int *n, int *nobs,
 	}
 	// double ncol2 = ncol1;
 	// Rprintf("int = %2i, double = %4.2f\n", ncol1, ncol2);
-	int ncol = ncol1 + *nref;
+	int ncol = ncol1 + *_nref;
 	int ne = nrow * ncol;
 	glp_add_rows(lp, nrow);
 	if (*rts == 1){

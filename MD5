@@ -1,4 +1,4 @@
-c514b9d3fa005372cb47ff71f6b55d22 *DESCRIPTION
+5e0ef55dd5ffd79e0c346ed18aac171f *DESCRIPTION
 05dfdc8394f7442d1cabbee2fc294b1d *LICENSE
 4379034aa9fa8135dc776a560f7a9c6c *NAMESPACE
 978724ee8151f0198be84188b2547cd3 *R/npsf-internal.R
@@ -14,7 +14,7 @@ cfe850a46b752fea6984f0b2f7470a4d *R/teradial.R
 e5452ee5b2161f3139d9ce23ef005a75 *data/usmanuf.txt.gz
 80ada53adf6eb7352e3ec0c3d7f0ba9b *man/banks05.Rd
 ebb3e6d002d4e0952fbe83e52f4e472d *man/ccr81.Rd
-176e82a4d28bb1018a739a079e3d82b9 *man/npsf-package.Rd
+3590b9c65e2f21543fcca6eec7dfe398 *man/npsf-package.Rd
 49a5c1c4b128ec0c24a4b4091cf079ef *man/nptestind.Rd
 779953dd29e96ef9c8bc3967decf1bf7 *man/nptestrts.Rd
 a872ac8e9757b9eacaf516b7edff64dd *man/pwt56.Rd
@@ -203,7 +203,7 @@ c38d6479a639463003a1c0a2aba406e6 *src/libglpk/lux.c
 d0e4aabcf1a4f09fee109a559dec05f6 *src/libglpk/lux.h
 b53c287db30d683f09f019de3e416c7e *src/libglpk/minisat/LICENSE
 123024ae2b029c190414fdaba5fa80dd *src/libglpk/minisat/README
-b89317dace51f334238f501ba0d330ef *src/libglpk/minisat/minisat.c
+39453ea3c7fe03003a37dc074c7f0f59 *src/libglpk/minisat/minisat.c
 e89d6a8e40a79171fcbb79318f4f5116 *src/libglpk/minisat/minisat.h
 254eb54d691c645baeae4051427ca853 *src/libglpk/misc/bignum.c
 33b17b67e97d357f55e65308f949383e *src/libglpk/misc/bignum.h
@@ -290,7 +290,7 @@ fc3549bf0ef2c2df2197b6778cbc52f9 *src/libqhull/user.h
 203b7bbfb3b6107c273c027c99e8ca90 *src/libqhull/usermem.c
 fb5e2c3c5a8164c7b62f797a0d85b1ab *src/libqhull/userprintf.c
 054398e1672e7302b1d3f6f3069ddfc5 *src/libqhull/userprintf_rbox.c
-5014e387879b37215fe8e5d58baa81e6 *src/nonradial.c
+1abf068c201033f564e5d880e53bef7d *src/nonradial.c
 68e594a280438a5a141be6b04236a27d *src/qhAdapter.c
 af9950bb3c131bcee04cdc154cfa5767 *src/qhAdapter.h
 251c79387c68ae511ddd2c22488e19ad *src/radial.c

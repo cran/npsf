@@ -142,14 +142,35 @@ struct clause_t
 /*====================================================================*/
 /* Encode literals in clause pointers: */
 
-#define clause_from_lit(l) \
-      (clause*)((unsigned long)(l) + (unsigned long)(l) + 1)
+// (To pass CRAN check) #define clause_from_lit(l) \
+// (To pass CRAN check) (clause*)((unsigned long)(l) + (unsigned long)(l) + 1)
+#if defined(_WIN64)
+  #define clause_from_lit(l)                                   \
+    (clause*)((__int64)(l) + (__int64)(l) + 1)
+#else
+  #define clause_from_lit(l)                                   \
+    (clause*)((unsigned long)(l) + (unsigned long)(l) + 1)
+#endif
+      
+// (To pass CRAN check) #define clause_is_lit(c) \
+// (To pass CRAN check) ((unsigned long)(c) & 1)
+#if defined(_WIN64)
+  #define clause_is_lit(c)                                     \
+    ((__int64)(c) & 1)
+#else
+  #define clause_is_lit(c)                                     \
+    ((unsigned long)(c) & 1)
+#endif
 
-#define clause_is_lit(c) \
-      ((unsigned long)(c) & 1)
-
-#define clause_read_lit(c) \
-      (lit)((unsigned long)(c) >> 1)
+// (To pass CRAN check) #define clause_read_lit(c) \
+// (To pass CRAN check) (lit)((unsigned long)(c) >> 1)
+#if defined(_WIN64)
+  #define clause_read_lit(c)                                    \
+    (lit)((__int64)(c) >> 1)
+#else
+  #define clause_read_lit(c)                                    \
+    (lit)((unsigned long)(c) >> 1)
+#endif
 
 /*====================================================================*/
 /* Simple helpers: */

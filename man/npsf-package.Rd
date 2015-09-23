@@ -29,8 +29,8 @@ All function in \code{npsf} accept formula with either names of variables in the
 \tabular{ll}{
 Package: \tab npsf\cr
 Type: \tab Package\cr
-Version: \tab 0.1.4\cr
-Date: \tab 2015-09-20\cr
+Version: \tab 0.1.6\cr
+Date: \tab 2015-09-22\cr
 License: \tab GPL-2 | file LICENSE\cr
 }
 
