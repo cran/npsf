@@ -48,9 +48,9 @@ teradial <- function(formula, data, subset,
 	if(print.level >= 2){
 	 cat(paste("",rep("_", (winw-10)/1),"", sep = ""), "\n\n", sep = "")
 		cat("Summary of efficiencies:\n\n", sep = "")
-    	.su(te, print = TRUE)
+  .su(te, print = FALSE)
 	}
-	tymch <- list(K = nrow(t1$y), M = ncol(t1$y), N = ncol(t1$x), rts = t1$rts.string, base = t1$base.string, te = te, esample = t1$esample, esample.ref = t1$esample_ref)
+	tymch <- list(call = match.call(), model = "teradial", K = nrow(t1$y), M = ncol(t1$y), N = ncol(t1$x), rts = t1$rts.string, base = t1$base.string, te = te, esample = t1$esample, esample.ref = t1$esample.ref)
 	class(tymch) <- "npsf"
 	return(tymch)
 }

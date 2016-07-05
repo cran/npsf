@@ -1,12 +1,14 @@
 sf <- function(formula, uhet = NULL, vhet = NULL,
                tmean = NULL, prod = TRUE, data, subset, 
-               distribution = c("h", "t"), start.val = NULL, 
-               alpha = 0.05, marg.eff = FALSE, digits = 4, 
+               distribution = c("h", "t"), start.val = NULL,
+               lmtol = sqrt(.Machine$double.eps),
+               level = 95, marg.eff = FALSE, digits = 4, 
                print.level = 2) {
  
- if (alpha < 0 | alpha > 99.99) {
-  stop("'alpha' must be between 0 and 1 inclusive", call. = FALSE)
- }  
+ if (level < 0 | level > 99.99) {
+  stop("'level' must be between 0 and 99.99 inclusive", call. = FALSE)
+ }
+ alpha <- 1 - level / 100
  
  if(length(distribution) != 1){
   stop("Distribution of inefficiency term should be specified.")
@@ -18,19 +20,43 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
   stop("'distribution' is invalid")
  }
  
- if(is.null(tmean) == F & distribution == "h"){
+ if(is.null(tmean) == FALSE & distribution == "h"){
   stop("Option 'tmean' can be used only when distribution of inefficiency term is truncated normal.")
  }
  
  YXZ <- .prepareYXZ(formula = formula, uhet = uhet, vhet = vhet, tmean = tmean, data, subset)
  
- y <- YXZ$Y; X <- YXZ$X; Zu <- YXZ$Zu; Zv <- YXZ$Zv; Zdel <- YXZ$Zdel
- n <- YXZ$n; k <- YXZ$k; ku <- YXZ$ku; kv <- YXZ$kv; kdel <- YXZ$kdel
+ y <- YXZ$Y
+ X <- YXZ$X
+ Zu <- YXZ$Zu
+ Zv <- YXZ$Zv
+ Zdel <- YXZ$Zdel
+ n <- YXZ$n
+ k <- YXZ$k
+ ku <- YXZ$ku
+ kv <- YXZ$kv
+ kdel <- YXZ$kdel
  esample <- YXZ$esample
  
- names_x <- abbreviate(colnames(X), 9, strict = T, dot = F) ; names_zu <-  abbreviate(colnames(Zu), 9, strict = T, dot = F);  names_zv <-  abbreviate(colnames(Zv), 9, strict = T, dot = F)
+ names_x <- abbreviate(colnames(X), 9+6, strict = TRUE, dot = FALSE)
+ # names_zu <-  abbreviate(colnames(Zu), 9, strict = TRUE, dot = FALSE)
+ # names_zv <-  abbreviate(colnames(Zv), 9, strict = TRUE, dot = FALSE)
+ names_zu <- paste0("logVu_", abbreviate(colnames(Zu), 9, strict = TRUE, dot = FALSE))
+ names_zv <- paste0("logVv_", abbreviate(colnames(Zv), 9, strict = TRUE, dot = FALSE))
  
- if(distribution == "t") {names_del <- abbreviate(colnames(Zdel), 9, strict = T, dot = F); kdel = ncol(Zdel)} else {names_del <- NULL; kdel = 0}
+ if(distribution == "t"){
+  # names_del <- abbreviate(colnames(Zdel), 9, strict = T, dot = F)
+  kdel <- ncol(Zdel)
+  names_del <- paste0("mu_", abbreviate(colnames(Zdel), 9, strict = TRUE, dot = FALSE))
+  if(kdel == 1){
+   if(names_del == "mu_intercept"){
+    names_del <- "mu"
+   }
+  }
+ } else {
+  names_del <- NULL
+  kdel <- 0
+ }
  
  # starting values
  ols <- lm(y ~ 0 + X)
@@ -43,9 +69,9 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
   m3 <- sum(olsResid^3)/n
   m2 <- sum(olsResid^2)/n
   su2init <- ((m3/(sqrt(2/pi)*(1-4/pi)))^2)^(1/3)
-  if(is.nan(su2init) == T | su2init < 0) su2init <- 0.1
+  if(is.nan(su2init) | su2init < 0) su2init <- 0.1
   sv2init <- m2 - (1 - 2/pi)*su2init
-  if(is.nan(sv2init) == T | sv2init < 0) sv2init <- 0.1
+  if(is.nan(sv2init) | sv2init < 0) sv2init <- 0.1
   beta0[1] <- beta0[1] + sqrt(2/pi)*sqrt(su2init)
   y1 <- 0.5*log(((olsResid^2 - sv2init)/(1 - 2/pi))^2)
   reg_hetu <- lm(y1 ~ 0 + Zu)
@@ -53,34 +79,49 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
   y2 <- 0.5*log((olsResid^2 - (1 - 2/pi)* su2init)^2)
   reg_hetv <- lm(y2 ~ 0 + Zv)
   gv0 <- as.matrix(coef(reg_hetv), nrow = length(coef(reg_hetv)), ncol = 1)
-  if((is.null(tmean) == T) & (distribution == "t")){
+  if((is.null(tmean)) & (distribution == "t")){
    theta0 <- rbind( beta0, gv0, gu0, 0)
-  } else if (is.null(tmean) == F) {
+  } else if (!is.null(tmean)) {
    theta0 <- rbind( beta0, gv0, gu0, as.matrix(rep(0, kdel)))
   } else {
    theta0 <- rbind( beta0, gv0, gu0)
   }
  } else {
-  theta0 = start.val
+  theta0 <- start.val
  }
- rownames(theta0) = c(names_x, names_zv, names_zu, names_del)
+ rownames(theta0) <- c(names_x, names_zv, names_zu, names_del)
  
+ max.name.length <- max(nchar(rownames(theta0)))
+ 
+ # print(theta0)
  
    time.05 <- proc.time()
    if(print.level >= 2){
     # cat("__________________________________________________")
     cat("\nOptimization using 'mlmaximize': \n\n", sep = "")
    }
-   obj <- eval(parse(text = paste(" tryCatch(.mlmaximize(theta0, .ll.",noquote(distribution),"n, gr = .g.",noquote(distribution),"n, hess = .hess.",noquote(distribution),"n, prod = prod, k = k, kv = kv, ku = ku, y = y, Zv = Zv, Zu = Zu, kdel = kdel, Zdel = Zdel, X = X, print.level = print.level), error = function(e) e )", sep = "")))
+   obj <- eval(parse(text = paste(" tryCatch(.mlmaximize(theta0, .ll.",noquote(distribution),"n, gr = .g.",noquote(distribution),"n, hess = .hess.",noquote(distribution),"n, prod = prod, k = k, kv = kv, ku = ku, y = y, Zv = Zv, Zu = Zu, kdel = kdel, Zdel = Zdel, X = X, print.level = print.level, lmtol = lmtol), error = function(e) e )", sep = "")))
+   # print(obj)
+   
    if(inherits(obj, "error")){
-     cat("\n=================")
-     cat(" Trying to optimize using 'optim':\n\n", sep = "")
-     cat("                  ('optim' minimizes, so 'll' is\n", sep = "")
-     cat("                   negative of what is printed) \n\n", sep = "") 
-     obj <- eval(parse(text = paste(" tryCatch( optim(par = theta0, fn = .ll.",noquote(distribution),"n, gr = .g.",noquote(distribution),"n, prod = prod, k = k, kv = kv, ku = ku, y = y, Zv = Zv, Zu = Zu, kdel = kdel, Zdel = Zdel, X = X, method = c('BFGS'), control = list(reltol  = .Machine$double.eps, maxit = 200, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 1, -1), fnscale = -1), hessian = TRUE), error = function(e) e )", sep = "")))
+    if(print.level >= 2){
+     cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
+     cat(" Failed, trying to optimize using 'optim':\n", sep = "")
+     cat(" ('optim' minimizes, so 'll' is\n", sep = "")
+     cat("  negative of what is printed) \n\n", sep = "")
+    }
+     obj <- eval(parse(text = paste(" tryCatch( optim(par = theta0, fn = .ll.",noquote(distribution),"n, gr = .g.",noquote(distribution),"n, prod = prod, k = k, kv = kv, ku = ku, y = y, Zv = Zv, Zu = Zu, kdel = kdel, Zdel = Zdel, X = X, method = c('BFGS'), control = list(reltol  = .Machine$double.eps, maxit = 200, trace = ifelse(print.level >=2, 1, 0), REPORT = ifelse(print.level >=2, 1, 1), fnscale = -1), hessian = TRUE), error = function(e) e )", sep = "")))
+     # print(obj)
      cannot.est.model <- inherits(obj, "error")
+     if(cannot.est.model){
+      # what is the error?
+      # print(obj)
+      stop("convergence was not reached or 'optim' cannot estimate the model at provided starting values")
+     }
      if(obj$convergence == 0){
-       obj$vcov = solve(-obj$hessian)
+      obj$gHg <- 17
+      obj$ll <- obj$value
+      obj$vcov = solve(-obj$hessian)
      } else if(cannot.est.model){
        # what is the error?
       # print(obj)
@@ -106,7 +147,7 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
    names(est.time.sec) <- "sec"
  if(print.level >= 2){
   .timing(est.time.sec, "\nLog likelihood maximization completed in\n")
-  cat("___________________________________________________\n")
+  # cat("___________________________________________________\n")
  }
   
  # SE for sigmau and sigmav
@@ -143,9 +184,11 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
  colnames(output) <- c("Coef.", "SE ", "z ",  "P>|z|")
  
  # estimation results
+ max.name.length <- max(nchar(row.names(output)))
 
  if(print.level >= 1){
-  if(prod == TRUE){
+  cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
+  if(prod){
    cat("\nCross-sectional stochastic (production) frontier model\n",  sep = "")} 
   else {
    cat("\nCross-sectional stochastic (cost) frontier model\n",  sep = "")
@@ -167,10 +210,14 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
    Distribution = Distribution,
    Assumption = Assumptions
   )
-  print(a1, quote = FALSE, right = F)
+  print(a1, quote = FALSE, right = FALSE)
   cat("\nNumber of observations = ", n, "\n", sep = "")
-  cat("\n--------------- Estimation results: --------------\n\n", sep = "")
-  .printoutcs(output, digits = digits, k = k, kv = kv, ku = ku, kdel = kdel, na.print = "NA", dist = distribution)
+  max.name.length <- max(nchar(row.names(output)))
+  est.rez.left <- floor( (max.name.length+42-22) / 2 )
+  est.rez.right <- max.name.length+42-22 - est.rez.left
+  cat("\n",rep("-", est.rez.left)," Estimation results: ",rep("-", est.rez.right),"\n\n", sep ="")
+  # cat("\n--------------- Estimation results: --------------\n\n", sep = "")
+  .printoutcs(output, digits = digits, k = k, kv = kv, ku = ku, kdel = kdel, na.print = "NA", dist = distribution,max.name.length = max.name.length)
  }
  
  # Technical efficiencies
@@ -187,7 +234,7 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
  }
  
  # Marginal effects
- if(marg.eff == TRUE){
+ if(marg.eff){
   meff = tryCatch(.me(obj$par[-c(1:(k+kv)),1,drop = FALSE], Zu = Zu, Zdel = Zdel, ku = ku, kdel = kdel, n = n, dist = distribution), error = function(e) { cat('In error handler\n'); print(e); e })
   if(inherits(meff, "error"))  {meff = NULL} else { meff = as.data.frame(meff)}
  } else {meff = NULL}
@@ -195,40 +242,53 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
  myeff <- ifelse(prod, "technical", "cost")
  
  if(print.level >= 3){
-  cat("\n=================")
-  cat(" Summary of ",myeff," efficiencies, exp(-E[ui|ei]): \n\n", sep = "")
-  .su1(eff[,2, drop = F])
+  eff.name <- paste0("Summary of ",myeff," efficiencies")
+  len.eff.name <- nchar(eff.name)
+  est.eff.left <- floor( (max.name.length+42-len.eff.name-4) / 2 )
+  est.eff.right <- max.name.length+42-len.eff.name-4 - est.eff.left
+  cat("\n",rep("-", est.eff.left)," ",eff.name,": ",rep("-", est.eff.right),"\n\n", sep ="")
+  eff1 <- eff[,2:4]
+  colnames(eff1) <- formatC(colnames(eff1), width = 4, flag = "-")
+  cat("",rep(" ", est.eff.left+1),"JLMS:= exp(-E[ui|ei])\n", sep = "")
+  cat("",rep(" ", est.eff.left+1),"Mode:= exp(-M[ui|ei])\n", sep = "")
+  cat("",rep(" ", est.eff.left+3),"BC:= E[exp(-ui)|ei]\n", sep = "")
+  cat("\n")
+  .su1(eff1, transpose = TRUE)
   
-  cat("\n=================")
-  cat(" Summary of ",myeff," efficiencies, exp(-M[ui|ei]): \n\n", sep = "")
-  .su1(eff[,3, drop = F])
-  
-  cat("\n=================")
-  cat(" Summary of ",myeff," efficiencies, E[exp(-ui)|ei]: \n\n", sep = "")
-  .su1(eff[,4, drop = F])
-  cat("\n\n")
+  # cat("\n=================")
+  # cat(" Summary of ",myeff," efficiencies, exp(-E[ui|ei]): \n\n", sep = "")
+  # .su1(eff1[,1, drop = FALSE], transpose = TRUE)
+  # 
+  # cat("\n=================")
+  # cat(" Summary of ",myeff," efficiencies, exp(-M[ui|ei]): \n\n", sep = "")
+  # .su1(eff1[,2, drop = FALSE])
+  # 
+  # cat("\n=================")
+  # cat(" Summary of ",myeff," efficiencies, E[exp(-ui)|ei]: \n\n", sep = "")
+  # .su1(eff1[,3, drop = FALSE])
+  # cat("\n\n")
  }
  
  if(print.level == 4){
   cat("Point and interval estimates of unit-specific ",myeff," efficiencies: \n\n", sep = "")
-  print(eff)
+  print(eff1)
  }
  
  if(length(unique(sigmas_u)) == 1) sigmas_u = NULL
  if(length(unique(sigmas_v)) == 1) sigmas_v = NULL
  if(length(unique(mu)) == 1) mu = NULL
  
- if((is.null(uhet) == T) & (is.null(vhet) == T)){
- if (prod == T & olsSkewness > 0) {
+ if(is.null(uhet) & is.null(vhet)){
+ if (prod & olsSkewness > 0) {
   warning("OLS residuals are positively skewed, leading to zero estimate of inefficiency variance. Remaining ML estimates are equal to OLS. All units are estimated to be fully technically efficient.")
- } else if(prod == F & olsSkewness < 0) {
+ } else if(!prod & olsSkewness < 0) {
   warning("OLS residuals are negatively skewed, leading to zero estimate of inefficiency variance. Remaining ML estimates are equal to OLS. All units are estimated to be fully cost efficient.")
  }
  }
  
  colnames(obj$vcov) = rownames(obj$vcov) = c(names_x, names_zv, names_zu, names_del)
  
- temp = list(coef = par, vcov = obj$vcov, loglik = obj$ll, efficiencies = eff, marg.effects = meff, sigmas_u = sigmas_u, sigmas_v = sigmas_v, mu = mu, esample = esample)
+ temp = list(call = match.call(), model = "sfsc", coef = par[names(par) %in% colnames(obj$vcov)], table = output, vcov = obj$vcov, loglik = obj$ll, lmtol = lmtol, LM = obj$gHg, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, sigmas_u = sigmas_u, sigmas_v = sigmas_v, mu = mu, k = k, kv = kv, ku = ku, kdel = kdel, distribution = distribution, esample = esample)
  
  class(temp) <- "npsf"
  

@@ -5,7 +5,7 @@ nptestrts <- function(formula, data, subset,
                       core.count = 1, cl.type = c("SOCK", "MPI"),
                       print.level = 1, dots = TRUE){
  
- if (alpha < 0 | alpha > 99.99) {
+ if (alpha < 0 | alpha > 1) {
   stop("'alpha' must be between 0 and 1 inclusive", call. = FALSE)
  }
  
@@ -13,14 +13,18 @@ nptestrts <- function(formula, data, subset,
   stop("'reps' must be at least 100")
  }
  
+ my.warnings <- NULL
+ 
  if (reps < 200) {
-  warning(" Statistical inference may be unreliable \n          for small number of bootstrap replications", call. = FALSE, immediate. = TRUE)
-  warning(" Statistical inference may be unreliable for small number of bootstrap replications", call. = FALSE, immediate. = FALSE)
+  warning(" Statistical inference may be unreliable \n          for small number of bootstrap replications; \n          consider setting 'reps' larger than 200", call. = FALSE, immediate. = TRUE)
+  warning(" Statistical inference may be unreliable for small number of bootstrap replications; consider setting 'reps' larger than 200", call. = FALSE, immediate. = FALSE)
+  my.warnings <- c(my.warnings, " Statistical inference may be unreliable for small number of bootstrap replications; consider setting 'reps' larger than 200.")
  }
  
  if (reps > 2000) {
   warning(" Unnecessary too many bootstrap replications; \n          consider setting 'reps' smaller than 2000", call. = FALSE, immediate. = TRUE)
-  warning(" Unnecessary too many bootstrap replications; consider setting 'reps' smaller than 2000", call. = FALSE, immediate. = FALSE)
+  warning(" Unnecessary too many bootstrap replications; consider setting 'reps' smaller than 2000\n", call. = FALSE, immediate. = FALSE)
+  my.warnings <- c(my.warnings, " Unnecessary too many bootstrap replications; consider setting 'reps' smaller than 2000.")
  }
  
  # begin require for parallel computing
@@ -382,10 +386,12 @@ nptestrts <- function(formula, data, subset,
 	  cat("\n", sep = "")
 	  warning(" Statistical inference on individual scale efficiency is not \n          performed likely due to few bootstrap replications \n          (for all data points)", call. = FALSE, immediate. = TRUE)
 	  warning(" Statistical inference on individual scale efficiency is not \n performed likely due to few bootstrap replications (for all data points)", call. = FALSE, immediate. = FALSE)
+	  my.warnings <- c(my.warnings, " Statistical inference on individual scale efficiency is not \n performed likely due to few bootstrap replications (for all data points)")
 	 }
 	 if(locComputed & min(pvalsTestOne$nonNa, na.rm = TRUE) < 100){
 	  warning(" Statistical inference on individual scale efficiency is not \n          performed likely due to few bootstrap replications \n          (for some data points)", call. = FALSE, immediate. = TRUE)
 	  warning(" Statistical inference on individual scale efficiency is not \n performed likely due to few bootstrap replications (for some data points)", call. = FALSE, immediate. = FALSE)
+	  my.warnings <- c(my.warnings, " Statistical inference on individual scale efficiency is not \n performed likely due to few bootstrap replications (for some data points)")
 	 }
 	}
 	
@@ -728,7 +734,9 @@ nptestrts <- function(formula, data, subset,
 	 }
 	} # end of if ( test.two )
 	
-	tymch <- list(K = K, M = M, N = N, reps = reps, alpha = alpha,
+	tymch <- list(call = match.call(), model = "nptestrts", K = K, M = M, N = N, 
+	              esample = esample, base = YX$base.string, 
+	              reps = reps, alpha = alpha, boot.type = boot.type,
 	              teCrs = teCrs, teNrs = teNrs, teVrs = teVrs, 
 	              sefficiency = seCrs, sefficiencyMean = seCrsMean, 
 	              pGlobalCRS = pvalsTestOne$pgCRS )
@@ -749,7 +757,7 @@ nptestrts <- function(formula, data, subset,
 		 tymch$nrsOVERvrs <- seNrs
 	 }
 	}
-	tymch$esample < esample
+	tymch$warnings <- my.warnings
 	class(tymch) <- "npsf"
  return(tymch)
 }

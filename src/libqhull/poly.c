@@ -441,7 +441,7 @@ int qh_gethash(int hashsize, setT *set, int size, int firstindex, void *skipelem
     i= 3;
     do {     /* this is about 10% in 10-d */
       if ((elem= (ptr_intT)*elemp++) != (ptr_intT)skipelem) {
-        hash ^= (elem << i) + (elem >> (32-i));
+        hash ^= ((unsigned)elem << i) + (elem >> (32-i));
         i += 3;
         if (i >= 32)
           i -= 32;

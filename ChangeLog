@@ -1,0 +1,14 @@
+npsf v0.1.7 (Release date: 2016-06-30)
+
+* Added nobs(), coef(), and vcov() for all relevant objects
+
+* Added summary() and print() for all relevant objects
+
+* Fixed some bugs with names in sf
+
+* Fixed documentation
+
+
+npsf v0.1.6 (Release date: 2015-09-20)
+
+* Initial release of the npsf package on CRAN

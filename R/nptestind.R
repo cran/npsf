@@ -3,7 +3,7 @@ nptestind <- function(formula, data, subset,
                       reps = 999, alpha = 0.05,
                       print.level = 1, dots = TRUE){
  
- if (alpha < 0 | alpha > 99.99) {
+ if (alpha < 0 | alpha > 1) {
   stop("'alpha' must be between 0 and 1 inclusive", call. = FALSE)
  }
  
@@ -151,29 +151,20 @@ nptestind <- function(formula, data, subset,
 
 	if(print.level >= 1){
 	 if ( ba == 1){
-	  if(N == 1){
-	   inps <- "input"
-	  }
-	  else {
-	   inps <- "mix of inputs"
-	  }
+	  inps <- ngettext(N, "input", "mix of inputs")
 # 	  cat(" Test: Ho: input-based measure of technical efficiency and\n", sep = "")
 # 	  cat("           ",inps," are independent \n\n", sep = "")
-	  cat("", paste("",rep("_", (winw-10)/1),"", sep = ""), sep = "")
-	  cat("\n          Test\n\n", sep = "")
+	  
 	  mymesage <- paste("Ho: input-based measure of technical efficiency and ",inps," are independent\n", sep = "")
 	 }
 	 else {
-	  if(M == 1){
-	   outs <- "output"
-	  }
-	  else {
-	   outs <- "mix of outputs"
-	  }
+	  outs <- ngettext(M, "output", "mix of outputs")
 # 	  cat(" Test: Ho: output-based measure of technical efficiency and\n", sep = "")
 # 	  cat("           ",outs," are independent \n\n", sep = "")
 	  mymesage <- paste("\nHo: input-based measure of technical efficiency and ",outs," are independent\n", sep = "")
 	 }
+	 cat("", paste("",rep("_", (winw-10)/1),"", sep = ""), sep = "")
+	 cat("\n          Test\n", sep = "")
 	 cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
 	}
 	 
@@ -221,7 +212,7 @@ nptestind <- function(formula, data, subset,
 	 }
 	 cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
 	
-	 mymesage <- paste("\n",ifelse(pval <= alpha, "Heterogeneous", "Homogeneous")," bootstrap ",ifelse(pval <= alpha, "should", "can")," be used when performing ",YX$base.string,"-based technical efficiency measurement under assumption of ",YX$rts.string," technology\n", sep = "")
+	 mymesage <- paste("\n",ifelse(pval <= alpha, "Heterogeneous", "Homogeneous")," bootstrap ",ifelse(pval <= alpha, "should", "can")," be used when performing ",YX$base.string,"-based technical efficiency measurement under assumption of ",YX$rts.string," technology", sep = "")
 	 cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
 # 	if(pval <= alpha){
 # 	 mymesage <- paste("\nHeterogeneous bootstrap \n", sep = "")
@@ -236,8 +227,9 @@ nptestind <- function(formula, data, subset,
 # 	 decision = "d and w are independent ==> SW 1998 homogeneous bootstrap"
 # 	}
 	}
-	tymch <- list(K = K, M = M, N = N, reps = reps, alpha = alpha,
-	              t4n = t4n, pval = pval)
+	tymch <- list(call = match.call(), model = "nptestind", K = K, M = M, N = N, 
+	              rts = YX$rts.string, base = YX$base.string, 
+	              reps = reps, alpha = alpha, t4n = t4n, pval = pval)
 	class(tymch) <- "npsf"
 	return(tymch)
 

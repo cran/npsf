@@ -9,8 +9,9 @@
 \usage{
 sf(formula, uhet = NULL, vhet = NULL,
  tmean = NULL, prod = TRUE, data, subset, 
- distribution = c("h", "t"), start.val = NULL, 
- alpha = 0.05, marg.eff = FALSE, digits = 4, 
+ distribution = c("h", "t"), start.val = NULL,
+ lmtol = sqrt(.Machine$double.eps),
+ level = 95, marg.eff = FALSE, digits = 4, 
  print.level = 2)
 }
 \arguments{
@@ -41,8 +42,12 @@ sf(formula, uhet = NULL, vhet = NULL,
  \item{start.val}{
  numeric. Starting values to be supplied to the optimization routine. If \code{NULL}, OLS and method of moments estimates are used (see Kumbhakar and Lovell 2000).
  }
- \item{alpha}{
- numeric. Defines (1-\eqn{\alpha})100\% two-sided prediction interval for technical or cost efficiencies (see Horrace and Schmidt 1996). Default is 0.05.
+ \item{lmtol}{
+ numeric. Tolerance for the scaled gradient in ML optimization. Default is sqrt(.Machine$double.eps).
+ }
+  
+ \item{level}{
+ numeric. Defines level\% two-sided prediction interval for technical or cost efficiencies (see Horrace and Schmidt 1996). Default is 95.
  }
  \item{marg.eff}{
  logical. If \code{TRUE}, unit-specific marginal effects of exogenous variables on the mean of distribution of inefficiency term are returned.
@@ -113,7 +118,6 @@ Wang, H.-J. (2002), Heteroskedasticity and non-monotonic efficiency effects of a
 
 \author{
  Oleg Badunenko <obadunen@uni-koeln.de>, Yaryna Kolomiytseva <yaryna.kolomiytseva@uni-koeln.de>
-  
 }
 
 \seealso{
@@ -139,6 +143,9 @@ pwt56 [4, "K"] <- NA
  
 m1 <- sf(log(Y) ~ log(L) + log(K), data = pwt56, 
  subset = year == 1965, distribution = "h")
+
+# Test CRS: 'car' package in required for that
+\dontrun{linearHypothesis(m1, "log(L) + log(K) = 1")}
  
 # Write efficiencies to the data frame using 'esample':
 
@@ -186,4 +193,4 @@ summary(m4$marg.effects)
 \keyword{ Heteroskedasticity }
 \keyword{ Truncated normal }
 \keyword{ Parametric efficiency analysis }
-
+\keyword{ summary }

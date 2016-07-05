@@ -32,14 +32,22 @@ teradialbc <- function(formula, data, subset,
   stop("'reps' must be at least 100")
  }
  
+ if(print.level == 0){
+  dots <- FALSE
+ }
+ 
+ my.warnings <- NULL
+ 
  if (reps < 200) {
-  warning(" Statistical inference may be unreliable \n          for small number of bootstrap replications", call. = FALSE, immediate. = TRUE)
-  warning(" Statistical inference may be unreliable for small number of bootstrap replications\n", call. = FALSE, immediate. = FALSE)
+  warning(" Statistical inference may be unreliable \n          for small number of bootstrap replications; \n          consider setting 'reps' larger than 200", call. = FALSE, immediate. = TRUE)
+  warning(" Statistical inference may be unreliable for small number of bootstrap replications; consider setting 'reps' larger than 200\n", call. = FALSE, immediate. = FALSE)
+  my.warnings <- c(my.warnings, " Statistical inference may be unreliable for small number of bootstrap replications; consider setting 'reps' larger than 200.")
  }
  
  if (reps > 2000) {
   warning(" Unnecessary too many bootstrap replications; \n          consider setting 'reps' smaller than 2000", call. = FALSE, immediate. = TRUE)
   warning(" Unnecessary too many bootstrap replications; consider setting 'reps' smaller than 2000\n", call. = FALSE, immediate. = FALSE)
+  my.warnings <- c(my.warnings, " Unnecessary too many bootstrap replications; consider setting 'reps' smaller than 2000.")
  }
  
  # begin require for parallel computing
@@ -222,25 +230,25 @@ teradialbc <- function(formula, data, subset,
  # end preparation for bootstrap	
 	
  # begin bootstrap
+	if( smoothed ){
+	 if ( homogeneous ) {
+	  # cat("\n Smoothed homogeneous bootstrap (",reps," replications)\n\n", sep = "")
+	  boot.type <- paste("Smoothed homogeneous bootstrap (",reps," replications)\n", sep = "")
+	 }
+	 else {
+	  # cat("\n Smoothed heterogeneous bootstrap (",reps," replications)\n\n", sep = "")
+	  boot.type <- paste("Smoothed heterogeneous bootstrap (",reps," replications)\n", sep = "")
+	 }
+	}
+	else {
+	 # cat("\n Subsampling bootstrap (",reps," replications)\n\n", sep = "")
+	 boot.type <- paste("Subsampling bootstrap (",reps," replications)\n", sep = "")
+	}
 	
 	# printing
 	if(print.level >= 1){
 	 mymesage <- paste("\nBootstrapping reference set formed by ",Kr," ",ifelse(is.null(ref), "reference data", "data")," point(s) and computing radial (Debreu-Farrell) ",YX$base.string,"-based measures of technical efficiency under assumption of ",YX$rts.string," technology for each of ",K," data point(s) realtive to the bootstrapped reference set\n", sep = "")
 	 cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
-	 if( smoothed ){
-   if ( homogeneous ) {
-    # cat("\n Smoothed homogeneous bootstrap (",reps," replications)\n\n", sep = "")
-    boot.type <- paste("Smoothed homogeneous bootstrap (",reps," replications)\n", sep = "")
-   }
-   else {
-    # cat("\n Smoothed heterogeneous bootstrap (",reps," replications)\n\n", sep = "")
-    boot.type <- paste("Smoothed heterogeneous bootstrap (",reps," replications)\n", sep = "")
-   }
-	 }
-	 else {
-	  # cat("\n Subsampling bootstrap (",reps," replications)\n\n", sep = "")
-	  boot.type <- paste("Subsampling bootstrap (",reps," replications)\n", sep = "")
-	 }
 	}
 
 	teboot <- matrix(nrow = reps, ncol = K)
@@ -415,26 +423,34 @@ teradialbc <- function(formula, data, subset,
   te <- 1/te
   if(print.level >= 1){
    warning(" One or more bias-corrected Farrell ",YX$base.string,"-based measures of technical efficiency is negative.  Analysis will be done in terms of Shephard distance function, a reciprocal of the Farrell measure. \n", call. = FALSE, immediate. = FALSE)
+   my.warnings <- c(my.warnings, paste0(" One or more bias-corrected Farrell ",YX$base.string,"-based measures of technical efficiency is negative.  Analysis will be done in terms of Shephard distance function, a reciprocal of the Farrell measure."))
   }
 	}
 	
 	# Check if bias squared over var is larger for all
 	if( min(bci$BovV, na.rm = TRUE) < 1){
-  warning(" For one or more data points statistic [(1/3)*(bias)^2/var] is smaller than 1; bias-correction should not be used.\n", call. = FALSE, immediate. = FALSE)
+  warning(" For one or more data points statistic [(3*(bias)^2/var] is smaller than 1; bias-correction should not be used.\n", call. = FALSE, immediate. = FALSE)
+	 my.warnings <- c(my.warnings, " For one or more data points statistic [(3*(bias)^2/var] is smaller than 1; bias-correction should not be used.")
 	}
 	
 	if ( !homogeneous & smoothed ){
-	 tymch <- list(K = K, M = M, N = N, reps = reps, level = level,
+	 tymch <- list(call = match.call(), model ="teradialbc", K = K, M = M, N = N, reps = reps, level = level,
+	               rts = YX$rts.string, base = YX$base.string, 
+	               Kr = Kr, ref = ifelse(is.null(ref), "FALSE", "TRUE"),
 	               te = te, tebc = bci$tebc, biasboot = bci$bias, varboot = bci$vari,
 	               biassqvar = bci$BovV, realreps = bci$reaB,
 	               telow = bci$LL, teupp = bci$UU, teboot = teboot,
-	               samples.b = realnrep, esample = esample)
+	               samples.b = realnrep, boot.type = boot.type,
+	               esample = esample, esample.ref = YX$esample.ref, warnings = my.warnings)
 	}
 	else {
-	 tymch <- list(K = K, M = M, N = N, reps = reps, level = level,
+	 tymch <- list(call = match.call(), model = "teradialbc", K = K, M = M, N = N, reps = reps, level = level,
+	               rts = YX$rts.string, base = YX$base.string, 
+	               Kr = Kr, ref = ifelse(is.null(ref), "FALSE", "TRUE"),
 	               te = te, tebc = bci$tebc, biasboot = bci$bias, varboot = bci$vari,
 	               biassqvar = bci$BovV, realreps = bci$reaB,
-	               telow = bci$LL, teupp = bci$UU, teboot = teboot, esample = esample)
+	               telow = bci$LL, teupp = bci$UU, teboot = teboot, boot.type = boot.type,
+	               esample = esample, esample.ref = YX$esample.ref, warnings = my.warnings)
 	}
 	
 	class(tymch) <- "npsf"

@@ -15,40 +15,40 @@ nptestrts(formula, data, subset,
  print.level = 1, dots = TRUE)
 }
 \arguments{
-  \item{formula}{
+\item{formula}{
 an object of class ``formula'' (or one that can be coerced to that class): a symbolic description of the model. The details of model specification are given under `Details'.
 }
-  \item{data}{
+\item{data}{
 an optional data frame containing the variables in the model. If not found in data, the variables are taken from environment (\code{formula}), typically the environment from which \code{teradial} is called.
 }
-  \item{subset}{
+\item{subset}{
 an optional vector specifying a subset of observations for which technical efficiency is to be computed.
 }
-  \item{base}{
+\item{base}{
 character or numeric. string: first letter of the word ``o'' for computing output-based or ``i'' for computing input-based technical efficiency measure. string: 2 for computing output-based or 1 for computing input-based technical efficiency measure
 }
-  \item{homogeneous}{
+\item{homogeneous}{
 logical. If TRUE, the reference set is bootstrapped with homogeneous smoothing; if FALSE, the reference set is bootstrapped with heterogeneous smoothing.
 }
-  \item{test.two}{
+\item{test.two}{
 logical. If TRUE, test 2, where efficiency measures under assumption of non-increasing and variable returns to scale technology are compared; if FALSE, \code{nptestrts} stops after test 1 is completed.
 }
-  \item{reps}{
+\item{reps}{
 specifies the number of bootstrap replications to be performed.  The default is 999.  The minimum is 100.  Adequate estimates of confidence intervals using bias-corrected methods typically require 1,000 or more replications.
 }
-  \item{alpha}{
+\item{alpha}{
 sets significance level; default is \code{alpha=0.05}.
 }
-  \item{core.count}{
+\item{core.count}{
 positive integer. Number of cluster nodes. If \code{core.count=1}, the process runs sequentially. See  \code{\link[snowFT]{performParallel}} for more details.
 }
-  \item{cl.type}{
+\item{cl.type}{
 Character string that specifies cluster type (see \code{\link[snowFT]{makeClusterFT}}). Possible values are 'MPI' and 'SOCK' ('PVM' is currently not available). See  \code{\link[snowFT]{performParallel}} for more details.
 }
-  \item{dots}{
+\item{dots}{
 logical. Relevant if \code{print.level>=1}. If TRUE, one dot character is displayed for each successful replication; if FALSE,  display of the replication dots is suppressed.
 }
-  \item{print.level}{
+\item{print.level}{
 numeric. 0 - nothing is printed; 1 - print summary of the model and data. 2 - print summary of technical efficiency measures. 3 - print estimation results observation by observation. Default is 1.
 }
 }
@@ -67,78 +67,80 @@ On some systems, specifying option \code{cl.type="SOCK"} results in much quicker
 
 Parallel computing make a difference for large data sets.  Specifying option \code{dots=TRUE} will indicate at what speed the bootstrap actually proceeds.  Specify \code{reps=100} and compare two runs with option \code{core.count=1} and \code{core.count>1} to see if parallel computing speeds up the bootstrap.  For small samples, parallel computing may actually slow down the \code{nptestrts}.
 
+Results can be summarized using \code{\link{summary.npsf}}.
+
 }
 
 \value{
 \code{nptestrts} returns a list of class \code{npsf} containing the following elements:
-  \item{K}{
+\item{K}{
 numeric: number of data points.
 }
-  \item{M}{
-numeric: number of inputs.
-}
-  \item{N}{
+\item{M}{
 numeric: number of outputs.
 }
-  \item{rts}{
+\item{N}{
+numeric: number of inputs.
+}
+\item{rts}{
 string: RTS assumption.
 }
-  \item{base}{
+\item{base}{
 string: base for efficiency measurement.
 }
-  \item{reps}{
+\item{reps}{
 numeric: number of bootstrap replications.
 }
-  \item{alpha}{
+\item{alpha}{
 numeric: significance level.
 }
-  \item{teCrs}{
+\item{teCrs}{
 numeric: measures of technical efficiency under the assumption of CRS.
 }
-  \item{teNrs}{
+\item{teNrs}{
 numeric: measures of technical efficiency under the assumption of NiRS.
 }
-  \item{teVrs}{
+\item{teVrs}{
 numeric: measures of technical efficiency under the assumption of VRS.
 }
-  \item{sefficiency}{
+\item{sefficiency}{
 numeric: scale efficiency.
 }
-  \item{sefficiencyMean}{
+\item{sefficiencyMean}{
 numeric: ratio of means of technical efficiency measures under CRS and VRS.
 }
-  \item{pGlobalCRS}{
+\item{pGlobalCRS}{
 numeric: p-value of the test that the technology is globally CRS.
 }
 
-  \item{psefficient}{
+\item{psefficient}{
 numeric: p-value of the test that data point is statistically scale efficient.
 }
-  \item{sefficient}{
+\item{sefficient}{
 logical: returns \code{TRUE}, if statistically scale efficient; \code{FALSE} otherwise.
 }
-  \item{nsefficient}{
+\item{nsefficient}{
 numeric: number of statistically scale efficient.
 }
 
-  \item{nrsOVERvrsMean}{
+\item{nrsOVERvrsMean}{
 numeric: ratio of means of technical efficiency measures under NIRS and VRS (if \code{test.two=TRUE}).
 }
-  \item{pGlobalNRS}{
+\item{pGlobalNRS}{
 numeric: p-value of the test the technology is globally NIRS (if \code{test.two=TRUE}).
 }
 
-  \item{sineffdrs}{
+\item{sineffdrs}{
 logical: returns \code{TRUE} if statistically scale inefficient due to DRS and \code{FALSE} if statistically scale inefficient due to IRS (if \code{test.two=TRUE} and not all data points are statistically scale efficient \code{nsefficient<K}).
 }
-  \item{pineffdrs}{
+\item{pineffdrs}{
 numeric: p-value of the test that data point is scale inefficient due to DRS (if \code{test.two=TRUE} and not all data points are statistically scale efficient \code{nsefficient<K}).
 }
-  \item{nrsOVERvrs}{
+\item{nrsOVERvrs}{
 numeric: ratio of measures of technical efficiency under NiRS and VRS (if \code{test.two=TRUE} and not all data points are statistically scale efficient \code{nsefficient<K}).
 }
 
-  \item{esample}{
+\item{esample}{
 logical: returns TRUE if the observation in user supplied data is in the estimation subsample and FALSE otherwise.
 }
 
@@ -146,6 +148,8 @@ logical: returns TRUE if the observation in user supplied data is in the estimat
 
 \note{
 Before specifying option \code{homogeneous} it is advised to preform the test of independence (see \code{\link{nptestind}}).
+
+Results can be summarized using \code{\link{summary.npsf}}.
 }
 
 \references{
@@ -157,7 +161,7 @@ Simar L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{E
 }
 
 \author{
-Oleg Badunenko <obadunen@uni-koeln.de>, Pavlo Mozharovskyi <mozharovskyi@statistik.uni-koeln.de>
+Oleg Badunenko <obadunen@uni-koeln.de>, Pavlo Mozharovskyi <pavlo.mozharovskyi@univ-rennes1.fr>
 
 }
 
@@ -257,3 +261,4 @@ t5 <- nptestrts(Y ~ K + L + M, data = usmanuf,
 \keyword{ Smoothed bootstrap }
 \keyword{ Subsampling bootstrap }
 \keyword{ Parallel computing }
+\keyword{ summary }

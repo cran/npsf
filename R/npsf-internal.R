@@ -74,13 +74,13 @@
  base1 <- tolower(substr(base, 1,1 ))
  
  if(is.null(rts.subst)){
-  if(rts1 == "c" | rts == 1){
+  if(rts1 == "c" | rts == 3){
    myrts <- 3
    myrts1 <- "CRS"
   } else if (rts1 == "n" | rts == 2){
    myrts <- 2
    myrts1 <- "NIRS"
-  } else if (rts1 == "v" | rts == 3){
+  } else if (rts1 == "v" | rts == 1){
    myrts <- 1
    myrts1 <- "VRS"
   } else {
@@ -103,7 +103,7 @@
  
  # for printing
  if(print.level >= 1 & winw > 50){
-  mymesage <- paste("\n",ifelse(type == "RM", "Nonradial (Russell)", "Radial Debrue-Farrell")," ",mybase1,"-based measures of technical efficiency under assumption of ",myrts1," technology are computed for the following data:\n", sep = "")
+  mymesage <- paste("\n",ifelse(type == "RM", "Nonradial (Russell)", "Radial (Debrue-Farrell)")," ",mybase1,"-based measures of technical efficiency under assumption of ",myrts1," technology are computed for the following data:\n", sep = "")
   cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
   # 		cat("\n ",ifelse(type == "RM", "Nonradial (Russell)", "Radial Debrue-Farrell")," ",mybase1,"-based measures of technical efficiency \n", sep = "")
   # 		cat(" under assumption of ",myrts1," technology are computed for the \n", sep = "")
@@ -332,7 +332,7 @@
  #  }
  
  if(print.level >= 1 & winw > 50){
-  mymesage <- paste("\n",ifelse(type == "RM", "Nonradial (Russell)", "Radial Debrue-Farrell")," ",mybase1,"-based measures of technical efficiency under assumption of ",myrts1," technology are computed for the following data:\n", sep = "")
+  mymesage <- paste("\n",ifelse(type == "RM", "Nonradial (Russell)", "Radial (Debrue-Farrell)")," ",mybase1,"-based measures of technical efficiency under assumption of ",myrts1," technology are computed for the following data:\n", sep = "")
   cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
   # 		cat("\n ",ifelse(type == "RM", "Nonradial (Russell)", "Radial Debrue-Farrell")," ",mybase1,"-based measures of technical efficiency \n", sep = "")
   # 		cat(" under assumption of ",myrts1," technology are computed for the \n", sep = "")
@@ -404,11 +404,19 @@
   # print(class(t1))
   # print(dim(t1))
   if(xvec2 & !xvec1) colnames(t1) <- mynames
-  if(print) print(t(t1), digits = digits)		
+  if(print){
+   tymch <- formatC(t(t1), digits = 4, format = "f", width = 4+1)
+   tymch <- gsub(".0000","",tymch, fixed = TRUE)
+   print(tymch, quote = FALSE)
+  }
  }
- tymch <- t(t1)
- class(tymch) <- "npsf"
- return(tymch)
+ class(t1) <- "npsf"
+ return(t(t1))
+}
+
+.rownames.Intercept.change <- function(x){
+ x <- gsub("(Intercept)","intercept",x, fixed = TRUE)
+ x
 }
 
 .teRad <- function(Y,X,M,N,K,
@@ -712,7 +720,7 @@
  # 	bias <- con3 * (tebm - teff)
  # 	tebc <- teff - bias
  # 	vari <- apply(teboot, 2, var, na.rm = TRUE)
- # 	BovV <- bias^2 / vari / 3
+ # 	BovV <- bias^2 / vari * 3
  # 	
  # 	# CI
  # 	teOverTEhat <- sweep(teboot, 2, FUN = "/", teff)
@@ -747,7 +755,7 @@
   else {
    bias[i] = con3 * ( mean(TEi) - teff[i] )
    vari[i] = var(TEi)
-   BovV[i] = (bias[i])^2 / vari[i] / 3
+   BovV[i] = (bias[i])^2 / vari[i] * 3
    tebc[i] = teff[i] - bias[i]
    teOverTEhat = (TEi / teff[i] - 1) * con1
    quans = quantile(teOverTEhat, probs = (100 + c(-level, level))/200, na.rm = TRUE)
@@ -1298,6 +1306,7 @@
   k <- ncol(X)
   if(ku == 1){
    Zu <- matrix(1, nrow = sum(esample), ncol = 1)
+   colnames(Zu) <- "(Intercept)"
   }
   else {
    Zu <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 2), data = dataesample))
@@ -1305,6 +1314,7 @@
   }
   if(kv == 1){
    Zv <- matrix(1, nrow = sum(esample), ncol = 1)
+   colnames(Zv) <- "(Intercept)"
   }
   else {
    Zv <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 3), data = dataesample))
@@ -1312,6 +1322,7 @@
   }
   if(kdel == 1){
    Zdel <- matrix(1, nrow = sum(esample), ncol = 1)
+   colnames(Zdel) <- "(Intercept)"
   }
   else {
    Zdel <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 4), data = dataesample))
@@ -1368,6 +1379,7 @@
   # get Zu
   if(ku == 1){
    Zu <- matrix(1, nrow = sum(esample), ncol = 1)
+   colnames(Zu) <- "(Intercept)"
   }
   else {
    mf <- mf0
@@ -1386,6 +1398,7 @@
   # get Zv
   if(kv == 1){
    Zv <- matrix(1, nrow = sum(esample), ncol = 1)
+   colnames(Zv) <- "(Intercept)"
   }
   else {
    mf <- mf0
@@ -1404,17 +1417,42 @@
   # get Zdel
   if(kdel == 1){
    Zdel <- matrix(1, nrow = sum(esample), ncol = 1)
+   colnames(Zdel) <- "(Intercept)"
   }
   else {
    Zdel <- XZ[, -(2:(k+ku-1+kv-1)), drop = FALSE]
    # print(head(Zdel))
   }
   
-  #   print(head(Zu))
-  #   print(head(Zv))
-  #   print(head(Zdel))
+    # print(head(Zu))
+    # print(head(Zv))
+    # print(head(Zdel))
  }
- colnames(X)[1] <- colnames(Zu)[1] <- colnames(Zv)[1] <- colnames(Zdel)[1] <- "Intercept"
+ # colnames(X)[1] <- colnames(Zu)[1] <- colnames(Zv)[1] <- colnames(Zdel)[1] <- "Intercept"
+
+ # if(sum(colnames(X) == "(Intercept)") > 0){
+ #  # print(which(colnames(X) == "(Intercept)"))
+ #  colnames(X)[which(colnames(X) == "(Intercept)")] <- "Intercept"
+ # }
+ # if(sum(colnames(Zu) == "(Intercept)") > 0){
+ #  # print(which(colnames(Zu) == "(Intercept)"))
+ #  colnames(Zu)[which(colnames(Zu) == "(Intercept)")] <- "Intercept"
+ # }
+ # if(sum(colnames(Zv) == "(Intercept)") > 0){
+ #  # print(which(colnames(Zv) == "(Intercept)"))
+ #  colnames(Zv)[which(colnames(Zv) == "(Intercept)")] <- "Intercept"
+ # }
+ # if(sum(colnames(Zdel) == "(Intercept)") > 0){
+ #  # print(which(colnames(Zv) == "(Intercept)"))
+ #  colnames(Zdel)[which(colnames(Zdel) == "(Intercept)")] <- "Intercept"
+ # }
+ 
+ colnames(X) <- .rownames.Intercept.change(colnames(X))
+ colnames(Zu) <- .rownames.Intercept.change(colnames(Zu))
+ colnames(Zv) <- .rownames.Intercept.change(colnames(Zv))
+ colnames(Zdel) <- .rownames.Intercept.change(colnames(Zdel))
+ 
+ # print(colnames(Zdel))
  
  tymch <- list(Y = Y, X = X, Zu = Zu, Zv = Zv, Zdel = Zdel, n = n, k = k, ku = ku, kv = kv, kdel = kdel, esample = esample)
  class(tymch) <- "npsf"
@@ -1656,32 +1694,33 @@
 
 # Print the estimation results
 
-.printoutcs = function(x, digits, k, kv, ku, kdel, na.print = "NA", dist){
+.printoutcs = function(x, digits, k, kv, ku, kdel, na.print = "NA", dist, max.name.length){
  
- Cf = cbind(ifelse(x[,1, drop = F]> 999, formatC(x[,1, drop = F], digits = 1, format = "e",width = 10), formatC(x[,1, drop = F], digits = digits, format = "f", width = 10)),
-            ifelse(x[,2, drop = F]>999, formatC(x[,2, drop = F], digits = 1, format = "e", width = 10), formatC(x[,2, drop = F], digits = digits, format = "f", width = 10)),
-            ifelse(x[,3, drop = F]>999, formatC(x[,3, drop = F], digits = 1, format = "e", width = 7), formatC(x[,3, drop = F], digits = 2, format = "f", width = 7)),
-            ifelse(x[,4, drop = F]>999, formatC(x[,4, drop = F], digits = 1, format = "e", width = 10), formatC(x[,4, drop = F], digits = digits, format = "f", width = 10)))
+ Cf = cbind(ifelse(x[,1, drop = FALSE]> 999, formatC(x[,1, drop = FALSE], digits = 1, format = "e",width = 10), formatC(x[,1, drop = FALSE], digits = digits, format = "f", width = 10)),
+            ifelse(x[,2, drop = FALSE]>999, formatC(x[,2, drop = FALSE], digits = 1, format = "e", width = 10), formatC(x[,2, drop = FALSE], digits = digits, format = "f", width = 10)),
+            ifelse(x[,3, drop = FALSE]>999, formatC(x[,3, drop = FALSE], digits = 1, format = "e", width = 7), formatC(x[,3, drop = FALSE], digits = 2, format = "f", width = 7)),
+            ifelse(x[,4, drop = FALSE]>999, formatC(x[,4, drop = FALSE], digits = 1, format = "e", width = 10), formatC(x[,4, drop = FALSE], digits = digits, format = "f", width = 10)))
  
- cat("               Coef.        SE       z       P>|z|\n", sep = "")
+ # cat("               Coef.        SE       z       P>|z|\n", sep = "")
+ row.names(Cf) <- formatC(row.names(Cf), width = max(nchar(row.names(Cf))), flag = "-")
+ cat("",rep(" ", max.name.length+6),"Coef.        SE       z       P>|z|\n", sep = "")
  dimnames(Cf)[[2]] <- rep("", dim(Cf)[[2]])
- cat("__________________________________________________", "\n", "Frontier", "\n")
- print.default(Cf[1:k,,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
- cat("--------------------------------------------------", "\n", "Random noise component: log(sigma_v^2)", "\n")
+ cat("",rep("_", max.name.length+42-1),"", "\n", "Frontier", "\n", sep = "")
+ print.default(Cf[1:k,,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+ cat("",rep("-", max.name.length+42-1),"", "\n", "Random noise component: log(sigma_v^2)", "\n", sep = "")
  # dimnames(Cf)[[2]] <- rep("", dim(Cf)[[2]])
- print.default(Cf[(k+1):(k+kv),,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
- cat("--------------------------------------------------", "\n", "Inefficiency component: log(sigma_u^2)", "\n")
- print.default(Cf[(k+kv+1):(k+kv+ku),,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
+ print.default(Cf[(k+1):(k+kv),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+ cat("",rep("-", max.name.length+42-1),"", "\n", "Inefficiency component: log(sigma_u^2)", "\n", sep = "")
+ print.default(Cf[(k+kv+1):(k+kv+ku),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
  if(dist == "t"){
-  cat("--------------------------------------------------", "\n", "Mu (location parameter)", "\n")
+  cat("",rep("-", max.name.length+42-1),"", "\n", "Mu (location parameter)", "\n", sep = "")
   print.default(Cf[(k+kv+ku+1):(k+kv+ku+kdel),,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
  }
- 
- if(nrow(Cf[-c(1:(k+kv+ku+kdel)),,drop=F]) >= 1){
-  cat("--------------------------------------------------", "\n", "Parameters of compound error distribution", "\n")
-  print.default(Cf[-c(1:(k+kv+ku+kdel)),,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
+ if(nrow(Cf[-c(1:(k+kv+ku+kdel)),,drop=FALSE]) >= 1){
+  cat("",rep("-", max.name.length+42-1),"", "\n", "Parameters of compound error distribution", "\n", sep = "")
+  print.default(Cf[-c(1:(k+kv+ku+kdel)),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
  }
- cat("__________________________________________________", "\n")
+ cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
  invisible(x)
 }
 
@@ -2155,7 +2194,7 @@ is.negative.definite <- function (x, tol = 1e-08)
   # t17
   
   if(print.level >= 2){
-   cat(paste("\nFinal log likelihood = ",format(ll0, digits = 5),"\n\n", sep = ""), sep = "")
+   cat(paste("\nFinal log likelihood = ",formatC(ll0,digits=7,format="f"),"\n\n", sep = ""), sep = "")
   }
   # cat(paste("Stoc. frontier normal/",distribution,"\n", sep = ""), sep = "")
   if(print.level >= 5.5){
@@ -2170,7 +2209,7 @@ is.negative.definite <- function (x, tol = 1e-08)
  
  
 }
-.su1 <- function(x, mat.var.in.col = TRUE, digits = 4, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), print = TRUE){
+.su1 <- function(x, mat.var.in.col = TRUE, digits = 4, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), print = TRUE, transpose = FALSE){
  
  xvec2 <- xvec1 <- FALSE
  
@@ -2205,7 +2244,16 @@ is.negative.definite <- function (x, tol = 1e-08)
   # print(class(t1))
   # print(dim(t1))
   if(xvec2 & !xvec1) colnames(t1) <- mynames
-  if(print) print(t(t1), digits = digits)    
+  
+  if(print){
+   if(transpose){
+    tymch <- formatC(t1, digits = 4, format = "f", width = 4+1)
+   } else {
+    tymch <- formatC(t(t1), digits = 4, format = "f", width = 4+1)
+   }
+   tymch <- gsub(".0000","",tymch, fixed = TRUE)
+   print(tymch, quote = FALSE)
+  }
  }
  return(t1)
 }

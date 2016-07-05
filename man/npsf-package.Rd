@@ -3,7 +3,7 @@
 \alias{npsf}
 \docType{package}
 \title{
-Introduction to Nonparametric and Stochastic Frontier Analysis
+ Introduction to Nonparametric and Stochastic Frontier Analysis
 }
 
 \description{
@@ -26,11 +26,13 @@ For details of the respective method please see the reference at the end of this
 
 All function in \code{npsf} accept formula with either names of variables in the data set, or names of the matrices.  Except for \code{\link{nptestind}}, all function return \code{esample}, a logical vector length of which is determined by \code{data} and \code{subset} (if specified) or number of rows in matrix \code{outputs}. \code{esample} equals \code{TRUE} if this data point parted in estimation procedure, and \code{FALSE} otherwise.
 
+Results can be summarized using \code{\link{summary.npsf}}.
+
 \tabular{ll}{
 Package: \tab npsf\cr
 Type: \tab Package\cr
-Version: \tab 0.1.6\cr
-Date: \tab 2015-09-22\cr
+Version: \tab 0.1.8\cr
+Date: \tab 2016-07-05\cr
 License: \tab GPL-2 | file LICENSE\cr
 }
 
@@ -42,7 +44,7 @@ Oleg Badunenko, <obadunen@uni-koeln.de>
 
 Yaryna Kolomiytseva, <yaryna.kolomiytseva@uni-koeln.de>
 
-Pavlo Mozharovskyi, <mozharovskyi@statistik.uni-koeln.de>
+Pavlo Mozharovskyi, <pavlo.mozharovskyi@univ-rennes1.fr>
 
 Maintainer: Oleg Badunenko <obadunen@uni-koeln.de>
 }
@@ -106,3 +108,5 @@ Wilson P.W.  (2003), Testing Independence in Models of Productive Efficiency, \e
 \keyword{ Smoothed bootstrap }
 \keyword{ Subsampling bootstrap }
 \keyword{ Parallel computing }
+\keyword{ Variance-covariance matrix }
+\keyword{ summary }
