@@ -105,7 +105,8 @@ teradialbc <- function(formula, data, subset,
   
  YX <- .prepareYX(formula = formula, data = data, subset = subset, rts = rts,
                   base = base, ref = ref,	data.ref = data.ref, subset.ref = subset.ref,
-                  print.level = print.level, type = "DF", winw = winw)
+                  print.level = print.level, type = "DF", winw = winw, 
+                  sysnframe = sys.nframe())
  Y  <- YX$y
  X  <- YX$x
  M  <- ncol(Y)

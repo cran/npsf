@@ -24,7 +24,7 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
   stop("Option 'tmean' can be used only when distribution of inefficiency term is truncated normal.")
  }
  
- YXZ <- .prepareYXZ(formula = formula, uhet = uhet, vhet = vhet, tmean = tmean, data, subset)
+ YXZ <- .prepareYXZ(formula = formula, uhet = uhet, vhet = vhet, tmean = tmean, data, subset, sysnframe = sys.nframe())
  
  y <- YXZ$Y
  X <- YXZ$X
@@ -110,7 +110,7 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
      cat(" ('optim' minimizes, so 'll' is\n", sep = "")
      cat("  negative of what is printed) \n\n", sep = "")
     }
-     obj <- eval(parse(text = paste(" tryCatch( optim(par = theta0, fn = .ll.",noquote(distribution),"n, gr = .g.",noquote(distribution),"n, prod = prod, k = k, kv = kv, ku = ku, y = y, Zv = Zv, Zu = Zu, kdel = kdel, Zdel = Zdel, X = X, method = c('BFGS'), control = list(reltol  = .Machine$double.eps, maxit = 200, trace = ifelse(print.level >=2, 1, 0), REPORT = ifelse(print.level >=2, 1, 1), fnscale = -1), hessian = TRUE), error = function(e) e )", sep = "")))
+     obj <- eval(parse(text = paste(" tryCatch( optim(par = theta0, fn = .ll.",noquote(distribution),"n, gr = .g.",noquote(distribution),"n, prod = prod, k = k, kv = kv, ku = ku, y = y, Zv = Zv, Zu = Zu, kdel = kdel, Zdel = Zdel, X = X, method = c('BFGS'), control = list(reltol  = .Machine$double.eps, maxit = 1000, trace = ifelse(print.level >=2, 1, 0), REPORT = ifelse(print.level >=2, 1, 1), fnscale = -1), hessian = TRUE), error = function(e) e )", sep = "")))
      # print(obj)
      cannot.est.model <- inherits(obj, "error")
      if(cannot.est.model){
@@ -286,9 +286,9 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
  }
  }
  
- colnames(obj$vcov) = rownames(obj$vcov) = c(names_x, names_zv, names_zu, names_del)
+ colnames(obj$vcov) <- rownames(obj$vcov) <- c(names_x, names_zv, names_zu, names_del)
  
- temp = list(call = match.call(), model = "sfsc", coef = par[names(par) %in% colnames(obj$vcov)], table = output, vcov = obj$vcov, loglik = obj$ll, lmtol = lmtol, LM = obj$gHg, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, sigmas_u = sigmas_u, sigmas_v = sigmas_v, mu = mu, k = k, kv = kv, ku = ku, kdel = kdel, distribution = distribution, esample = esample)
+ temp <- list(call = match.call(), model = "sfsc", coef = par[names(par) %in% colnames(obj$vcov)], table = output, vcov = obj$vcov, loglik = obj$ll, lmtol = lmtol, LM = obj$gHg, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, sigmas_u = sigmas_u, sigmas_v = sigmas_v, mu = mu, k = k, kv = kv, ku = ku, kdel = kdel, distribution = distribution, esample = esample)
  
  class(temp) <- "npsf"
  

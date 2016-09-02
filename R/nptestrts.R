@@ -81,7 +81,8 @@ nptestrts <- function(formula, data, subset,
  
  YX <- .prepareYXnoRef(formula = formula, data = data, subset = subset,
                        base = base, print.level = print.level,
-                       type = "DF", winw = winw, rts.subst = "CRS, NiRS, and VRS")
+                       type = "DF", winw = winw, rts.subst = "CRS, NiRS, and VRS", 
+                       sysnframe = sys.nframe())
  Y  <- YX$y
  X  <- YX$x
  M  <- ncol(Y)

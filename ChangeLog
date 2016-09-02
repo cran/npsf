@@ -1,13 +1,15 @@
-npsf v0.1.7 (Release date: 2016-06-30)
+npsf v0.1.9 (Release date: 2016-09-02)
+
+* Fixed some bugs with data preparation
+* Added truncated regression (truncreg) estimation with 
+  lower and upper bounds (which can be specified simultaneously)
+
+npsf v0.1.8 (Release date: 2016-07-05)
 
 * Added nobs(), coef(), and vcov() for all relevant objects
-
 * Added summary() and print() for all relevant objects
-
 * Fixed some bugs with names in sf
-
 * Fixed documentation
-
 
 npsf v0.1.6 (Release date: 2015-09-20)
 

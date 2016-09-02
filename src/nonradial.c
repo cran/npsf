@@ -3,7 +3,7 @@
 #include "glpk.h"
 #include "qhAdapter.h"
 
-void nonradial(double *yobs, double *xobs, int *m, int *n, int *nobs, 
+void nonradial(double *yobs, double *xobs, int *m, int *n, int *nobs,
 			double *yref, double *xref, int *nref, int *rts, int *ort, int *ifqh, int *printlevel,
 			double *sol){
 	/* Temporary structures for reference data */
@@ -214,6 +214,7 @@ void nonradial(double *yobs, double *xobs, int *m, int *n, int *nobs,
 		// glp_load_matrix(lp, ne, rowIndices, colIndices, values);
 		glp_load_matrix(lp, ne, &rowIndices[-1], &colIndices[-1], &values[-1]);
 		// /* Execute linear solver */
+		glp_scale_prob(lp, GLP_SF_GM);
 		glp_simplex(lp, NULL);
 		if (glp_get_status(lp) == GLP_OPT){
 			/* Save solution */

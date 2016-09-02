@@ -36,7 +36,7 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
  }
  mymodel <- x$model
  # possible.models <- c("teradial", "tenonradial", "teradialbc", "nptestrts", "nptestind", "sfsc")
- valid.model <- mymodel %in% c("teradial", "tenonradial", "teradialbc", "nptestrts", "nptestind", "sfsc") # possible.models
+ valid.model <- mymodel %in% c("teradial", "tenonradial", "teradialbc", "nptestrts", "nptestind", "sfsc", "truncreg.cs") # possible.models
  if(!valid.model){
   stop( gettextf("Not valid model in '%s'.", deparse(substitute(x))) )
  }
@@ -278,6 +278,60 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
    .su1(eff1, transpose = TRUE)
   }
   # end sf sross-sectional
+ }
+ if (mymodel == "truncreg.cs"){
+  # begin sf truncreg
+  if(print.level >= 1 & winw > 50){
+   # model
+   
+   cat("Truncated regression for cross-sectional data\n", sep = "")
+   cat(" Limits:\n", sep = "")
+   #  check if infinite
+   ll.inf <- sum(is.infinite(x$LL))
+   ul.inf <- sum(is.infinite(x$UL))
+   
+   if (ll.inf == x$n) {
+    #  if all are infinite
+    cat("  lower limit for left-truncation  = ",x$LL[1],"\n", sep = "")
+   } else {
+    if (sd(x$LL[is.finite(x$LL)]) != 0) {
+     cat("  lower limit for left-truncation:", sep = "")
+     print(summary(x$LL))
+    } else {
+     cat("  lower limit for left-truncation  = ",x$LL[1],"\n", sep = "")
+    }
+   }
+   
+   if (ul.inf == x$n) {
+    #  if all are infinite
+    cat("  upper limit for right-truncation = ",x$UL[1],"\n", sep = "")
+   } else {
+    if (sd(x$UL[is.finite(x$UL)]) != 0) {
+     cat("  upper limit for right-truncation:", sep = "")
+     print(summary(x$UL))
+    } else {
+     cat("  upper limit for right-truncation = ",x$UL[1],"\n", sep = "")
+    }
+   }
+   cat("\n(Note: ",x$n.full-x$n," (out of ",x$n.full,") observations truncated) \n", sep = "")
+   cat("Number of observations (used in regression)               = ",x$n,"\n", sep = "")
+   cat("Number of truncated observations (not used in regression) = ",x$n.full-x$n,"\n", sep = "")
+   cat("\n")
+   cat("Convergence given g*inv(H)*g' = ",formatC(x$LM,digits=1,format="e")," < lmtol(",formatC(x$lmtol,digits=1,format="e"),")\n", sep = "")
+   .timing(x$esttime, "Log likelihood maximization completed in ")
+   cat("Final log likelihood = ",formatC(x$loglik,digits=7,format="f"),"\n",  sep = "")
+   
+   cat("\nEstimation results:\n\n", sep = "")
+   
+   # estimation results
+   
+   printCoefmat(x$table)
+   
+   # cat("\n")
+   # .su1(eff1, transpose = TRUE)
+  }
+  
+  # end sf truncreg
  }
  
  

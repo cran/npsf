@@ -1,13 +1,36 @@
 .prepareYX <- function(formula, data, subset, rts = c("C", "NI", "V"),
                        base = c("output", "input"), ref = NULL,
                        data.ref = NULL, subset.ref = NULL, print.level = 1, 
-                       type = "RM", winw = 50, rts.subst = NULL, ...)
+                       type = "RM", winw = 50, rts.subst = NULL, sysnframe = 1, ...)
 {
  # get y and x matrices
  
  # mf0 <- match.call(expand.dots = FALSE, call = sys.call(which = 1))
- needed.frame <- sys.nframe() - 1
+ # needed.frame <- sys.nframe() - 1
+ needed.frame <- sys.nframe() - sysnframe
+ # cat("sys.nframe() = ",sys.nframe(),"\n")
+ # cat("needed.frame = ",needed.frame,"\n")
+ # cat("sysnframe = ",sysnframe,"\n")
+ # this is the entire call
+ # this one is from previous call
+ # mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = needed.frame)))
+ # print(mf0)
+ # this one is from the initial call (where tenonradial might have been called)
  mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = needed.frame)))
+ # print(mf0)
+ # print( match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = sysnframe+2))) )
+ # for(i in 1:1){
+ #  cat("i=",i,"\n")
+ #  mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = i)))
+ #  mf <- mf0
+ #  m <- match(c("formula", "data", "subset"), names(mf), 0L)
+ #  mf <- mf[c(1L, m)]
+ #  mf[[1L]] <- as.name("model.frame")
+ #  # mf$formula <- Formula( formula )
+ #  # mf <- eval(mf, parent.frame(n = 1))
+ #  print(mf)
+ # }
+ # cat("end\n")
  
  # if(print.level >= 1) print(mf0)
  
@@ -27,12 +50,19 @@
   mf <- mf[c(1L, m)]
   mf[[1L]] <- as.name("model.frame")
   # mf$formula <- Formula( formula )
-  # mf <- eval(mf, parent.frame(n = 1))
+  # print(mf)
   mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+  # mf <- eval(mf, parent.frame())
   mt <- attr(mf, "terms")
   x <- as.matrix(model.matrix(mt, mf))
+  # print(x)
   # now get the names in the entire data
-  esample <- seq_len( nrow(data) ) %in% as.numeric(rownames(x))
+  # esample <- seq_len( nrow(data) ) %in% as.numeric(rownames(x))
+  esample <- rownames(data) %in% rownames(x)
+  
+  # print(rownames(data) )
+  # print(rownames(x))
+  # 
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
   
@@ -63,7 +93,7 @@
   # print(y)
   # print(x)
  }
- 
+
  if( !is.numeric(y) ) stop("Some of the outputs are not numeric.")
  if( !is.numeric(x) ) stop("Some of the inputs are not numeric.")
  
@@ -1244,8 +1274,11 @@
 
 # end parallel computing
 
-.prepareYXZ <- function(formula, uhet = NULL, vhet = NULL, tmean = NULL, data, subset, ...) {
- needed.frame <- sys.nframe() - 1
+.prepareYXZ <- function(formula, uhet = NULL, vhet = NULL, tmean = NULL, data, subset, sysnframe = 1, ...) {
+ # needed.frame <- sys.nframe() - 1
+ needed.frame <- sys.nframe() - sysnframe
+ # cat("sys.nframe() = ",sys.nframe(),"\n")
+ # cat("needed.frame = ",needed.frame,"\n")
  mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = needed.frame)))
  if ( is.null(uhet) ){
   uhet <- ~ 1
@@ -1286,7 +1319,8 @@
   mt <- attr(mf, "terms")
   X <- as.matrix(model.matrix(mt, mf))
   # now get the names in the entire data
-  esample <- seq_len( nrow(data) ) %in% as.numeric(rownames(X))
+  # esample <- seq_len( nrow(data) ) %in% as.numeric(rownames(X))
+  esample <- rownames(data) %in% rownames(X)
   if(sum(esample)==0){
    stop("no valid data points")
   }
@@ -2256,5 +2290,257 @@ is.negative.definite <- function (x, tol = 1e-08)
   }
  }
  return(t1)
+}
+
+
+# truncreg ---------------------------------------------------------------------
+
+# a and b are lower and upper truncations
+.h.trunc <- function(al, be, a1 = 1, b1 = 1, a = -Inf, b = Inf, print = FALSE)
+ (ifelse( b == Inf, 0, b1*dnorm(be) ) - ifelse( a == -Inf, 0, a1*dnorm(al) )  ) /
+ ( pnorm(be) - pnorm(al) )
+
+# log likelihood
+.ll.trunc <- function(y, x, beta, sigma, a, b) - 0.5*length(y)*log(2*pi) - length(y)*log(sigma) - 0.5*sigma^(-2)*sum((y - x %*% beta)^2) - sum( log( pnorm((b - x %*% beta)/sigma, log.p = FALSE) - pnorm((a - x %*% beta)/sigma, log.p = FALSE) ) )
+
+# function with formula or matrices ---------------------------------------
+.prepareYXllul <- function(formula, ll = -Inf, ul = Inf, data, subset, sysnframe = 1, ...) {
+ # needed.frame <- sys.nframe() - 1
+ needed.frame <- sys.nframe() - sysnframe
+ # cat("sys.nframe() = ",sys.nframe(),"\n")
+ # cat("needed.frame = ",needed.frame,"\n")
+ mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = needed.frame)))
+ 
+ ll.clas <- class(ll)
+ if (ll.clas == "formula"){
+  if (length(all.vars(ll)) == 1){
+   ll.form <- TRUE
+  } else {
+   stop("invalid formula for lower limit for left-truncation; 'll' must be '~ variableName'")
+  }
+ } else if (ll.clas == "numeric") {
+  if (length(ll) == 1){
+   ll.form <- FALSE
+  } else {
+   stop("invalid lower limit for left-truncation; 'll' must be a scalar")
+  }
+ } else {
+  stop("invalid lower limit for left-truncation; 'll' must be a formula or a scalar")
+ }
+ 
+ ul.clas <- class(ul)
+ if (ul.clas == "formula"){
+  if (length(all.vars(ul)) == 1){
+   ul.form <- TRUE
+  } else {
+   stop("invalid formula for upper limit for right-truncation; 'ul' must be '~ variableName'")
+  }
+ } else if (ul.clas == "numeric") {
+  if (length(ul) == 1){
+   ul.form <- FALSE
+  } else {
+   stop("invalid upper limit for right-truncation; 'ul' must be a scalar")
+  }
+ } else {
+  stop("invalid upper limit for right-truncation; 'ul' must be a formula or a scalar")
+ }
+ 
+ form1 <- Formula::Formula(formula)
+ 
+ # cat(" print(form1)\n", sep = "")
+ # print(form1)
+ 
+ if (ll.form) {
+  form1 <- Formula(as.formula(paste("",deparse(form1, width.cutoff = 500L)," | ",ll[2]," ", sep = "")))
+ }
+ if (ul.form) {
+  form1 <- Formula(as.formula(paste("",deparse(form1, width.cutoff = 500L)," | ",ul[2]," ", sep = "")))
+ }
+ 
+ # cat(" print(form1)\n", sep = "")
+ # print(form1)
+ 
+ # check if it is a matrix
+ datasupplied <- !(match("data", names(mf0), 0) == 0)
+ subssupplied <- !(match("subset", names(mf0), 0) == 0)
+ 
+ if(subssupplied & !datasupplied){
+  stop("Cannot specify 'subset' without specifying 'data'\n")
+ }
+ 
+ if(datasupplied){
+  # begin get a logical vector equal TRUE if !missing
+  # first using data and subset to get x without NA
+  mf <- mf0
+  mf$formula <- form1 #formula( form )
+  m <- match(c("formula", "data", "subset"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf[[1L]] <- as.name("model.frame")
+  mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+  mt <- attr(mf, "terms")
+  X <- as.matrix(model.matrix(mt, mf))
+  # now get the names in the entire data
+  # esample <- seq_len( nrow(data) ) %in% as.numeric(rownames(X))
+  esample <- rownames(data) %in% rownames(X)
+  if(sum(esample)==0){
+   stop("no valid data points")
+  }
+  # print(table(esample))
+  # end get a logical vector equal TRUE if !missing
+  
+  # get the data
+  # print(form1)
+  dataesample <- model.frame(form1, data = data[esample,])
+  # cat(" dim(dataesample)\n", sep = "")
+  # print(dim(dataesample))
+  # print(head(dataesample))
+  
+  # this is my full LHS
+  Y <- model.part(form1, data = dataesample, lhs = 1, drop = TRUE)
+  # cat(" print(Y)\n", sep = "")
+  # print(Y)
+  n.full <- length(Y)
+  # Y <- as.matrix( model.matrix(formula(form1, lhs = 1, rhs = 0), data = data[esample,]))
+  # print(Y)
+  X <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 1), data = dataesample))
+  # print(X)
+  
+  if (ll.form) {
+   LL <- model.matrix(formula(form1, lhs = 0, rhs = 2), data = dataesample)[,2]
+  } else {
+   LL <- rep(ll, n.full)
+  }
+  
+  if (ul.form) {
+   if (ll.form) {
+    UL <- model.matrix(formula(form1, lhs = 0, rhs = 3), data = dataesample, drop = TRUE)[,2]
+   } else {
+    UL <- model.matrix(formula(form1, lhs = 0, rhs = 2), data = dataesample, drop = TRUE)[,2]
+   }
+  } else {
+   UL <- rep(ul, n.full)
+  }
+  
+  # cat(" LL\n", sep = "")
+  # print(LL)
+  # cat(" UL\n", sep = "")
+  # print(UL)
+  
+  
+  # flag those that are required for regression
+  flag <- (Y > LL & Y < UL)
+  # cat(" dim(X)\n", sep = "")
+  # print(dim(X))
+  # cat(" flag\n", sep = "")
+  # print(flag)
+  
+  
+  # get subsets
+  # cat(" Y\n", sep = "")
+  Y  <- Y[flag]
+  n <- length(Y)
+  # cat(" X\n", sep = "")
+  X  <- X[flag, , drop = FALSE]
+  # print(dim(X))
+  # cat(" LL\n", sep = "")
+  LL <- LL[flag]
+  # print(LL)
+  # cat(" UL\n", sep = "")
+  UL <- UL[flag]
+  # print(UL)
+ }
+ # if data are not supplied
+ else {
+  # begin get a logical vector equal TRUE if !missing
+  
+  # first using data and subset to get XZ without NA
+  mf <- mf0
+  mf$formula <- formula( form1 )
+  subsetsupplied <- !(match("subset", names(mf), 0) == 0)
+  if(subsetsupplied) stop("Subset with matrices is not allowed")
+  m <- match(c("formula"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf[[1L]] <- as.name("model.frame")
+  # mf <- eval(mf, parent.frame())
+  mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+  mt <- attr(mf, "terms")
+  Y <- as.matrix(model.response(mf))
+  n <- nrow(Y)
+  XZ <- as.matrix(model.matrix(mt, mf))
+  # print(head(XZ))
+  # get a logical vector equal TRUE if !missing
+  with.na <- model.frame(mt, na.action = na.pass)
+  esample <- rownames(with.na) %in% rownames(XZ)
+  if(sum(esample)==0){
+   stop("no valid data points")
+  }
+  # print(table(esample))
+  # end get a logical vector equal TRUE if !missing
+  
+  # get the data
+  
+  # get number of vars in X
+  mf <- mf0
+  m <- match(c("formula"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf[[1L]] <- as.name("model.frame")
+  mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+  mt <- attr(mf, "terms")
+  X <- as.matrix(model.matrix(mt, mf))
+  # print(head(X))
+  k <- ncol(X)
+  
+  Y <- Y[esample,]
+  n.full <- length(Y)
+  X <- XZ[esample,]
+  
+  if (ll.form) {
+   LL <- XZ[esample,(k+1)]
+  } else {
+   LL <- rep(ll, n.full)
+  }
+  
+  if (ul.form) {
+   if (ll.form) {
+    UL <- XZ[esample,(k+2)]
+   } else {
+    UL <- XZ[esample,(k+1)]
+   }
+  } else {
+   UL <- rep(ul, n.full)
+  }
+  
+  # cat(" LL\n", sep = "")
+  # print(LL)
+  # cat(" UL\n", sep = "")
+  # print(UL)
+  
+  
+  # flag those that are required for regression
+  flag <- (Y > LL & Y < UL)
+  # cat(" dim(X)\n", sep = "")
+  # print(dim(X))
+  # cat(" flag\n", sep = "")
+  # print(flag)
+  
+  # get subsets
+  # cat(" Y\n", sep = "")
+  Y  <- Y[flag]
+  n <- length(Y)
+  # cat(" X\n", sep = "")
+  X  <- X[flag, , drop = FALSE]
+  # print(dim(X))
+  # cat(" LL\n", sep = "")
+  LL <- LL[flag]
+  # print(LL)
+  # cat(" UL\n", sep = "")
+  UL <- UL[flag]
+  # print(UL)
+  
+ }
+ 
+ tymch <- list(Y = Y, X = X, LL = LL, UL = UL, n = n, n.full = n.full, ll.form = ll.form, ul.form = ul.form, esample = esample, nontruncsample = flag)
+ class(tymch) <- "npsf"
+ return(tymch)
 }
 

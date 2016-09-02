@@ -38,11 +38,12 @@ tenonradial <- function(formula, data, subset,
  
  t1 <- .prepareYX(formula = formula, data = data, subset = subset, rts = rts,
                   base = base, ref = ref,	data.ref = data.ref, subset.ref = subset.ref,
-                  print.level = print.level, type = "RM", winw = winw)
+                  print.level = print.level, type = "RM", winw = winw, sysnframe = sys.nframe())
  
  te <- .teNonrad(t(t1$y), t(t1$x), ncol(t1$y), ncol(t1$x), nrow(t1$y),
               t(t1$y.ref), t(t1$x.ref), nrow(t1$y.ref), t1$myrts, t1$mybase,
               1, print.level = print.level)
+ te <- ifelse(abs(te - 1) < 1e-12, 1, te)
  te <- ifelse(te == -999, NA, te)
  if(print.level >= 3){
   cat("\n")

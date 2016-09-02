@@ -48,7 +48,7 @@ nptestind <- function(formula, data, subset,
  
  YX <- .prepareYXnoRef(formula = formula, data = data, subset = subset,
                        base = base, rts = rts, print.level = print.level,
-                       type = "DF", winw = winw)
+                       type = "DF", winw = winw, sysnframe = sys.nframe())
  
  # get the data in matrices
  
