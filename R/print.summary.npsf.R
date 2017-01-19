@@ -111,7 +111,7 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
    mymesage <- paste("\np-value of the Ho that output-based measure of technical efficiency and ",outs," are independent = ",formatC(x$pval, digits = 4, format = "f"),":", sep = "")
   }
   cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
-  
+
   mymesage <- paste("\n",ifelse(x$pval <= x$alpha, "Heterogeneous", "Homogeneous")," bootstrap ",ifelse(x$pval <= x$alpha, "should", "can")," be used when performing ",x$base,"-based technical efficiency measurement under assumption of ",x$rts," technology", sep = "")
   cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
   # end nptestind
@@ -158,7 +158,7 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
    cat("  Number of data points (K) = ",x$K,"\n", sep = "")
    cat("  Number of outputs     (M) = ",x$M,"\n", sep = "")
    cat("  Number of inputs      (N) = ",x$N,"\n", sep = "")
-   
+
    mymesage <- paste("\nReference set is formed by ",x$K," data point(s), for which measures of technical efficiency are computed", sep = "")
    cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
    # test 1
@@ -221,11 +221,16 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
  if(mymodel == "sfsc"){
   # begin sf sross-sectional
   if(print.level >= 1 & winw > 50){
-   if(x$LM < x$lmtol){
-    cat("Convergence given g*inv(H)*g' = ",formatC(x$LM,digits=1,format="e")," < lmtol(",formatC(x$lmtol,digits=1,format="e"),")\n", sep = "")
-   }
-   else {
+   if(x$convergence == 1){#x$LM < x$lmtol){
+    cat("Convergence given g*inv(H)*g' = ",formatC(x$LM,digits=2,format="e")," < lmtol(",formatC(x$lmtol,digits=1,format="e"),")\n", sep = "")
+   } else if (x$convergence == 2){
+    cat("\nConvergence given relative change in log likelihood = ",formatC(x$delta_rel,digits=2,format="e")," < ltol(",formatC(x$ltol,digits=1,format="e"),")\n", sep = "")
+   } else if (x$convergence == 3){
+    cat("\nConvergence given relative change in parameters = ",x$theta_rel," < steptol(",formatC(x$steptol,digits=2,format="e"),")\n", sep = "")
+   } else if (x$convergence == 0) {
     cat("'optim' did it\n", sep = "")
+   } else {
+    stop("Smothing went wrong")
    }
    .timing(x$esttime, "Log likelihood maximization completed in ")
    cat("Final log likelihood = ",formatC(x$loglik,digits=7,format="f"),"\n",  sep = "")
@@ -233,7 +238,7 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
    max.name.length <- max(nchar(row.names(x$table)))
    cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
    if(x$prod){
-    cat("\nCross-sectional stochastic (production) frontier model\n",  sep = "")} 
+    cat("\nCross-sectional stochastic (production) frontier model\n",  sep = "")}
    else {
     cat("\nCross-sectional stochastic (cost) frontier model\n",  sep = "")
    }
@@ -241,7 +246,7 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
    Assumptions <- rep("heteroskedastic",2)
    if(x$kv==1){
     Assumptions[1] <- "homoskedastic"
-   } 
+   }
    if(x$ku==1){
     Assumptions[2] <- "homoskedastic"
    }
@@ -283,13 +288,13 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
   # begin sf truncreg
   if(print.level >= 1 & winw > 50){
    # model
-   
+
    cat("Truncated regression for cross-sectional data\n", sep = "")
    cat(" Limits:\n", sep = "")
    #  check if infinite
    ll.inf <- sum(is.infinite(x$LL))
    ul.inf <- sum(is.infinite(x$UL))
-   
+
    if (ll.inf == x$n) {
     #  if all are infinite
     cat("  lower limit for left-truncation  = ",x$LL[1],"\n", sep = "")
@@ -301,7 +306,7 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
      cat("  lower limit for left-truncation  = ",x$LL[1],"\n", sep = "")
     }
    }
-   
+
    if (ul.inf == x$n) {
     #  if all are infinite
     cat("  upper limit for right-truncation = ",x$UL[1],"\n", sep = "")
@@ -320,21 +325,21 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
    cat("Convergence given g*inv(H)*g' = ",formatC(x$LM,digits=1,format="e")," < lmtol(",formatC(x$lmtol,digits=1,format="e"),")\n", sep = "")
    .timing(x$esttime, "Log likelihood maximization completed in ")
    cat("Final log likelihood = ",formatC(x$loglik,digits=7,format="f"),"\n",  sep = "")
-   
+
    cat("\nEstimation results:\n\n", sep = "")
-   
+
    # estimation results
-   
+
    printCoefmat(x$table)
-   
+
    # cat("\n")
    # .su1(eff1, transpose = TRUE)
   }
-  
+
   # end sf truncreg
  }
- 
- 
+
+
  # if(x$LM < x$lmtol){
  #    cat("\nConvergence given g*inv(H)*g' = ",formatC(x$LM,digits=1,format="e")," < lmtol(",x$lmtol,")\n", sep = "")
  #  }

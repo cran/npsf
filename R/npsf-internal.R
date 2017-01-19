@@ -1,10 +1,10 @@
 .prepareYX <- function(formula, data, subset, rts = c("C", "NI", "V"),
                        base = c("output", "input"), ref = NULL,
-                       data.ref = NULL, subset.ref = NULL, print.level = 1, 
+                       data.ref = NULL, subset.ref = NULL, print.level = 1,
                        type = "RM", winw = 50, rts.subst = NULL, sysnframe = 1, ...)
 {
  # get y and x matrices
- 
+
  # mf0 <- match.call(expand.dots = FALSE, call = sys.call(which = 1))
  # needed.frame <- sys.nframe() - 1
  needed.frame <- sys.nframe() - sysnframe
@@ -31,19 +31,19 @@
  #  print(mf)
  # }
  # cat("end\n")
- 
+
  # if(print.level >= 1) print(mf0)
- 
+
  # check if it is a matrix
  datasupplied <- !(match("data", names(mf0), 0) == 0)
  # subsetsupplied <- !(match("subset", names(mf0), 0) == 0)
  # print(subsetsupplied)
  # cat("1\n")
- 
+
  # if data are supplied
  if(datasupplied){
   # begin get a logical vector equal TRUE if !missing
-  
+
   # first using data and subset to get x without NA
   mf <- mf0
   m <- match(c("formula", "data", "subset"), names(mf), 0L)
@@ -59,17 +59,17 @@
   # now get the names in the entire data
   # esample <- seq_len( nrow(data) ) %in% as.numeric(rownames(x))
   esample <- rownames(data) %in% rownames(x)
-  
+
   # print(rownames(data) )
   # print(rownames(x))
-  # 
+  #
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
-  
+
   # get the data
   y <- as.matrix(model.part(Formula(formula), data = data[esample,], lhs = 1))
   x <- as.matrix(model.matrix(Formula(formula), data = data[esample,], rhs = 1)[,-1])
-  
+
   # print(y)
   # print(x)
  }
@@ -97,12 +97,56 @@
  if( !is.numeric(y) ) stop("Some of the outputs are not numeric.")
  if( !is.numeric(x) ) stop("Some of the inputs are not numeric.")
  
+ if(type == "RM"){
+  # check negative
+  x.negative <- apply(x, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
+  if(sum(x.negative) == nrow(x)){
+   stop("Negative values in at least one of the inputs for each data point", call. = FALSE)
+  }
+  y.negative <- apply(y, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
+  if(sum(y.negative) == nrow(y)){
+   stop("Negative values in at least one of the outputs for each data point", call. = FALSE)
+  }
+  # deal with negative
+  if(sum(x.negative) > 0){
+   warning(paste0("There are negative values in inputs for ",sum(x.negative)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+   cat("\n")
+  }
+  if(sum(y.negative) > 0){
+   warning(paste0("There are negative values in outputs for ",sum(y.negative)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+   cat("\n")
+  }
+  x <- x[!x.negative & !y.negative,,drop = FALSE]
+  y <- y[!x.negative & !y.negative,,drop = FALSE]
+ } else {
+  # check nonpositive
+  x.nonpositive <- apply(x, MARGIN = 1, FUN = function(q) sum(q<=0)) >= 1
+  if(sum(x.nonpositive) == nrow(x)){
+   stop("Nonpositive values in at least one of the inputs for each data point", call. = FALSE)
+  }
+  y.nonpositive <- apply(y, MARGIN = 1, FUN = function(q) sum(q<00)) >= 1
+  if(sum(y.nonpositive) == nrow(y)){
+   stop("Nonpositive values in at least one of the outputs for each data point", call. = FALSE)
+  }
+  # deal with negative
+  if(sum(x.nonpositive) > 0){
+   warning(paste0("There are nonpositive values in inputs for ",sum(x.nonpositive)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+   cat("\n")
+  }
+  if(sum(y.nonpositive) > 0){
+   warning(paste0("There are nonpositive values in outputs for ",sum(y.nonpositive)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+   cat("\n")
+  }
+  x <- x[(!x.nonpositive & !y.nonpositive),,drop = FALSE]
+  y <- y[(!x.nonpositive & !y.nonpositive),,drop = FALSE]
+ }
+ 
  rts <- rts[1]
  base <- base[1]
- 
+
  rts1 <- tolower(substr(rts, 1,1 ))
  base1 <- tolower(substr(base, 1,1 ))
- 
+
  if(is.null(rts.subst)){
   if(rts1 == "c" | rts == 3){
    myrts <- 3
@@ -120,7 +164,7 @@
  else {
   myrts1 <- rts.subst
  }
- 
+
  if (base1 == "o" | base == 2){
   mybase <- 2
   mybase1 <- "output"
@@ -130,7 +174,7 @@
  } else {
   stop("invalid 'base'; 'base' must be 'output' or 'input'")
  }
- 
+
  # for printing
  if(print.level >= 1 & winw > 50){
   mymesage <- paste("\n",ifelse(type == "RM", "Nonradial (Russell)", "Radial (Debrue-Farrell)")," ",mybase1,"-based measures of technical efficiency under assumption of ",myrts1," technology are computed for the following data:\n", sep = "")
@@ -142,22 +186,22 @@
   cat("  Number of outputs     (M) = ",ncol(y),"\n", sep = "")
   cat("  Number of inputs      (N) = ",ncol(x),"\n", sep = "")
  }
- 
+
  # get y_ref and x_ref matrices
- 
+
  if(!is.null(ref)){
   mf <- mf0
-  
+
   # check if it is a matrix
   datasupplied <- !(match("data.ref", names(mf), 0) == 0)
-  
+
   # if data are supplied
   if(datasupplied){
    N_all_ref <- nrow(data.ref)
    if(N_all_ref == 0) warning("Provided data for reference set does not have a signle data point", call. = FALSE)
-   
+
    # begin get a logical vector equal TRUE if !missing
-   
+
    # first using data and subset to get x without NA
    mf <- mf0
    m <- match(c("ref", "data.ref", "subset.ref"), names(mf), 0L)
@@ -222,13 +266,58 @@
   if(!is.null(y_ref)){
    if(ncol(y_ref) != ncol(y)) stop("Number of outputs for data points and reference set must be the same.")
    if(ncol(x_ref) != ncol(x)) stop("Number of inputs for data points and reference set must be the same.")
-  }		
+  }
+  
+  if(type == "RM"){
+   # check negative
+   x.negative <- apply(x_ref, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
+   if(sum(x.negative) == nrow(x_ref)){
+    stop("Negative values in at least one of the reference inputs for each data point", call. = FALSE)
+   }
+   y.negative <- apply(y_ref, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
+   if(sum(y.negative) == nrow(y_ref)){
+    stop("Negative values in at least one of the reference outputs for each data point", call. = FALSE)
+   }
+   # deal with negative
+   if(sum(x.negative) > 0){
+    warning(paste0("There are negative values in reference inputs for ",sum(x.negative)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+    cat("\n")
+   }
+   if(sum(y.negative) > 0){
+    warning(paste0("There are negative values in reference outputs for ",sum(y.negative)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+    cat("\n")
+   }
+   x_ref <- x_ref[!x.negative & !y.negative,,drop = FALSE]
+   y_ref <- y_ref[!x.negative & !y.negative,,drop = FALSE]
+  } else {
+   # check nonpositive
+   x.nonpositive <- apply(x_ref, MARGIN = 1, FUN = function(q) sum(q<=0)) >= 1
+   if(sum(x.nonpositive) == nrow(x)){
+    stop("Nonpositive values in at least one of the reference inputs for each data point", call. = FALSE)
+   }
+   y.nonpositive <- apply(y_ref, MARGIN = 1, FUN = function(q) sum(q<00)) >= 1
+   if(sum(y.nonpositive) == nrow(y_ref)){
+    stop("Nonpositive values in at least one of the reference outputs for each data point", call. = FALSE)
+   }
+   # deal with negative
+   if(sum(x.nonpositive) > 0){
+    warning(paste0("There are nonpositive values in reference inputs for ",sum(x.nonpositive)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+    cat("\n")
+   }
+   if(sum(y.nonpositive) > 0){
+    warning(paste0("There are nonpositive values in outputs for ",sum(y.nonpositive)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+    cat("\n")
+   }
+   x_ref <- x_ref[!x.nonpositive & !y.nonpositive,,drop = FALSE]
+   y_ref <- y_ref[!x.nonpositive & !y.nonpositive,,drop = FALSE]
+  }
+  
  } else {
   y_ref <- y
   x_ref <- x
   esample_ref <- NULL
  }
- 
+
  if(print.level >= 1  & winw > 50){
   if(is.null(esample_ref)){
    mymesage <- paste("\nData for reference set are not provided. Reference set is formed by ",nrow(y)," data ",ngettext(nrow(y), "point", "point(s)"), " for which measures of technical efficiency are computed", sep = "")
@@ -242,35 +331,35 @@
    # cat("\n Reference set is formed by ",nrow(y_ref)," provided reference data points.\n\n", sep = "")
   }
  }
- 
+
  tymch <- list(y = y, x = x, y.ref = y_ref, x.ref = x_ref, esample = esample, esample.ref = esample_ref, myrts = myrts, rts.string = myrts1, mybase = mybase, base.string = mybase1)
  class(tymch) <- "npsf"
  return(tymch)
 }
 
-.prepareYXnoRef <- function(formula, data, subset, 
+.prepareYXnoRef <- function(formula, data, subset,
                             rts = c("C", "NI", "V"), rts.subst = NULL,
-                            base = c("output", "input"), print.level = 1, 
+                            base = c("output", "input"), print.level = 1,
                             type = "RM", winw = 50, ...)
 {
  # get y and x matrices
- 
+
  # mf0 <- match.call(expand.dots = FALSE, call = sys.call(which = 1))
  needed.frame <- sys.nframe() - 1
  mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = needed.frame)))
- 
+
  # if(print.level >= 1) print(mf0)
- 
+
  # check if it is a matrix
  datasupplied <- !(match("data", names(mf0), 0) == 0)
  # subsetsupplied <- !(match("subset", names(mf0), 0) == 0)
  # print(subsetsupplied)
  # cat("1\n")
- 
+
  # if data are supplied
  if(datasupplied){
   # begin get a logical vector equal TRUE if !missing
-  
+
   # first using data and subset to get x without NA
   mf <- mf0
   m <- match(c("formula", "data", "subset"), names(mf), 0L)
@@ -285,11 +374,11 @@
   esample <- seq_len( nrow(data) ) %in% as.numeric(rownames(x))
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
-  
+
   # get the data
   y <- as.matrix(model.part(Formula(formula), data = data[esample,], lhs = 1))
   x <- as.matrix(model.matrix(Formula(formula), data = data[esample,], rhs = 1)[,-1])
-  
+
   # print(y)
   # print(x)
  }
@@ -313,16 +402,60 @@
   # print(y)
   # print(x)
  }
- 
+
  if( !is.numeric(y) ) stop("Some of the outputs are not numeric.")
  if( !is.numeric(x) ) stop("Some of the inputs are not numeric.")
  
+ if(type == "RM"){
+  # check negative
+  x.negative <- apply(x, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
+  if(sum(x.negative) == nrow(x)){
+   stop("Negative values in at least one of the inputs for each data point", call. = FALSE)
+  }
+  y.negative <- apply(y, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
+  if(sum(y.negative) == nrow(y)){
+   stop("Negative values in at least one of the outputs for each data point", call. = FALSE)
+  }
+  # deal with negative
+  if(sum(x.negative) > 0){
+   warning(paste0("There are negative values in inputs for ",sum(x.negative)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+   cat("\n")
+  }
+  if(sum(y.negative) > 0){
+   warning(paste0("There are negative values in outputs for ",sum(y.negative)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+   cat("\n")
+  }
+  x <- x[!x.negative & !y.negative,,drop = FALSE]
+  y <- y[!x.negative & !y.negative,,drop = FALSE]
+ } else {
+  # check nonpositive
+  x.nonpositive <- apply(x, MARGIN = 1, FUN = function(q) sum(q<=0)) >= 1
+  if(sum(x.nonpositive) == nrow(x)){
+   stop("Nonpositive values in at least one of the inputs for each data point", call. = FALSE)
+  }
+  y.nonpositive <- apply(y, MARGIN = 1, FUN = function(q) sum(q<00)) >= 1
+  if(sum(y.nonpositive) == nrow(y)){
+   stop("Nonpositive values in at least one of the outputs for each data point", call. = FALSE)
+  }
+  # deal with negative
+  if(sum(x.nonpositive) > 0){
+   warning(paste0("There are nonpositive values in inputs for ",sum(x.nonpositive)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+   cat("\n")
+  }
+  if(sum(y.nonpositive) > 0){
+   warning(paste0("There are nonpositive values in outputs for ",sum(y.nonpositive)," data points; these data points will not be considered"), call. = FALSE, immediate. = TRUE)
+   cat("\n")
+  }
+  x <- x[!x.nonpositive & !y.nonpositive,,drop = FALSE]
+  y <- y[!x.nonpositive & !y.nonpositive,,drop = FALSE]
+ }
+
  rts <- rts[1]
  base <- base[1]
- 
+
  rts1 <- tolower(substr(rts, 1,1 ))
  base1 <- tolower(substr(base, 1,1 ))
- 
+
  if(is.null(rts.subst)){
   if(rts1 == "c" | rts == 1){
    myrts <- 3
@@ -340,7 +473,7 @@
  else {
   myrts1 <- rts.subst
  }
- 
+
  if (base1 == "o" | base == 2){
   mybase <- 2
   mybase1 <- "output"
@@ -349,8 +482,8 @@
   mybase1 <- "input"
  } else {
   stop("invalid 'base'; 'base' must be 'output' or 'input'")
- } 
- 
+ }
+
  # for printing
  #  if(print.level >= 1){
  #   cat("\n Radial (Debreu-Farrell) ",mybase1,"-based measures of technical efficiency \n", sep = "")
@@ -360,7 +493,7 @@
  #   cat("  Number of outputs     (M) = ",ncol(y),"\n", sep = "")
  #   cat("  Number of inputs      (N) = ",ncol(x),"\n", sep = "")
  #  }
- 
+
  if(print.level >= 1 & winw > 50){
   mymesage <- paste("\n",ifelse(type == "RM", "Nonradial (Russell)", "Radial (Debrue-Farrell)")," ",mybase1,"-based measures of technical efficiency under assumption of ",myrts1," technology are computed for the following data:\n", sep = "")
   cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
@@ -370,16 +503,16 @@
   cat("  Number of data points (K) = ",nrow(y),"\n", sep = "")
   cat("  Number of outputs     (M) = ",ncol(y),"\n", sep = "")
   cat("  Number of inputs      (N) = ",ncol(x),"\n", sep = "")
-  
+
   mymesage <- paste("\nReference set is formed by ",nrow(y)," data point(s), for which measures of technical efficiency are computed", sep = "")
   cat("",unlist(strsplit(mymesage, " ")),"", sep = " ", fill = winw-10 )
  }
- 
+
  #  if(print.level >= 1){
  #    cat("\n Reference set is formed by ",nrow(y)," data points,\n", sep = "")
  #    cat(" for which measures of technical efficiency are computed.\n\n", sep = "")
  #  }
- 
+
  tymch <- list(y = y, x = x, esample = esample, mybase = mybase, base.string = mybase1)
  if(is.null(rts.subst)){
   tymch$myrts <- myrts
@@ -390,9 +523,9 @@
 }
 
 .su <- function(x, mat.var.in.col = TRUE, digits = 4, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), print = FALSE){
- 
+
  xvec2 <- xvec1 <- FALSE
- 
+
  if(is.matrix(x)){
   if(min(dim(x)) == 1){
    # xvec1 <- TRUE
@@ -402,7 +535,7 @@
     mynames <- rownames(x)
     x <- t(x)
    }
-   # x <- as.vector(x)	
+   # x <- as.vector(x)
   } else {
    if(!mat.var.in.col){
     x <- t(x)
@@ -415,16 +548,16 @@
   # print(x)
   # mynames <- colnames(x)
  } # end if matrix
- 
+
  if(is.vector(x)){
   xvec2 <- TRUE
   mynames <- deparse(substitute(x))
-  x <- data.frame(Var1 = x)	
+  x <- data.frame(Var1 = x)
  } # end if vector
- 
+
  # cat("nymanes", sep ="")
  # print(mynames)
- 
+
  if(!is.vector(x) & !is.matrix(x) & !is.data.frame(x)){
   stop("Provide vector, matrix, or data.frame")
  } else {
@@ -454,19 +587,40 @@
                    rts,base,ifqh,
                    print.level=0){
  .C("radial",
-    as.double(Y), 
-    as.double(X), 
-    as.integer(M), 
-    as.integer(N), 
-    as.integer(K), 
-    as.double(Yr), 
-    as.double(Xr), 
-    as.integer(Kref), 
-    as.integer(rts), 
+    as.double(Y),
+    as.double(X),
+    as.integer(M),
+    as.integer(N),
+    as.integer(K),
+    as.double(Yr),
+    as.double(Xr),
+    as.integer(Kref),
+    as.integer(rts),
     as.integer(base),
     as.integer(ifqh),
     as.integer(print.level),
     te = double(K) )$te
+}
+
+.teRad1 <- function(Y,X,M,N,K,
+                   Yr,Xr,Kref,
+                   rts,base,ifqh,
+                   print.level=0){
+ t1 <- .C("radial",
+    Y = as.double(Y),
+    X = as.double(X),
+    as.integer(M),
+    as.integer(N),
+    as.integer(K),
+    Yr = as.double(Yr),
+    Xr = as.double(Xr),
+    as.integer(Kref),
+    as.integer(rts),
+    as.integer(base),
+    as.integer(ifqh),
+    as.integer(print.level),
+    te = double(K) )
+ return(list(Y = t1$Y,X = t1$X,Yr = t1$Yr,Xr = t1$Xr))
 }
 
 .teNonrad <- function(Y,X,M,N,K,
@@ -474,15 +628,15 @@
                       rts,base,ifqh,
                       print.level=0){
  .C("nonradial",
-    as.double(Y), 
-    as.double(X), 
-    as.integer(M), 
-    as.integer(N), 
-    as.integer(K), 
-    as.double(Yr), 
-    as.double(Xr), 
-    as.integer(Kref), 
-    as.integer(rts), 
+    as.double(Y),
+    as.double(X),
+    as.integer(M),
+    as.integer(N),
+    as.integer(K),
+    as.double(Yr),
+    as.double(Xr),
+    as.integer(Kref),
+    as.integer(rts),
     as.integer(base),
     as.integer(ifqh),
     as.integer(print.level),
@@ -515,7 +669,7 @@
   }
   if (width == 100) {
    cat(" ___|___ 6 ___|___ 7 ___|___ 8 ___|___ 9 ___|___ 10", sep = "")
-  }  
+  }
   cat("\n")
  }
  else {
@@ -603,18 +757,18 @@
   }
   ZStar1 <- rbind(ZStar1, ZStar)
  }
- 
+
  ZStar <- ZStar1
- 
+
  #  # toss possible negative values
  #  nonNegV <- apply(ZStar, MARGIN = 1, FUN = function(x) ifelse(min(x) < 0, FALSE, TRUE))
  #  # nonNegV <- rep(TRUE, Kr)
  #  ZStar <- ZStar[nonNegV,]
  nonNegV <- rep(TRUE, Kr)
- 
+
  # step 8
  ZStar[,nZ] <- ifelse(ZStar[,nZ] > 1, ZStar[,nZ], 2 - ZStar[,nZ])
- 
+
  # step 9
  if (ba == 1){
   teb <- 1 / ZStar[,nZ]
@@ -640,7 +794,7 @@
  newSample <- sample( seq_len(2*Kr), Kr, replace = TRUE)
  ZStar <- Zt[newSample,]
  zBarStar <- matrix( colMeans( ZStar ), nrow  = 1)
- 
+
  # step 6
  epsStar <- matrix(rnorm(Kr * nZ), nrow = Kr, ncol = nZ)
  for(ww in seq_len(Kr)){
@@ -652,7 +806,7 @@
  }
  # step 7
  ZStar <- kronecker (onesN, zBarStar) + cons1 * ( M1 %*% ZStar + cons2 * epsStar)
- 
+
  # toss values outside the frontier (including possible negative values)
  nonNeg <- apply(ZStar, MARGIN = 1, FUN = function(x) ifelse(min(x) < 0, FALSE, TRUE))
  if(ba == 1){
@@ -663,7 +817,7 @@
  }
  Zgood <- withinFr & nonNeg
  ZStar0 <- ZStar[Zgood,]
- 
+
  # complete Zstar if not full
  if( nrow(ZStar0) < Kr){
   while (nrow(ZStar0) < Kr){
@@ -696,10 +850,10 @@
  }
  ZStar <- ZStar0[seq_len(Kr),]
  # print(nrow(ZStar))
- 
+
  # step 8
  ZStar[,nZ] <- ifelse(ZStar[,nZ] > 1, ZStar[,nZ], 2 - ZStar[,nZ])
- 
+
  # step 9
  if (ba == 1){
   teb <- 1 / ZStar[,nZ]
@@ -724,9 +878,9 @@
  return( list(Yrb = yrb, Xrb = xrb, teb = teb, Krb = nrow(ZStar)) )
 }
 
-.biasAndCI <- function(te, teboot, msub  = 0, K, Kr, M, N, 
+.biasAndCI <- function(te, teboot, msub  = 0, K, Kr, M, N,
                        level, smoothed, forceLargerOne){
- 
+
  if ( forceLargerOne ){
   teff   <- 1/te
   teboot <- 1/teboot
@@ -734,7 +888,7 @@
  else {
   teff <- te
  }
- 
+
  if (smoothed) {
   con1 <- 1
   con2 <- 1
@@ -744,32 +898,32 @@
   con2 <- Kr ^ (-2 / (M + N + 1) )
  }
  con3 <- con1 * con2
- 
+
  # 	# bias-correction
  # 	tebm <- colMeans(teboot, na.rm = TRUE)
  # 	bias <- con3 * (tebm - teff)
  # 	tebc <- teff - bias
  # 	vari <- apply(teboot, 2, var, na.rm = TRUE)
  # 	BovV <- bias^2 / vari * 3
- # 	
+ #
  # 	# CI
  # 	teOverTEhat <- sweep(teboot, 2, FUN = "/", teff)
  # 	teOverTEhat <- (teOverTEhat - 1) * con1
  # 	quans <- apply(teOverTEhat, 2, quantile, probs = (100 + c(-level, level))/200, na.rm = T)
  # 	LL <- teff / (1 + quans[2] * con2)
  # 	UU <- teff / (1 + quans[1] * con2)
- # 	
+ #
  # 	# drop if inference is based on less than 100
  # 	reaB <- apply(teboot, 2, function(x) sum( !is.na(x) ) )
- # 	
+ #
  # 	bias <- ifelse(reaB < 100, NA, bias)
  # 	vari <- ifelse(reaB < 100, NA, vari)
  # 	tebc <- ifelse(reaB < 100, NA, tebc)
  # 	LL <- ifelse(reaB < 100, NA, LL)
  # 	UU <- ifelse(reaB < 100, NA, UU)
- 
+
  bias <- vari <- reaB <- BovV <- tebc <- LL <- UU <- numeric(K)
- 
+
  for (i in seq_len(K) ) {
   TEi <- teboot[,i]
   TEi <- TEi[!is.na(TEi)]
@@ -780,7 +934,7 @@
    BovV[i] = NA
    tebc[i] = NA
    LL[i]   = NA
-   UU[i]   = NA		
+   UU[i]   = NA
   }
   else {
    bias[i] = con3 * ( mean(TEi) - teff[i] )
@@ -793,9 +947,9 @@
    UU[i] = teff[i] / (1 + quans[1] * con2)
   }
  }
- 
+
  return(list(reaB=reaB, bias=bias, vari=vari, BovV=BovV, tebc=tebc, LL=LL, UU=UU))
- 
+
 }
 
 
@@ -814,11 +968,11 @@
   # local CRS
   plCRS <- rowMeans( apply(seCrsB, MARGIN = 1, FUN = function(z) z >= seCrs), na.rm = TRUE )
  }
- 
+
  # count those that are not NA
  nonNa <- apply(seCrsB, MARGIN = 2, FUN = function(z) length(na.omit(z)))
  plCRS <- ifelse(nonNa >= 100, plCRS, NA)
- 
+
  return(list(pgCRS = pgCRS, plCRS = plCRS, nonNa = nonNa, reaB = length(seCrsMeanB)))
 }
 
@@ -829,7 +983,7 @@
  if ( performGlobal ){
   seNrsMeanB <- rowMeans(te1boot, na.rm = TRUE) / rowMeans(te2boot, na.rm = TRUE)
   seNrsMeanB <- na.omit( seNrsMeanB )
-  
+
   if(ba ==1){
    # global NRS
    pgNRS <- mean(seNrsMeanB <= seNrsMean)
@@ -867,10 +1021,10 @@
  # count those that are not NA
  nonNa <- apply(seNrsB, MARGIN = 2, FUN = function(z) length(na.omit(z)))
  plNRS <- ifelse(nonNa >= 100, plNRS, NA)
- 
+
  # write into appropriate cells
  pineffdrs <- rep(NA, length(s.inefficient))
- 
+
  if (performGlobal){
   pineffdrs <- ifelse(s.inefficient, plNRS, pineffdrs)
  }
@@ -901,7 +1055,7 @@
  return(mean(f1))
 }
 
-# empirical joint distribution function 
+# empirical joint distribution function
 .ejdf <- function(Y, X, y, x){
  # 1
  if(length(y) == 1){
@@ -924,7 +1078,7 @@
  sum(f1 & g1) / length(f1)
 }
 
-# empirical joint distribution function 
+# empirical joint distribution function
 .ejdfedf1 <- function(Y, X, y, x){
  # 1
  if(length(y) == 1){
@@ -982,14 +1136,14 @@
  terfl <- args$terfl
  mybw <- args$mybw
  scVarHom <- args$scVarHom
- 
+
  M  <- ncol(Y)
  N  <- ncol(X)
  K  <- nrow(Y)
  # Prepare output structure
  te1boot <- rep(NA, K)
  te2boot <- rep(NA, K)
- 
+
  for(ii in seq_len(K)){
   # begin homogeneous
   # print(1)
@@ -1034,12 +1188,12 @@
  terfl <- args$terfl
  mybw <- args$mybw
  scVarHom <- args$scVarHom
- 
+
  M  <- ncol(Y)
  N  <- ncol(X)
  K  <- nrow(Y)
  Kr <- nrow(Yr)
- 
+
  # begin homogeneous
  # print(1)
  # teB <- numeric(K)
@@ -1075,7 +1229,7 @@
  cons2 <- args$cons2
  onesN <- args$onesN
  ba <- args$ba
- 
+
  M  <- ncol(Y)
  N  <- ncol(X)
  K  <- nrow(Y)
@@ -1084,7 +1238,7 @@
  # Prepare output structure
  te1boot <- rep(NA, K)
  te2boot <- rep(NA, K)
- 
+
  for(ii in seq_len(K)){
   # begin heterogeneous
   # print(2)
@@ -1139,13 +1293,13 @@
  cons2 <- args$cons2
  onesN <- args$onesN
  ba <- args$ba
- 
+
  M  <- ncol(Y)
  N  <- ncol(X)
  K  <- nrow(Y)
  Kr <- nrow(Yr)
  nZ <- ncol(Zt)
- 
+
  # begin heterogeneous
  # print(2)
  # step 1: sampling
@@ -1202,11 +1356,11 @@
  #    character <- "x"
  #   }
  #  }
- 
+
  #  if (!is.numeric(width)) {
  #   stop("'width' should be numeric")
  #  }
- #  if (width != 50 & width != 60 & width != 70 & 
+ #  if (width != 50 & width != 60 & width != 70 &
  #      width != 80 & width != 90  & width != 100){
  #   stop("'width' should be 50, 60, 70, 80, 90, or 100")
  #  }
@@ -1229,7 +1383,7 @@
  #   }
  #   if (width == 100) {
  #    cat(" ___|___ 6 ___|___ 7 ___|___ 8 ___|___ 9 ___|___ 10", sep = "")
- #   }  
+ #   }
  #   cat("\n")
  #  }
  #  else {
@@ -1252,12 +1406,12 @@
  rt <- args$rt
  ba <- args$ba
  msub <- args$msub
- 
+
  M  <- ncol(Y)
  N  <- ncol(X)
  K  <- nrow(Y)
  Kr <- nrow(Yr)
- 
+
  # begin subsampling
  # print(3)
  # step 1: sub-sampling
@@ -1298,15 +1452,15 @@
  } else {
   kdel <- 17
  }
- 
+
  form1 <- Formula(as.formula(paste("",deparse(formula, width.cutoff = 500L)," | ",uhet[2]," | ",vhet[2]," | ",tmean[2],"", sep = "")))
- 
+
  form <- Formula(as.formula(paste("",deparse(formula, width.cutoff = 500L)," + ",uhet[2]," + ",vhet[2]," + ",tmean[2],"", sep = "")))
- 
+
  # check if it is a matrix
  datasupplied <- !(match("data", names(mf0), 0) == 0)
- 
- 
+
+
  if(datasupplied){
   # begin get a logical vector equal TRUE if !missing
   # first using data and subset to get x without NA
@@ -1326,7 +1480,7 @@
   }
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
-  
+
   # get the data
   # print(form1)
   dataesample <- model.frame(form1, data = data[esample,])
@@ -1371,7 +1525,7 @@
  # if data are not supplied
  else {
   # begin get a logical vector equal TRUE if !missing
-  
+
   # first using data and subset to get XZ without NA
   mf <- mf0
   mf$formula <- formula( form )
@@ -1394,11 +1548,11 @@
   }
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
-  
+
   # get the data
   #   print(head(Y))
   #   print(head(XZ))
-  
+
   # get X
   mf <- mf0
   m <- match(c("formula"), names(mf), 0L)
@@ -1409,7 +1563,7 @@
   X <- as.matrix(model.matrix(mt, mf))
   # print(head(X))
   k <- ncol(X)
-  
+
   # get Zu
   if(ku == 1){
    Zu <- matrix(1, nrow = sum(esample), ncol = 1)
@@ -1428,7 +1582,7 @@
    ku <- ncol(Zu)
    # print(head(Zu))
   }
-  
+
   # get Zv
   if(kv == 1){
    Zv <- matrix(1, nrow = sum(esample), ncol = 1)
@@ -1447,7 +1601,7 @@
    kv <- ncol(Zv)
    # print(head(Zv))
   }
-  
+
   # get Zdel
   if(kdel == 1){
    Zdel <- matrix(1, nrow = sum(esample), ncol = 1)
@@ -1457,7 +1611,7 @@
    Zdel <- XZ[, -(2:(k+ku-1+kv-1)), drop = FALSE]
    # print(head(Zdel))
   }
-  
+
     # print(head(Zu))
     # print(head(Zv))
     # print(head(Zdel))
@@ -1480,33 +1634,33 @@
  #  # print(which(colnames(Zv) == "(Intercept)"))
  #  colnames(Zdel)[which(colnames(Zdel) == "(Intercept)")] <- "Intercept"
  # }
- 
+
  colnames(X) <- .rownames.Intercept.change(colnames(X))
  colnames(Zu) <- .rownames.Intercept.change(colnames(Zu))
  colnames(Zv) <- .rownames.Intercept.change(colnames(Zv))
  colnames(Zdel) <- .rownames.Intercept.change(colnames(Zdel))
- 
+
  # print(colnames(Zdel))
- 
+
  tymch <- list(Y = Y, X = X, Zu = Zu, Zv = Zv, Zdel = Zdel, n = n, k = k, ku = ku, kv = kv, kdel = kdel, esample = esample)
  class(tymch) <- "npsf"
  return(tymch)
- 
+
 }
 
 # Half-normal model
 
 # Log-likelihood
 .ll.hn <- function(theta, prod, k, kv, ku, kdel = NULL, y, Zv, Zu, Zdel = NULL, X) {
- s <- ifelse(prod, -1, 1) 
+ s <- ifelse(prod, -1, 1)
  beta <- theta[1:k]
  gv <- theta[(k+1):(k+kv)]
  gu <- theta[-c(1:k, (k+1):(k+kv))]
  e <- y-X%*%beta
  sig <- sqrt(exp(Zv%*%gv) + exp(Zu%*%gu))
  lmd <- sqrt(exp(Zu%*%gu)/exp(Zv%*%gv))
- 
- # Log-likelihood  
+
+ # Log-likelihood
  llf <- sum(log(2) - log(sqrt(2*pi)) - log(sig) + pnorm(s*e*lmd/sig, log.p = TRUE) - 0.5*(e/sig)^2)
  return(llf)
 }
@@ -1521,30 +1675,30 @@
  expu <- exp(Zu%*%gu); expv <- exp(Zv%*%gv)
  sig <- sqrt(expv + expu); lmd <- sqrt(expu/expv)
  ls <- lmd/sig; g <- dnorm(s*e*ls)/pnorm(s*e*ls)
- gels <- g*e*ls; 
- 
+ gels <- g*e*ls;
+
  # Gradient
  gb <- t(X)%*%(-s*g*ls + e/sig^2)
  ggv <- 0.5*t(Zv)%*%(expv/sig^2 * ((e/sig)^2 - 1) - s*gels*(1 + expv/sig^2))
- ggu <- 0.5*t(Zu)%*%(expu/sig^2 * ((e/sig)^2 - 1) - s*gels*(expu/sig^2 - 1))                                                                                                                         
+ ggu <- 0.5*t(Zu)%*%(expu/sig^2 * ((e/sig)^2 - 1) - s*gels*(expu/sig^2 - 1))
  grad <- rbind(gb, ggv, ggu)
  return(grad)
 }
 
 # Hessian
 .hess.hn <- function(theta, prod, k, kv, ku, kdel = NULL, y, Zv, Zu, Zdel = NULL, X) {
- s <- ifelse(prod, -1, 1) 
+ s <- ifelse(prod, -1, 1)
  beta <- theta[1:k]
  gv <- theta[(k+1):(k+kv)]
  gu <- theta[-c(1:k, (k+1):(k+kv))]
  e <- y - X%*%beta
  expu <- exp(Zu%*%gu); expv <- exp(Zv%*%gv)
  sig <- sqrt(expv + expu); lmd <- sqrt(expu/expv)
- ls <- lmd/sig; els <- e*ls; 
+ ls <- lmd/sig; els <- e*ls;
  g <- dnorm(s*e*ls)/pnorm(s*e*ls); gels <- g*els
- 
+
  # Hessian
- Hb <- t(as.numeric(-s*g*(els + s*g)*ls^2 - sig^(-2))*X)%*%X 
+ Hb <- t(as.numeric(-s*g*(els + s*g)*ls^2 - sig^(-2))*X)%*%X
  Hbgu <- t(as.numeric(0.5*g*ls*(1 - expu/sig^2)*((g + s*els)*els - s*1) - e*expu/sig^4)*X)%*%Zu
  Hbgv <- t(as.numeric(-s*0.5*g*ls*(1 + expv/sig^2)*((els + s*g)*els - 1) - e*expv/sig^4)*X)%*%Zv
  Hgvu <- t(0.5*as.numeric(-s*0.5*gels*(1 - expu/sig^2)*(1 + expv/sig^2)*(1 - s*(g + s*els)*els) - expv*expu*(2*(e/sig)^2 - s*gels - 1)/sig^4)*Zv)%*%Zu
@@ -1552,13 +1706,13 @@
  Hgv <- t(0.5*as.numeric(expv/sig^2 * ((1 - expv/sig^2)*((e/sig)^2 - s*gels - 1) - e^2*expv/sig^4) - s*0.5*gels*(1 + expv/sig^2)^2 * ((els + s*g)*els - 1))*Zv)%*%Zv
  H <- cbind(rbind(Hb, t(Hbgv), t(Hbgu)), rbind(Hbgv, Hgv, t(Hgvu)), rbind(Hbgu, Hgvu, Hgu))
  return(H)
-} 
+}
 
 # Truncated-normal model
 
 #Log-likelihood
 .ll.tn <- function(theta, prod, k, kv, ku, kdel, y, Zv, Zu, X, Zdel) {
- s <- ifelse(prod, -1, 1) 
+ s <- ifelse(prod, -1, 1)
  beta <- theta[1:k]
  gv <- theta[(k+1):(k+kv)]
  gu <- theta[(k+kv+1):(k+kv+ku)]
@@ -1567,8 +1721,8 @@
  sig <- sqrt(exp(Zv%*%gv) + exp(Zu%*%gu))
  lmd <- sqrt(exp(Zu%*%gu)/exp(Zv%*%gv))
  mu <- Zdel%*%delta
- 
- # Log-likelihood  
+
+ # Log-likelihood
  llf <- sum(-log(sqrt(2*pi)) - log(sig) - pnorm(mu/sqrt(exp(Zu%*%gu)), log.p = TRUE) + pnorm(mu/(sig*lmd) + s*e*lmd/sig, log.p = TRUE) - 0.5*(((e - s*mu)^2)/sig^2))
  return(llf)
 }
@@ -1582,7 +1736,7 @@
  gu <- theta[(k+kv+1):(k+kv+ku)]
  delta <- theta[(k+kv+ku+1):(k+kv+ku+kdel)]
  e <- y-X%*%beta
- expu <- exp(Zu%*%gu); expv <- exp(Zv%*%gv) 
+ expu <- exp(Zu%*%gu); expv <- exp(Zv%*%gv)
  sig <- sqrt(exp(Zv%*%gv) + exp(Zu%*%gu))
  lmd <- sqrt(exp(Zu%*%gu)/exp(Zv%*%gv))
  mu <- Zdel%*%delta; ls <- lmd/sig
@@ -1592,7 +1746,7 @@
  d2 <- -0.5*s*e*ls * (1 + expv/sig^2)
  d3 = -0.5*mu/(sig*lmd)*(1 + expu/sig^2)
  d4 = 0.5*s*e*ls * (1 - expu/sig^2)
- 
+
  # Gradient
  gb <- t(X)%*%((e - s*mu)/sig^2 - s*g1*ls)
  gdel <- t(Zdel)%*%(-g2/sqrt(expu) + g1/(sig*lmd) + s*(e - s*mu)/sig^2)
@@ -1610,7 +1764,7 @@
  gu <- theta[(k+kv+1):(k+kv+ku)]
  delta <- theta[(k+kv+ku+1):(k+kv+ku+kdel)]
  e <- y-X%*%beta
- expu <- exp(Zu%*%gu); expv <- exp(Zv%*%gv) 
+ expu <- exp(Zu%*%gu); expv <- exp(Zv%*%gv)
  sig <- sqrt(exp(Zv%*%gv) + exp(Zu%*%gu))
  lmd <- sqrt(exp(Zu%*%gu)/exp(Zv%*%gv))
  mu <- Zdel%*%delta; ls <- lmd/sig
@@ -1618,9 +1772,9 @@
  gr1u <- ls*(0.5*(1 - expu/sig^2)*(mu/lmd^2 + s*e) - mu/lmd^2)*g1*(-s*ls*(e + s*mu/lmd^2) - g1)
  gr1v <- ls*(mu/lmd^2 - 0.5*(1 + expv/sig^2)*(mu/lmd^2 + s*e))*g1*(-s*ls*(e + s*mu/lmd^2) - g1)
  g2 <- dnorm(mu/sqrt(expu))/pnorm(mu/sqrt(expu)); ml = mu/lmd^2
- 
+
  # Hessian
- Hb <- t(as.numeric(-1/sig^2 - s*g1*ls^2*(ls*(e + s*ml) + s*g1))*X)%*%X 
+ Hb <- t(as.numeric(-1/sig^2 - s*g1*ls^2*(ls*(e + s*ml) + s*g1))*X)%*%X
  Hbdel <- t(as.numeric(-s/sig^2 - s*g1*(ls/lmd)^2*(-s*ls*(e + s*ml) - g1))*X)%*%Zdel
  Hbgv <- t(as.numeric(-(e - s*mu)*expv/sig^4 + s*0.5*ls*(1 + expv/sig^2)*g1 - s*ls*gr1v)*X)%*%Zv
  Hbgu <- t(as.numeric(-(e - s*mu)*expu/sig^4 - s*0.5*ls*(1 - expu/sig^2)*g1 - s*ls*gr1u)*X)%*%Zu
@@ -1630,7 +1784,7 @@
  Hgv <- t(as.numeric(0.5*expv/sig^2 * ((1 - expv/sig^2)*((e - s*mu)^2/sig^2 - 1) - (e - s*mu)^2*expv/sig^4) + (ml - 0.5*(1 + expv/sig^2)*(ml + s*e))*(gr1v*ls - 0.5*g1*ls*(1 + expv/sig^2)) + g1*ls*(ml - 0.5*(expv/sig^2 * (1 - expv/sig^2)*(ml + s*e) + (1 + expv/sig^2)*ml)))*Zv)%*%Zv
  Hgu <- t(as.numeric((0.5*(1 - expu/sig^2)*(ml + s*e) - ml)*ls*(gr1u + 0.5*g1*(1 - expu/sig^2)) + g1*ls*(0.5*(expu/sig^2 - 1)*(expu/sig^2*(ml + s*e) + ml) + ml) + 0.5*(expu/sig^2 * ((1 - expu/sig^2)*((e - s*mu)^2/sig^2 - 1) - expu*(e - s*mu)^2/sig^4) + 0.5*g2*mu/sqrt(expu)*(-1 + mu/sqrt(expu)*(mu/sqrt(expu) + g2))))*Zu)%*%Zu
  Hgvgu <- t(as.numeric(0.5*expv*expu/sig^4 * (1 - 2*((e - s*mu)/sig)^2) + (ml - 0.5*(1 + expv/sig^2)*(ml + s*e))*ls*(gr1u + 0.5*(1 - expu/sig^2)*g1) + g1*ls*(-ml + 0.5*(expv*expu/sig^4*(ml + s*e) + (1 + expv/sig^2)*ml)))*Zv)%*%Zu
- 
+
  H <- cbind(rbind(Hb, t(Hbgv),  t(Hbgu),t(Hbdel)), rbind(Hbgv, Hgv, t(Hgvgu), Hdelgv),rbind(Hbgu, Hgvgu, Hgu, Hdelgu), rbind(Hbdel, t(Hdelgv), t(Hdelgu), Hdel ))
  return(H)
 }
@@ -1642,8 +1796,8 @@
  if(prod == T){sn = -1} else {sn = 1}
  s  <- sqrt(su^2 + sv^2);  m1 <- (sn*su^2 * e + mu*sv^2)/s^2
  s1 <- su * sv / s;  z  <- m1 / s1
- point.est.mean <- m1 + s1 * dnorm(z) / pnorm(z) 
- point.est.mode <- ifelse( m1 >= 0, m1, 0 ) 
+ point.est.mean <- m1 + s1 * dnorm(z) / pnorm(z)
+ point.est.mode <- ifelse( m1 >= 0, m1, 0 )
  te_jlms_mean <- exp( -point.est.mean)
  te_jlms_mode <- exp( -point.est.mode)
  zl    <- qnorm( 1 - alpha / 2 * pnorm(z) )
@@ -1660,9 +1814,9 @@
 
 # Marginal effects
 .me = function(theta, Zu, Zdel, ku, kdel, n, dist = c("h", "t")){
- 
+
  mat.equal <- function(x, y) is.matrix(x) && is.matrix(y) && ncol(x) == ncol(y) && all(colnames(x) == colnames(y))
- 
+
  gu = theta[1:ku,1,drop = F]
  expu = exp(Zu%*%gu)
  if(dist == "t"){
@@ -1672,7 +1826,7 @@
  }
  if(length(gu) == 1) gu = rep(0, max(ku, kdel))
  meff = matrix(NA, ncol = max(ku, kdel) - 1, nrow = n)
- 
+
  if(dist == "h"){
   if(ncol(Zu) == 1) {
    warning("Marginal effects are not returned: scale of half-normal distribution of inefficiency term is not expressed as function of any exogenous variables", call. = FALSE)
@@ -1680,12 +1834,12 @@
   } else {
    arg = sqrt(1/(2*pi)) * sqrt(expu)
    for(i in 2:ku){
-    meff[,i-1] = arg*gu[i]  
+    meff[,i-1] = arg*gu[i]
     meff = round(meff, digits = 5)
    }
    colnames(meff) = rownames(gu)[-1]
   }} else if(ncol(Zu) == 1 & ncol(Zdel) == 1){
-   warning("Marginal effects are not returned: mean or variance of (pre-)truncated normal distribution of inefficiency term is not expressed as function of any exogenous variables", call. = FALSE) 
+   warning("Marginal effects are not returned: mean or variance of (pre-)truncated normal distribution of inefficiency term is not expressed as function of any exogenous variables", call. = FALSE)
    meff = NULL
   }else  if(dist == "t" & (mat.equal(Zu, Zdel)| all(delta == 0) | all(gu == 0))){
    arg = mu/sqrt(expu)
@@ -1704,37 +1858,50 @@
 }
 
 
-.skewness <- function (x, na.rm = FALSE, type = 3) 
+.skewness <- function (x, na.rm = FALSE, type = 3)
 {
  if (any(ina <- is.na(x))) {
-  if (na.rm) 
+  if (na.rm)
    x <- x[!ina]
   else return(NA)
  }
- if (!(type %in% (1:3))) 
+ if (!(type %in% (1:3)))
   stop("Invalid 'type' argument.")
  n <- length(x)
  # x <- x - mean(x)
  y <- sqrt(n) * sum(x^3)/(sum(x^2)^(3/2))
  if (type == 2) {
-  if (n < 3) 
+  if (n < 3)
    stop("Need at least 3 complete observations.")
   y <- y * sqrt(n * (n - 1))/(n - 2)
  }
- else if (type == 3) 
+ else if (type == 3)
   y <- y * ((1 - 1/n))^(3/2)
  y
 }
 
 # Print the estimation results
 
-.printoutcs = function(x, digits, k, kv, ku, kdel, na.print = "NA", dist, max.name.length){
- 
+.printoutcs = function(x, digits, k, kv, ku, kdel, na.print = "NA", dist, max.name.length, mycutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), mysymbols = c("***", "**", "*", ".", " ")){
+
  Cf = cbind(ifelse(x[,1, drop = FALSE]> 999, formatC(x[,1, drop = FALSE], digits = 1, format = "e",width = 10), formatC(x[,1, drop = FALSE], digits = digits, format = "f", width = 10)),
             ifelse(x[,2, drop = FALSE]>999, formatC(x[,2, drop = FALSE], digits = 1, format = "e", width = 10), formatC(x[,2, drop = FALSE], digits = digits, format = "f", width = 10)),
             ifelse(x[,3, drop = FALSE]>999, formatC(x[,3, drop = FALSE], digits = 1, format = "e", width = 7), formatC(x[,3, drop = FALSE], digits = 2, format = "f", width = 7)),
-            ifelse(x[,4, drop = FALSE]>999, formatC(x[,4, drop = FALSE], digits = 1, format = "e", width = 10), formatC(x[,4, drop = FALSE], digits = digits, format = "f", width = 10)))
- 
+            ifelse(x[,4, drop = FALSE]>999, formatC(x[,4, drop = FALSE], digits = 1, format = "e", width = 10), formatC(x[,4, drop = FALSE], digits = digits, format = "f", width = 10)),
+            formatC(mysymbols[findInterval(x = x[,4], vec = mycutpoints)], flag = "-"))
+
+ # mycutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1)
+ # mysymbols = c("***", "**", "*", ".", " ")
+ #
+ # pvals <- m0$table[,4]
+ #
+ # findInterval(x = pvals, vec = mycutpoints)
+ #
+ # cbind(pvals,mysymbols[findInterval(x = pvals, vec = cutpoints)])
+ #
+ # pval_sym <- mysymbols[findInterval(x = x[,4], vec = cutpoints)]
+
+
  # cat("               Coef.        SE       z       P>|z|\n", sep = "")
  row.names(Cf) <- formatC(row.names(Cf), width = max(nchar(row.names(Cf))), flag = "-")
  cat("",rep(" ", max.name.length+6),"Coef.        SE       z       P>|z|\n", sep = "")
@@ -1755,6 +1922,7 @@
   print.default(Cf[-c(1:(k+kv+ku+kdel)),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
  }
  cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
+ cat("Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n")
  invisible(x)
 }
 
@@ -1797,13 +1965,13 @@
 }
 
 # library(matrixcalc)
-is.negative.definite <- function (x, tol = 1e-08) 
+is.negative.definite <- function (x, tol = 1e-08)
 {
- # if (!is.square.matrix(x)) 
+ # if (!is.square.matrix(x))
  # stop("argument x is not a square matrix")
- # if (!is.symmetric.matrix(x)) 
+ # if (!is.symmetric.matrix(x))
  # stop("argument x is not a symmetric matrix")
- # if (!is.numeric(x)) 
+ # if (!is.numeric(x))
  # stop("argument x is not a numeric matrix")
  eigenvalues <- eigen(x, only.values = TRUE)$values
  n <- nrow(x)
@@ -1819,31 +1987,31 @@ is.negative.definite <- function (x, tol = 1e-08)
 }
 
 .mlmaximize <- function(theta0, ll, gr = NULL, hess = NULL, alternate = NULL, BHHH = F, level = 0.99, step.back = .Machine$double.eps, reltol = .Machine$double.eps, lmtol = sqrt(.Machine$double.eps), steptol = sqrt(.Machine$double.eps), digits = 4, when.backedup = sqrt(.Machine$double.eps), max.backedup = 17, print.level = 6, only.maximize = FALSE, maxit = 150, n = 100, ...){
- 
+
  theta00 <- theta0
- 
+
  k4 <- length(theta0)
- 
+
  if(print.level >= 6){
   cat("\n=================")
   cat(" Initial values:\n\n", sep = "")
   print(theta0)
  }
- 
+
 #  if(print.level >= 2){
 #   cat("\n=================")
 #   cat(" Maximization:\n\n", sep = "")
 #  }
- 
+
  # step.back = 2^-217
- 
+
  ll0 <- ll(theta0, ...)
  ltol <- reltol * (abs(ll0) + reltol)
  typf <- ll0
  theta1 <- theta0
- 
+
  iter <- iter.total <- backedup <- backedups <- wasconcave <- wasconcaves <- 0
- 
+
  if( is.na(ll0) | ll0 == -Inf ){
   if(print.level >= 2){
    cat("Could not compute ll at starting values: trying something else\n")
@@ -1860,22 +2028,22 @@ is.negative.definite <- function (x, tol = 1e-08)
   }
   # backedups <- iter1
  }
- 
+
  delta1 <- gHg <- s1 <- 1
  h1 <- tryCatch( 2, error = function(e) e )
  cant.invert.hess <- FALSE
- 
+
  if(print.level >= 2){
   cat(paste("Iteration ",formatC(iter, width = 3)," (at starting values):       log likelihood = ",format(ll0, digits = 13),"\n\n", sep = ""), sep = "")
  }
- 
+
  repeat{
   iter.total <- iter.total + 1
   # cat("backedup = ",backedup," backedups = ",backedups,"\n", sep = "")
   if(print.level >= 6){
    print(theta0)
   }
-  
+
   # cumulate how many times did it backed-up in a row
   if(s1 < when.backedup){
    backedup <- backedup + 1
@@ -1889,7 +2057,7 @@ is.negative.definite <- function (x, tol = 1e-08)
   } else {
    wasconcave <- 0
   }
-  
+
   # try different values if was concave more than @@@ times
   if(wasconcave == max.backedup){
    # start over
@@ -1905,7 +2073,7 @@ is.negative.definite <- function (x, tol = 1e-08)
     cat(paste("Iteration ",formatC(iter, width = 3),"  (at slightly perturbed starting values):       log likelihood = ",format(ll0, digits = 13),"\n\n", sep = ""), sep = "")
    }
   }
-  
+
   # try different values if backed-up more than @@@ times
   if(backedup == max.backedup){
    # start over
@@ -1924,7 +2092,7 @@ is.negative.definite <- function (x, tol = 1e-08)
     cat(paste("Iteration ",formatC(iter, width = 3)," (at slightly perturbed starting values):       log likelihood = ",format(ll0, digits = 13),"\n\n", sep = ""), sep = "")
    }
   }
-  
+
   # see if it calculated ll
   if( is.na(ll0) | ll0 == -Inf | ll0 == Inf | ll0 == 0 ){
    if(print.level >= 2){
@@ -1956,15 +2124,15 @@ is.negative.definite <- function (x, tol = 1e-08)
   iter <- iter + 1
   delta3 <- 1
   # step 2: direction vector
-  
+
   # previous theta
-  
+
   if(iter.total > 1) theta1 <- theta0 - s1 * d0
-  
+
   # BHHH (faster, but different):
-  # The Hessian is approximated as the negative 
-  # of the sum of the outer products of the gradients 
-  # of individual observations, 
+  # The Hessian is approximated as the negative
+  # of the sum of the outer products of the gradients
+  # of individual observations,
   # -t(gradient) %*% gradient = - crossprod( gradient )
   g1 <- gr(theta0, ...)
   # print(g1)
@@ -1998,7 +2166,7 @@ is.negative.definite <- function (x, tol = 1e-08)
   if( !cant.invert.hess ){
    h0_previous <- h0
    h1_previous <- h1
-  } 
+  }
   # easier to invert positive definite matrix
   h1 <- tryCatch( qr.solve(-h0), error = function(e) e )
   # check if it can be inverted
@@ -2039,17 +2207,19 @@ is.negative.definite <- function (x, tol = 1e-08)
   # gg_scaled <- gg * max( crossprod(theta0), crossprod(theta1) ) / max( abs(ll0), abs(typf))
   # theta_rel <- max( abs(theta0 - theta1) / apply( cbind( abs(theta0),abs(theta1) ), 1, max) )
   theta_rel <- max( abs(theta0 - theta1) / (abs(theta1)+1) )
-  
-  
+
+
   # begin stopping criteria calculated using new values of g1 and h1
   if(s1 > when.backedup*10^-100 & delta1 != 17.17){ # if(s1 > when.backedup*10^-100 & !cant.invert.hess){
    if(abs(gHg) < lmtol & iter.total > 1){
+    conv.crite <- 1
     if(print.level >= 2){
      cat("\nConvergence given g inv(H) g' = ",abs(gHg)," < lmtol\n", sep = "")
     }
     break
    }
    if(theta_rel < steptol & iter.total > 2){
+    conv.crite <- 3
     # print(theta_rel)
     if(print.level >= 2){
      cat("\nConvergence given relative change in parameters = ",theta_rel," < steptol\n", sep = "")
@@ -2151,7 +2321,7 @@ is.negative.definite <- function (x, tol = 1e-08)
       cat(paste("\t\t\tCase 2b: s = ",s1,", delta = ",delta2,"\n", sep = ""), sep = "")
      }
      flag2 <- (!is.na(delta2) & delta2 != -Inf & delta2 > 0)
-    } 		
+    }
     if( !flag2 | s1 < step.back ){
      # stop("provide different starting values")
      delta1 <- 17.17
@@ -2165,8 +2335,8 @@ is.negative.definite <- function (x, tol = 1e-08)
     # end Case 2b: f(theta1) < f(theta0)
    }
   }
-  
-  
+
+
   if(print.level >= 2){
    if( cant.invert.hess ){
     cat(paste("Iteration ",formatC(iter, width = 3)," (hessian is ",ifelse(BHHH, "BHHH", "analytical"),", ",formatC(iter.total, width = 3)," in total):   log likelihood = ",format(ll0, digits = 13)," (not concave)\n", sep = ""), sep = "")
@@ -2176,7 +2346,7 @@ is.negative.definite <- function (x, tol = 1e-08)
     cat(paste("Iteration ",formatC(iter, width = 3)," (hessian is ",ifelse(BHHH, "BHHH", "analytical"),", ",formatC(iter.total, width = 3)," in total):   log likelihood = ",format(ll0, digits = 13),"\n", sep = ""), sep = "")
    }
   }
-  
+
   # printing criteria
   if(print.level >= 5){
    if( cant.invert.hess ){
@@ -2184,7 +2354,7 @@ is.negative.definite <- function (x, tol = 1e-08)
     if(print.level >= 5.5){
      print(theta0)
      cat("\n")
-    } 
+    }
    } else {
     cat(paste(" (in iter ",formatC(iter, width = 3),": delta = ",format(delta1, digits = 6),"; s = ",format(s1, digits = 6),"; gHg = ",format(gHg, digits = 6),"; theta_rel_change = ",format(theta_rel, digits = 6),")\n\n", sep = ""), sep = "")
     if(print.level >= 5.5){
@@ -2198,6 +2368,7 @@ is.negative.definite <- function (x, tol = 1e-08)
    # ltol <- reltol * (abs(ll0) + reltol)
    # print(cant.invert.hess)
    if(delta1 > 0 & !is.na(delta_rel) & delta_rel < ltol & iter.total > 1){
+    conv.crite <- 2
     if(print.level >= 2){
      cat("\nConvergence given relative change in log likelihood = ",delta_rel," < ltol\n", sep = "")
     }
@@ -2209,13 +2380,13 @@ is.negative.definite <- function (x, tol = 1e-08)
    break
   }
  } # end repeat
- 
- if( !only.maximize & !cant.invert.hess){		
+
+ if( !only.maximize & !cant.invert.hess){
   names(ll0) <- NULL
   colnames(h1) <- rownames(h1) <- names(g1) <- names(theta0)
-  
+
   # sqrt(crossprod(g1))
-  
+
   b0 <- theta0
   sd0 <- sqrt( diag( h1 ) )
   t0 <- b0 / sd0
@@ -2226,7 +2397,7 @@ is.negative.definite <- function (x, tol = 1e-08)
   colnames(t17) <- c("Estimate", "Std. Error", "t value", "Pr(>|t|)", paste("",level,"_CI_LB", sep = ""), paste("",level,"_CI_UB", sep = ""))
   # colnames(t17) <- c("Estimate", "Std. Error", "t value", "Pr(>|t|)")
   # t17
-  
+
   if(print.level >= 2){
    cat(paste("\nFinal log likelihood = ",formatC(ll0,digits=7,format="f"),"\n\n", sep = ""), sep = "")
   }
@@ -2235,23 +2406,23 @@ is.negative.definite <- function (x, tol = 1e-08)
    cat("\nCoefficients:\n\n", sep = "")
    printCoefmat(t17[,1:4], digits = digits)
   }
-  
-  return(list(par = theta0, table = t17, gradient = g1, vcov = h1, ll = ll0, gg = gg, gHg = gHg, theta_rel_ch = theta_rel))
+
+  return(list(par = theta0, table = t17, gradient = g1, vcov = h1, ll = ll0, gg = gg, gHg = gHg, delta_rel = delta_rel, ltol = ltol, theta_rel_ch = theta_rel, conv.crite = conv.crite))
  } else {
-  return(list(par = theta0, gradient = g1, vcov = h1, ll = ll0, gg = gg, gHg = gHg, theta_rel_ch = theta_rel))
+  return(list(par = theta0, gradient = g1, vcov = h1, ll = ll0, gg = gg, gHg = gHg, delta_rel = delta_rel, ltol = ltol, theta_rel_ch = theta_rel, conv.crite = conv.crite))
  }
- 
- 
+
+
 }
 .su1 <- function(x, mat.var.in.col = TRUE, digits = 4, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), print = TRUE, transpose = FALSE){
- 
+
  xvec2 <- xvec1 <- FALSE
- 
+
  if(is.matrix(x)){
   if(min(dim(x)) == 1){
    xvec1 <- TRUE
    # mynames <- deparse(substitute(x))
-   x <- as.vector(x)  
+   x <- as.vector(x)
   } else {
    if(!mat.var.in.col){
     x <- t(x)
@@ -2261,16 +2432,16 @@ is.negative.definite <- function (x, tol = 1e-08)
   # print(x)
   # mynames <- colnames(x)
  } # end if matrix
- 
+
  if(is.vector(x)){
   xvec2 <- TRUE
   mynames <- deparse(substitute(x))
-  x <- data.frame(Var1 = x)  
+  x <- data.frame(Var1 = x)
  } # end if vector
- 
+
  # cat("nymanes", sep ="")
  # print(mynames)
- 
+
  if(!is.vector(x) & !is.matrix(x) & !is.data.frame(x)){
   stop("Provide vector, matrix, or data.frame")
  } else {
@@ -2278,7 +2449,7 @@ is.negative.definite <- function (x, tol = 1e-08)
   # print(class(t1))
   # print(dim(t1))
   if(xvec2 & !xvec1) colnames(t1) <- mynames
-  
+
   if(print){
    if(transpose){
     tymch <- formatC(t1, digits = 4, format = "f", width = 4+1)
@@ -2310,7 +2481,7 @@ is.negative.definite <- function (x, tol = 1e-08)
  # cat("sys.nframe() = ",sys.nframe(),"\n")
  # cat("needed.frame = ",needed.frame,"\n")
  mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = needed.frame)))
- 
+
  ll.clas <- class(ll)
  if (ll.clas == "formula"){
   if (length(all.vars(ll)) == 1){
@@ -2327,7 +2498,7 @@ is.negative.definite <- function (x, tol = 1e-08)
  } else {
   stop("invalid lower limit for left-truncation; 'll' must be a formula or a scalar")
  }
- 
+
  ul.clas <- class(ul)
  if (ul.clas == "formula"){
   if (length(all.vars(ul)) == 1){
@@ -2344,30 +2515,30 @@ is.negative.definite <- function (x, tol = 1e-08)
  } else {
   stop("invalid upper limit for right-truncation; 'ul' must be a formula or a scalar")
  }
- 
+
  form1 <- Formula::Formula(formula)
- 
+
  # cat(" print(form1)\n", sep = "")
  # print(form1)
- 
+
  if (ll.form) {
   form1 <- Formula(as.formula(paste("",deparse(form1, width.cutoff = 500L)," | ",ll[2]," ", sep = "")))
  }
  if (ul.form) {
   form1 <- Formula(as.formula(paste("",deparse(form1, width.cutoff = 500L)," | ",ul[2]," ", sep = "")))
  }
- 
+
  # cat(" print(form1)\n", sep = "")
  # print(form1)
- 
+
  # check if it is a matrix
  datasupplied <- !(match("data", names(mf0), 0) == 0)
  subssupplied <- !(match("subset", names(mf0), 0) == 0)
- 
+
  if(subssupplied & !datasupplied){
   stop("Cannot specify 'subset' without specifying 'data'\n")
  }
- 
+
  if(datasupplied){
   # begin get a logical vector equal TRUE if !missing
   # first using data and subset to get x without NA
@@ -2387,14 +2558,14 @@ is.negative.definite <- function (x, tol = 1e-08)
   }
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
-  
+
   # get the data
   # print(form1)
   dataesample <- model.frame(form1, data = data[esample,])
   # cat(" dim(dataesample)\n", sep = "")
   # print(dim(dataesample))
   # print(head(dataesample))
-  
+
   # this is my full LHS
   Y <- model.part(form1, data = dataesample, lhs = 1, drop = TRUE)
   # cat(" print(Y)\n", sep = "")
@@ -2404,13 +2575,13 @@ is.negative.definite <- function (x, tol = 1e-08)
   # print(Y)
   X <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 1), data = dataesample))
   # print(X)
-  
+
   if (ll.form) {
    LL <- model.matrix(formula(form1, lhs = 0, rhs = 2), data = dataesample)[,2]
   } else {
    LL <- rep(ll, n.full)
   }
-  
+
   if (ul.form) {
    if (ll.form) {
     UL <- model.matrix(formula(form1, lhs = 0, rhs = 3), data = dataesample, drop = TRUE)[,2]
@@ -2420,21 +2591,21 @@ is.negative.definite <- function (x, tol = 1e-08)
   } else {
    UL <- rep(ul, n.full)
   }
-  
+
   # cat(" LL\n", sep = "")
   # print(LL)
   # cat(" UL\n", sep = "")
   # print(UL)
-  
-  
+
+
   # flag those that are required for regression
   flag <- (Y > LL & Y < UL)
   # cat(" dim(X)\n", sep = "")
   # print(dim(X))
   # cat(" flag\n", sep = "")
   # print(flag)
-  
-  
+
+
   # get subsets
   # cat(" Y\n", sep = "")
   Y  <- Y[flag]
@@ -2452,7 +2623,7 @@ is.negative.definite <- function (x, tol = 1e-08)
  # if data are not supplied
  else {
   # begin get a logical vector equal TRUE if !missing
-  
+
   # first using data and subset to get XZ without NA
   mf <- mf0
   mf$formula <- formula( form1 )
@@ -2476,9 +2647,9 @@ is.negative.definite <- function (x, tol = 1e-08)
   }
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
-  
+
   # get the data
-  
+
   # get number of vars in X
   mf <- mf0
   m <- match(c("formula"), names(mf), 0L)
@@ -2489,17 +2660,17 @@ is.negative.definite <- function (x, tol = 1e-08)
   X <- as.matrix(model.matrix(mt, mf))
   # print(head(X))
   k <- ncol(X)
-  
+
   Y <- Y[esample,]
   n.full <- length(Y)
   X <- XZ[esample,]
-  
+
   if (ll.form) {
    LL <- XZ[esample,(k+1)]
   } else {
    LL <- rep(ll, n.full)
   }
-  
+
   if (ul.form) {
    if (ll.form) {
     UL <- XZ[esample,(k+2)]
@@ -2509,20 +2680,20 @@ is.negative.definite <- function (x, tol = 1e-08)
   } else {
    UL <- rep(ul, n.full)
   }
-  
+
   # cat(" LL\n", sep = "")
   # print(LL)
   # cat(" UL\n", sep = "")
   # print(UL)
-  
-  
+
+
   # flag those that are required for regression
   flag <- (Y > LL & Y < UL)
   # cat(" dim(X)\n", sep = "")
   # print(dim(X))
   # cat(" flag\n", sep = "")
   # print(flag)
-  
+
   # get subsets
   # cat(" Y\n", sep = "")
   Y  <- Y[flag]
@@ -2536,9 +2707,9 @@ is.negative.definite <- function (x, tol = 1e-08)
   # cat(" UL\n", sep = "")
   UL <- UL[flag]
   # print(UL)
-  
+
  }
- 
+
  tymch <- list(Y = Y, X = X, LL = LL, UL = UL, n = n, n.full = n.full, ll.form = ll.form, ul.form = ul.form, esample = esample, nontruncsample = flag)
  class(tymch) <- "npsf"
  return(tymch)

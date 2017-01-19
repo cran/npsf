@@ -6,6 +6,64 @@
 void nonradial(double *yobs, double *xobs, int *m, int *n, int *nobs,
 			double *yref, double *xref, int *nref, int *rts, int *ort, int *ifqh, int *printlevel,
 			double *sol){
+ 
+ /*
+ // Begin Scaling
+ 
+ // Total columns to scale
+ int numColsToScale = 2 * *m + 2 * *n;
+ // Columns' pointers
+ double **ptrsCol = (double **) malloc(numColsToScale * sizeof(double *));
+ // Columns' lengths
+ int *numsRow = (int *) malloc(numColsToScale * sizeof(int));
+ // Columns' numbers
+ int *numsCol = (int *) malloc(numColsToScale * sizeof(int));
+ // Create objects with addresses of rows and columns of XOBS etc.
+ // Outputs
+ for (int i = 0; i < *m; i++){
+  // i-th column of yobs
+  ptrsCol[i * 2] = yobs + i;
+  numsRow[i * 2] = *nobs;
+  numsCol[i * 2] = *m;
+  // i-th column of yref
+  ptrsCol[i * 2 + 1] = yref + i;
+  numsRow[i * 2 + 1] = *nref;
+  numsCol[i * 2 + 1] = *m;
+ }
+ // Inputs
+ for (int i = 0; i < *n; i++){
+  // i-th column of xobs
+  ptrsCol[2 * *m + i * 2] = xobs + i;
+  numsRow[2 * *m + i * 2] = *nobs;
+  numsCol[2 * *m + i * 2] = *n;
+  // i-th column of xref
+  ptrsCol[2 * *m + i * 2 + 1] = xref + i;
+  numsRow[2 * *m + i * 2 + 1] = *nref;
+  numsCol[2 * *m + i * 2 + 1] = *n;
+ }
+ // Namely scaling
+ for (int i = 0; i < numColsToScale; i++){
+  // Calculate mean
+  double tmpMean = 0;
+  for (int j = 0; j < numsRow[i]; j++){
+   tmpMean += *(ptrsCol[i] + j * numsCol[i]);
+  }
+  tmpMean /= numsRow[i];
+  // Scale if mean significanly larger zero
+  if (tmpMean > 1e-8){
+   for (int j = 0; j < numsRow[i]; j++){
+    *(ptrsCol[i] + j * numsCol[i]) /= tmpMean;
+   }
+  }
+ }
+ // Clean the memory
+ free(ptrsCol);
+ free(numsRow);
+ free(numsCol);
+ 
+ // End Scaling
+  */
+ 
 	/* Temporary structures for reference data */
 	double *_yref;
 	double *_xref;

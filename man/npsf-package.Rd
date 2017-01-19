@@ -31,8 +31,8 @@ Results can be summarized using \code{\link{summary.npsf}}.
 \tabular{ll}{
 Package: \tab npsf\cr
 Type: \tab Package\cr
-Version: \tab 0.1.8\cr
-Date: \tab 2016-07-05\cr
+Version: \tab 0.2.0\cr
+Date: \tab 2017-01-19\cr
 License: \tab GPL-2 | file LICENSE\cr
 }
 
@@ -40,13 +40,13 @@ License: \tab GPL-2 | file LICENSE\cr
 }
 
 \author{
-Oleg Badunenko, <obadunen@uni-koeln.de>
+Oleg Badunenko, <oleg.badunenko@port.ac.uk>
 
-Yaryna Kolomiytseva, <yaryna.kolomiytseva@uni-koeln.de>
+Yaryna Kolomiytseva, <kolomiytseva@wiso.uni-koeln.de>
 
-Pavlo Mozharovskyi, <pavlo.mozharovskyi@univ-rennes1.fr>
+Pavlo Mozharovskyi, <pavlo.mozharovskyi@ensai.fr>
 
-Maintainer: Oleg Badunenko <obadunen@uni-koeln.de>
+Maintainer: Oleg Badunenko <oleg.badunenko@port.ac.uk>
 }
 
 \references{

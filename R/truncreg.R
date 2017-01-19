@@ -17,15 +17,18 @@ truncreg <- function(formula, data, subset,
  }
  
  # initial values
- beta0 <- 0.95*solve(t(x) %*% x) %*% t(x) %*% y
- sigma0 <- 1.05*sqrt( sum((y - x %*% beta0)^2)/(n-ncol(x)) )
+ beta0 <- 0.999999*solve(t(x) %*% x) %*% t(x) %*% y
+ sigma0 <- 1.000001*sqrt( sum((y - x %*% beta0)^2)/(n-ncol(x)) )
  names(sigma0) <- "/sigma"
  theta0 <- rbind( beta0, sigma0)
  # initial LL
  l_init <- .ll.trunc (y, x, beta0, sigma0, a, b)
  a0 <- a
  b0 <- b
-
+ 
+ # print(summary(a))
+ # print(summary(b))
+ 
  Delta <- 1
  mylm <- 1
  step <- 0

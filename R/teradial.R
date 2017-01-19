@@ -42,6 +42,13 @@ teradial <- function(formula, data, subset,
 	te <- .teRad(t(t1$y), t(t1$x), ncol(t1$y), ncol(t1$x), nrow(t1$y),
 	             t(t1$y.ref), t(t1$x.ref), nrow(t1$y.ref), t1$myrts, t1$mybase,
 	             1, print.level = print.level)
+	# sca_data <- .teRad1(t(t1$y), t(t1$x), ncol(t1$y), ncol(t1$x), nrow(t1$y),
+	#              t(t1$y.ref), t(t1$x.ref), nrow(t1$y.ref), t1$myrts, t1$mybase,
+	#              1, print.level = print.level)
+	# sca_data$Y <- t(matrix(sca_data$Y, byrow = TRUE, nrow = ncol(t1$y)))
+	# sca_data$Yr <- t(matrix(sca_data$Yr, byrow = TRUE, nrow = ncol(t1$y)))
+	# sca_data$X <- t(matrix(sca_data$X, byrow = TRUE, ncol = ncol(t1$x)))
+	# sca_data$Xr <- t(matrix(sca_data$Xr, byrow = TRUE, ncol = ncol(t1$x)))
 	te <- ifelse(abs(te - 1) < 1e-12, 1, te)
 	te <- ifelse(te == -999, NA, te)
 	if(print.level >= 3){
@@ -53,6 +60,7 @@ teradial <- function(formula, data, subset,
   .su(te, print = FALSE)
 	}
 	tymch <- list(call = match.call(), model = "teradial", K = nrow(t1$y), M = ncol(t1$y), N = ncol(t1$x), rts = t1$rts.string, base = t1$base.string, te = te, esample = t1$esample, esample.ref = t1$esample.ref)
+	# tymch <- list(call = match.call(), model = "teradial", K = nrow(t1$y), M = ncol(t1$y), N = ncol(t1$x), rts = t1$rts.string, base = t1$base.string, te = te, esample = t1$esample, esample.ref = t1$esample.ref, sca_data = sca_data)
 	class(tymch) <- "npsf"
 	return(tymch)
 }

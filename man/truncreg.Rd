@@ -98,6 +98,15 @@ head(mroz)
 
 t1 <- npsf::truncreg(hours ~ kidslt6 + kidsge6 + age*educ, 
  data = mroz, ll = 0, lmtol = 1e-16, print.level = 2)
+ 
+# matrices also can be used
+myY <- mroz$hours
+myX <- cbind(mroz$kidslt6, mroz$kidsge6, mroz$age, mroz$educ, mroz$age*mroz$educ)
+
+t1.m <- truncreg(myY ~ myX, ll = 0)
+
+# gives identical result to `t1':
+# compare summary(t1) and summary(t1.m)
 
 # using variable for limits is admissible
 # we obtain the same result as before
