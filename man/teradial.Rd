@@ -68,7 +68,7 @@ string: RTS assumption.
 string: base for efficiency measurement.
 }
 \item{te}{
-numeric: radial measure (Russell) of technical efficiency.
+numeric: radial measure (Debrue-Farrell) of technical efficiency.
 }
 \item{esample}{
 logical: returns TRUE if the observation in user supplied data is in the estimation subsample and FALSE otherwise.
@@ -232,6 +232,8 @@ t18 <- teradial ( Y1[-1,] ~ X1[-2,], ref = Y1[-2,] ~ X1[-1,] )
 
 t21 <- teradial ( Y ~ K + L, data = pwt56, subset = Nu < 10, 
 	ref = Y1[-2,] ~ X1[-1,] )
+	
+\dontrun{
 
 # Really large data-set
 
@@ -256,6 +258,7 @@ usmanuf$te_nonrad_crs_out[ t22$esample ] <- t22$te
 
 head(usmanuf, 17)
 
+}
 
 }
 

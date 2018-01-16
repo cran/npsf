@@ -1,7 +1,19 @@
+npsf v0.3.0 (Release date: 2018-01-16)
+
+* Fixed various bugs
+* Own LP solver instead of glpk
+* added nobs() method for objects of class 'npsf'
+* added summary() method for objects of class 'npsf'
+* added print() method for objects of class 'npsf'
+* added vcov() method for objects of class 'npsf' 
+  (relevant for function 'sf')
+* added coef() method for objects of class 'npsf'
+  (relevant for function 'sf')
+
 npsf v0.2.0 (Release date: 2017-01-19)
 
 * Fixed bugs with data preparation
-* Fixed initial values for  truncated regression (truncreg) estimation
+* Fixed initial values for truncated regression (truncreg) estimation
 
 npsf v0.1.9 (Release date: 2016-09-02)
 

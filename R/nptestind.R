@@ -63,7 +63,7 @@ nptestind <- function(formula, data, subset,
 
 	# original Farrell measures
 
-	te <- .teRad(t(Y),t(X),M,N,K,t(Y),t(X),K,rt,ba,1,print.level=0)
+	te <- .teRad(t(Y),t(X),M,N,K,t(Y),t(X),K,rt,ba,0,print.level=0)
 	
 	# redefine if some Farrell measures are not computed
 	

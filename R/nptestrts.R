@@ -95,13 +95,13 @@ nptestrts <- function(formula, data, subset,
 	# original Farrell measures
 
 	# CRS
-	teCrs <- .teRad(t(Y),t(X),M,N,K,t(Y),t(X),K,3,ba,1,print.level=0)
+	teCrs <- .teRad(t(Y),t(X),M,N,K,t(Y),t(X),K,3,ba,0,print.level=0)
 
 	# NIRS
-	teNrs <- .teRad(t(Y),t(X),M,N,K,t(Y),t(X),K,2,ba,1,print.level=0)
+	teNrs <- .teRad(t(Y),t(X),M,N,K,t(Y),t(X),K,2,ba,0,print.level=0)
 
 	# VRS
-	teVrs <- .teRad(t(Y),t(X),M,N,K,t(Y),t(X),K,1,ba,1,print.level=0)
+	teVrs <- .teRad(t(Y),t(X),M,N,K,t(Y),t(X),K,1,ba,0,print.level=0)
 	
 	# Check for Missing Values
 	teSum = teCrs + teNrs + teVrs

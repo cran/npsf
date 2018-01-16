@@ -213,12 +213,12 @@ t3 <- nptestrts(Y2 ~ X2,
 # ===========================
 
 # Perform previous test but use 4 cores and
-# cluster type MPI
+# cluster type SOCK
 
 t3 <-  nptestrts(y1 + y2 + y3 ~ x1 + x2 + x3 + x4 + x5,
 	data = ccr81, homogeneous = FALSE,
 	reps = 100, dots = TRUE, base = "o",
-	core.count = 4, cl.type = "MPI")
+	core.count = 8, cl.type = "SOCK")
 
 
 # Really large data-set
@@ -239,14 +239,14 @@ summary(usmanuf[usmanuf$year >= 1999 & usmanuf$year < 2000, "naics"])
 t4 <- nptestrts(Y ~ K + L + M, data = usmanuf,
 	subset = year >= 1999 & year < 2000 & naics < 321900,
 	homogeneous = FALSE, reps = 100, dots = TRUE, base = "o",
-	core.count = 4, cl.type = "MPI")
+	core.count = 8, cl.type = "SOCK")
 
 # This is very computer intensive task
 
 t5 <- nptestrts(Y ~ K + L + M, data = usmanuf,
 	subset = year >= 1999 & year < 2000,
 	homogeneous = FALSE, reps = 100, dots = TRUE, base = "o",
-	core.count = 4, cl.type = "MPI")
+	core.count = 8, cl.type = "SOCK")
 
 }
 

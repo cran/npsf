@@ -245,13 +245,13 @@ t5 <- teradialbc ( y1 + y2 + y3 ~ x1 + x2 + x3 + x4 + x5,
 # ===========================
 
 # Perform previous bias-correction but use 4 cores and 
-# cluster type MPI
+# cluster type SOCK
 
 t51 <-  teradialbc ( y1 + y2 + y3 ~ x1 + x2 + x3 + x4 + x5, 
 	data = ccr81, ref = y1 + y2 + y3 ~ x1 + x2 + x3 + x4 + x5, 
 	subset.ref = x5 != 10, data.ref = ccr81, homogeneous = FALSE, 
 	reps = 999, smoothed = TRUE, dots = TRUE, base = "i", rts = "n", 
-	core.count = 4, cl.type = "MPI")
+	core.count = 8, cl.type = "SOCK")
 
 
 # Really large data-set
@@ -270,7 +270,7 @@ head(usmanuf)
 t6 <- teradialbc ( Y ~ K + L + M, data = usmanuf, 
 	subset = year >= 1999 & year <= 2000, homogeneous = FALSE, 
 	base = "o", reps = 100, 
-	core.count = 4, cl.type = "MPI")
+	core.count = 8, cl.type = "SOCK")
 
 }
 

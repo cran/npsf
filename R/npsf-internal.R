@@ -1793,18 +1793,19 @@
 
 # Technical efficiencies and prediction intervals
 .u2efftnm <- function( e, su, sv, mu, alpha = 0.05, prod) {
- if(prod == T){sn = -1} else {sn = 1}
+ # if(prod){sn = -1} else {sn = 1}
+ sn <- ifelse(prod, -1, 1)
  s  <- sqrt(su^2 + sv^2);  m1 <- (sn*su^2 * e + mu*sv^2)/s^2
  s1 <- su * sv / s;  z  <- m1 / s1
- point.est.mean <- m1 + s1 * dnorm(z) / pnorm(z)
+ point.est.mean <- m1 + s1 * dnorm(-z) / pnorm(z)
  point.est.mode <- ifelse( m1 >= 0, m1, 0 )
- te_jlms_mean <- exp( -point.est.mean)
- te_jlms_mode <- exp( -point.est.mode)
+ te_jlms_mean <- exp( sn*point.est.mean)
+ te_jlms_mode <- exp( sn*point.est.mode)
  zl    <- qnorm( 1 - alpha / 2 * pnorm(z) )
  zu    <- qnorm( 1 - ( 1 - alpha/2 ) * pnorm(z) )
- te_l  <- exp( -m1 - zl * s1 )
- te_u  <- exp( -m1 - zu * s1 )
- te_bc <- exp(-m1 + .5 * s1^2) * pnorm(-s1 + z) / pnorm(z)
+ te_l  <- exp( sn*m1 - zl * s1 )
+ te_u  <- exp( sn*m1 - zu * s1 )
+ te_bc <- exp( sn*m1 + .5 * s1^2) * pnorm( sn*s1 + z ) / pnorm(z)
  tymch <- data.frame(te_l, te_jlms_mean, te_jlms_mode,te_bc,te_u)
  colnames(tymch) <- c("Lower bound","JLMS", "Mode", "BC","Upper bound" )
  return(tymch)

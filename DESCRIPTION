@@ -2,8 +2,8 @@ Package: npsf
 Type: Package
 Title: Nonparametric and Stochastic Efficiency and Productivity
         Analysis
-Version: 0.2.0
-Date: 2017-01-19
+Version: 0.3.0
+Date: 2018-01-16
 Author: Oleg Badunenko [aut, cre],
 	Yaryna Kolomiytseva [aut],
 	Pavlo Mozharovskyi [aut]
@@ -12,8 +12,9 @@ Description: Provides a variety of tools for nonparametric and parametric effici
 Depends: Formula
 Suggests: snowFT, Rmpi
 Encoding: UTF-8
-License: GPL-2 | file LICENSE
+License: GPL-2
+LinkingTo: Rcpp
 NeedsCompilation: yes
-Packaged: 2017-01-19 11:24:02 UTC; boo
+Packaged: 2018-01-16 14:52:15 UTC; boo
 Repository: CRAN
-Date/Publication: 2017-01-19 15:21:00
+Date/Publication: 2018-01-16 15:11:58 UTC

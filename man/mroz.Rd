@@ -38,11 +38,11 @@
 
 
 \details{
-	Instructional dataset, N=753, cross-sectional labor force participation data Accompanying Introductory Econometrics: A Modern Approach, Jeffrey M. Wooldridge, South-Western College Publishing, (c) 2000 and Jeffrey M. Wooldridge, Econometric Analysis of Cross Section and Panel Data, MIT Press,(c) 2001.
+	Instructional dataset, N=753, cross-sectional labor force participation data Accompanying Introductory Econometrics: A Modern Approach, Jeffrey M. Wooldridge, South-Western College Publishing, (c) 2000 and Jeffrey M. Wooldridge, Econometric Analysis of Cross Section and Panel Data, MIT Press,(c) 2001. 
 }
 
 \source{
-Datasets accessible from http://wooldridge.swcollege.com
+Datasets accessible from http://wooldridge.swcollege.com, http://courses.bus.msu.edu/econ/821/001/index.cfm?action=mat, and http://www.cengage.com/aise/economics/wooldridge_3e_datasets/
 }
 
 \references{

@@ -5,7 +5,7 @@ teradial <- function(formula, data, subset,
                      print.level = 1)
 {
  if( !is.null(ref) & is.null(data.ref) ){
-  warning("If you use variable names in 'ref', 'data.ref' is required", call. = FALSE)
+  warning("If you use variable names in 'ref', 'data.ref' is most certainly required", call. = FALSE)
  }
  
  if( is.null(ref) & !is.null(data.ref) ){
@@ -41,7 +41,7 @@ teradial <- function(formula, data, subset,
 
 	te <- .teRad(t(t1$y), t(t1$x), ncol(t1$y), ncol(t1$x), nrow(t1$y),
 	             t(t1$y.ref), t(t1$x.ref), nrow(t1$y.ref), t1$myrts, t1$mybase,
-	             1, print.level = print.level)
+	             0, print.level = print.level)
 	# sca_data <- .teRad1(t(t1$y), t(t1$x), ncol(t1$y), ncol(t1$x), nrow(t1$y),
 	#              t(t1$y.ref), t(t1$x.ref), nrow(t1$y.ref), t1$myrts, t1$mybase,
 	#              1, print.level = print.level)
@@ -50,7 +50,7 @@ teradial <- function(formula, data, subset,
 	# sca_data$X <- t(matrix(sca_data$X, byrow = TRUE, ncol = ncol(t1$x)))
 	# sca_data$Xr <- t(matrix(sca_data$Xr, byrow = TRUE, ncol = ncol(t1$x)))
 	te <- ifelse(abs(te - 1) < 1e-12, 1, te)
-	te <- ifelse(te == -999, NA, te)
+	te <- ifelse(te == -999, NA, te) # TODO!!!???
 	if(print.level >= 3){
 	 cat("\n")
 	}

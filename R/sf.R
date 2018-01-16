@@ -38,12 +38,13 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
  kdel <- YXZ$kdel
  esample <- YXZ$esample
 
- names_x <- abbreviate(colnames(X), 9+6, strict = TRUE, dot = FALSE)
+ abbr.length <- 34
+ names_x <- abbreviate(colnames(X), abbr.length+6, strict = TRUE, dot = FALSE, method = "both.sides")
  # names_zu <-  abbreviate(colnames(Zu), 9, strict = TRUE, dot = FALSE)
  # names_zv <-  abbreviate(colnames(Zv), 9, strict = TRUE, dot = FALSE)
- Zu_colnames <- abbreviate(colnames(Zu), 9, strict = TRUE, dot = FALSE)
- names_zu <- paste0("logVu_", abbreviate(colnames(Zu), 9, strict = TRUE, dot = FALSE))
- names_zv <- paste0("logVv_", abbreviate(colnames(Zv), 9, strict = TRUE, dot = FALSE))
+ Zu_colnames <- abbreviate(colnames(Zu), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides")
+ names_zu <- paste0("logVu_", abbreviate(colnames(Zu), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides"))
+ names_zv <- paste0("logVv_", abbreviate(colnames(Zv), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides"))
 
  if(distribution == "t"){
   # names_del <- abbreviate(colnames(Zdel), 9, strict = T, dot = F)
@@ -172,7 +173,7 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
  ggam <- c(gam*(1 - gam), -gam^2/lmd^2)
  se_gam <- as.vector( sqrt( t(ggam) %*% obj$vcov[c((k+1),(k+kv+1)), c((k+1),(k+kv+1))] %*% ggam))
 
- if((is.null(uhet) == T) & (is.null(vhet) == T)){
+ if((is.null(uhet) == TRUE) & (is.null(vhet) == TRUE)){
   par <- c(obj$par, sigv, sigu, lmd, gam); se <- c(sqrt(diag(obj$vcov)), se_sigv, se_sigu, se_lmd, se_gam)
   names(par) = c(names_x, names_zv, names_zu, names_del, "sigma_v  ", "sigma_u  ", "lambda   ", "gamma   ")
  } else if((is.null(uhet) == T) & (is.null(vhet) == F)){
@@ -223,7 +224,7 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
   est.rez.right <- max.name.length+42-22 - est.rez.left
   cat("\n",rep("-", est.rez.left)," Estimation results: ",rep("-", est.rez.right),"\n\n", sep ="")
   # cat("\n--------------- Estimation results: --------------\n\n", sep = "")
-  .printoutcs(output, digits = digits, k = k, kv = kv, ku = ku, kdel = kdel, na.print = "NA", dist = distribution,max.name.length = max.name.length)
+  .printoutcs(output, digits = digits, k = k, kv = kv, ku = ku, kdel = kdel, na.print = "NA", dist = distribution, max.name.length = max.name.length)
  }
 
  # Technical efficiencies
@@ -233,11 +234,13 @@ sf <- function(formula, uhet = NULL, vhet = NULL,
  sigmas_u <- sqrt(exp(Zu%*%obj$par[(k+kv+1):(k+kv+ku)]))
 
  if(distribution == "h"){
-  eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod), digits = digits)
+  # eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod), digits = digits)
+  eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod)
   mu = NULL
  } else {
   mu <- Zdel%*%obj$par[-c(1:(k+kv+ku))]
-  eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod), digits = digits)
+  # eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod), digits = digits)
+  eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod)
  }
 
  # Marginal effects

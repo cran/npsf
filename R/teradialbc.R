@@ -121,13 +121,19 @@ teradialbc <- function(formula, data, subset,
 	
 	# original Farrell measures
 	
-	te0 <- .teRad(t(Y),t(X),M,N,K,t(Yr),t(Xr),Kr,rt,ba,1,print.level=print.level)
+	te0 <- .teRad(t(Y),t(X),M,N,K,t(Yr),t(Xr),Kr,rt,ba,0,print.level=print.level)
+	
+	# te <- .teRad(t(t1$y), t(t1$x), ncol(t1$y), ncol(t1$x), nrow(t1$y),
+	#              t(t1$y.ref), t(t1$x.ref), nrow(t1$y.ref), t1$myrts, t1$mybase,
+	#              0, print.level = print.level)
+	
 	
 	# redefine if some Farrell measures are not computed
 	
 	te.good <- !is.na(te0)
 	K  <- sum(te.good)
 	if(K == 0){
+	 print(te0)
   stop("Could not compute measure of technical efficiency for a single data point")
 	}
 	te <- te0[te.good]
@@ -149,7 +155,7 @@ teradialbc <- function(formula, data, subset,
   }
   else {
    teRef0 <- .teRad(t(Yr),t(Xr),M,N,Kr,t(Yr),t(Xr),Kr,rt,ba,
-                    1,print.level=0)
+                    0,print.level=0)
    
    # redefine if some Farrell measures are not computed
    
