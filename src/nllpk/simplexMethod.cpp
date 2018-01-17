@@ -70,7 +70,7 @@ int simplexMethod::setProblem(){
       nSlacks++;
     }
   }
-//  Rcout << nSlacks << " slacks introduced.\n";
+  //  Rcout << nSlacks << " slacks introduced.\n";
   // Determine size and allocate structures
   AnRow = AinpnRow;
   AnCol = AinpnCol + nSlacks;
@@ -78,7 +78,7 @@ int simplexMethod::setProblem(){
   A = asMatrix(Araw, AnRow, AnCol); // new double*
   B = new double[AnRow];
   C = new double[AnCol];
-//  Rcout << "AnRow=" << AnRow << ",AnCol=" << AnCol << std::endl;
+  //  Rcout << "AnRow=" << AnRow << ",AnCol=" << AnCol << std::endl;
   // Copy and augment the structures:
   // Constraints
   int iSlack = 0;
@@ -132,8 +132,9 @@ int simplexMethod::setProblem(){
 int simplexMethod::setTableauI(){
   // Clean the memory if occupied
   if (tI){
-    delete[] tI;
-    delete[] tIraw;
+   delete[] tI;
+   delete[] tIraw;
+   delete[] tIbasis;
   }
   // Determine size and allocate structures
   tInRow = AnRow;
@@ -454,8 +455,9 @@ int simplexMethod::setTableauII(){
   // 2) Create table structure for Phase II (nrow based on above)
   // Clean the memory if occupied
   if (tII){
-    delete[] tII;
-    delete[] tIIraw;
+   delete[] tII;
+   delete[] tIIraw;
+   delete[] tIIbasis;
   }
 //  printTableau(tI, tInRow, tInCol);
 //  printBasis(tIbasis, tInRow);
@@ -569,7 +571,7 @@ int simplexMethod::scale(){
         if (fabs(Ainp[i][j]) < abMin){
           abMin = fabs(Ainp[i][j]);
         }
-        if (fabs(Ainp[i][j] > abMax)){
+        if (fabs(Ainp[i][j]) > abMax){
           abMax = fabs(Ainp[i][j]);
         }
       }

@@ -1,5 +1,5 @@
-c924199f08840570d0c2017cc252ed02 *ChangeLog
-1ab5bfdf69d19c36abfc5ea98e359535 *DESCRIPTION
+80c6d49141bd89f669c1e79408448abf *ChangeLog
+460229476c6c0e7b312aeb23f02935ec *DESCRIPTION
 c14821ab19d5e088a2a1cfd1b180566d *NAMESPACE
 a9851dc595511d3ab92feb91eae8037c *R/coef.npsf.R
 dd83114d9e8c30ab640972c89938f41e *R/nobs.npsf.R
@@ -43,7 +43,7 @@ c09a27dbef37c816c03146368c128f52 *src/init.c
 26235d3e6f28406c40b627cc85934a46 *src/nllpk/NlLpk.h
 1371bb3836594048947b30f84640db0e *src/nllpk/routines.cpp
 d65c67e50ba14263dc4db6c383e6df1c *src/nllpk/routines.h
-4a35292becfc42fce23fea9a1172cadd *src/nllpk/simplexMethod.cpp
+2da57c85d4748211b433f81b273c3c42 *src/nllpk/simplexMethod.cpp
 01fe167aac25df86245a0e0acdb04f3e *src/nllpk/simplexMethod.h
 413676ebb66958d96291d575210f9a2e *src/nonradial.cpp
 78b8a7aa81bf806c669fca0c75432ecf *src/radial.cpp
