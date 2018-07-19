@@ -48,7 +48,7 @@ numeric. 0 - nothing is printed; 1 - print summary of the model and data. 2 - pr
 }
 
 \author{
- Oleg Badunenko <obadunen@uni-koeln.de>
+ Oleg Badunenko <oleg.badunenko@port.ac.uk>
 }
 
 \seealso{
@@ -85,15 +85,16 @@ summary( m1 )
  
 data(banks05)
 
-m3 <- sf(lnC ~ lnw1 + lnw2 + lny1 + lny2, uhet = ~ ER, 
- vhet = ~ LA, data = banks05, distribution = "t", 
- prod = FALSE, print.level = 0)
+m3 <- sf(lnC ~ lnw1 + lnw2 + lny1 + lny2, ln.var.u.0i = ~ ER, 
+         ln.var.v.0i = ~ LA, data = banks05, distribution = "t", 
+         prod = FALSE, print.level = 3)
  
 summary(m3)
 
 }
 
 \keyword{ Stochastic Frontier Analysis }
+\keyword{ Panel Data Model }
 \keyword{ Heteroskedasticity }
 \keyword{ Truncated normal }
 \keyword{ Parametric efficiency analysis }

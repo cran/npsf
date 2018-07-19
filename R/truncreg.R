@@ -182,7 +182,7 @@ truncreg <- function(formula, data, subset,
   printCoefmat(coeffs)
  }
 
- tymch <- list(call = match.call(), model = "truncreg.cs", coef = coeffs[,1], table = coeffs, vcov = -iddl, loglik = l_init, lmtol = lmtol, LM = mylm, esttime = est.time.sec, sigma = theta0[length(theta0)], LL = a, UL = b, n = n, n.full = n.full, esample = YX$esample, nontruncsample = as.vector(YX$nontruncsample))
+ tymch <- list(call = match.call(), model = "truncreg.cs", coef = coeffs[,1], table = coeffs, vcov = -iddl, ll = l_init, lmtol = lmtol, LM = mylm, esttime = est.time.sec, sigma = theta0[length(theta0)], LL = a, UL = b, n = n, n.full = n.full, nontruncsample = as.vector(YX$nontruncsample), esample = YX$esample)
  
  if(marg.eff){
   tymch$marg.effects <- m.eff

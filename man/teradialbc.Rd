@@ -158,7 +158,7 @@ Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Non
 }
 
 \author{
-Oleg Badunenko <obadunen@uni-koeln.de>, Pavlo Mozharovskyi <pavlo.mozharovskyi@univ-rennes1.fr>
+Oleg Badunenko <oleg.badunenko@port.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@ensai.fr>
 
 }
 
@@ -244,7 +244,7 @@ t5 <- teradialbc ( y1 + y2 + y3 ~ x1 + x2 + x3 + x4 + x5,
 # ===  Parallel computing ===
 # ===========================
 
-# Perform previous bias-correction but use 4 cores and 
+# Perform previous bias-correction but use 8 cores and 
 # cluster type SOCK
 
 t51 <-  teradialbc ( y1 + y2 + y3 ~ x1 + x2 + x3 + x4 + x5, 

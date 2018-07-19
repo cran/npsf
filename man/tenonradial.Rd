@@ -94,7 +94,7 @@ Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers
 }
 
 \author{
-Oleg Badunenko <obadunen@uni-koeln.de>, Pavlo Mozharovskyi <pavlo.mozharovskyi@univ-rennes1.fr>
+Oleg Badunenko <oleg.badunenko@port.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@ensai.fr>
 }
 
 \seealso{

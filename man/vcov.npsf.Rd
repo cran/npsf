@@ -35,7 +35,7 @@
 }
 
 \author{
- Oleg Badunenko <obadunen@uni-koeln.de>
+ Oleg Badunenko <oleg.badunenko@port.ac.uk>
 }
 
 \examples{

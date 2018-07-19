@@ -522,15 +522,87 @@
  return(tymch)
 }
 
-.su <- function(x, mat.var.in.col = TRUE, digits = 4, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), print = FALSE){
+# .su <- function(x, mat.var.in.col = TRUE, digits = 4, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), print = FALSE){
+# 
+#  xvec2 <- xvec1 <- FALSE
+# 
+#  if(is.matrix(x)){
+#   if(min(dim(x)) == 1){
+#    # xvec1 <- TRUE
+#    if(which(dim(x) == 1) == 2){
+#     mynames <- colnames(x)
+#    } else {
+#     mynames <- rownames(x)
+#     x <- t(x)
+#    }
+#    # x <- as.vector(x)
+#   } else {
+#    if(!mat.var.in.col){
+#     x <- t(x)
+#    }
+#    mynames <- colnames(x)
+#   }
+#   # print(mynames)
+#   if(is.null(mynames)) mynames <- paste("Var", seq_len(ncol(x)), sep = "")
+#   x <- as.data.frame(x)
+#   # print(x)
+#   # mynames <- colnames(x)
+#  } # end if matrix
+# 
+#  if(is.vector(x)){
+#   xvec2 <- TRUE
+#   mynames <- deparse(substitute(x))
+#   x <- data.frame(Var1 = x)
+#  } # end if vector
+# 
+#  # cat("nymanes", sep ="")
+#  # print(mynames)
+# 
+#  if(!is.vector(x) & !is.matrix(x) & !is.data.frame(x)){
+#   stop("Provide vector, matrix, or data.frame")
+#  } else {
+#   t1 <- apply(x, 2, function(x) c(Obs = length(x), NAs = sum(is.na(x)), Mean = mean(x, na.rm = TRUE), StDev = sd(x, na.rm = TRUE), IQR = IQR(x, na.rm = TRUE), Min = min(x, na.rm = TRUE), quantile( x, probs = probs, na.rm = TRUE ), Max = max(x, na.rm = TRUE)))
+#   # print(t1)
+#   # print(mynames)
+#   # print(class(t1))
+#   # print(dim(t1))
+#   if(xvec2 & !xvec1) colnames(t1) <- mynames
+#   if(print){
+#    tymch <- formatC(t(t1), digits = 4, format = "f", width = 4+1)
+#    tymch <- gsub(".0000","",tymch, fixed = TRUE)
+#    print(tymch, quote = FALSE)
+#   }
+#  }
+#  class(t1) <- "npsf"
+#  return(t(t1))
+# }
 
+.my.prettyNum <- function(xx2){
+ n <- length(xx2)
+ xx2.pn <- prettyNum(xx2)
+ my.integers <- !(1:n %in%  grep(".", xx2.pn, fixed = TRUE))
+ xx3 <- ifelse(abs(xx2) < 1e-04 & xx2 != 0, formatC(xx2, digits = 1, format = "e", width = 5), ifelse(abs(xx2) >= 1e-04 & abs(xx2) < 10, formatC(xx2, format = "f", digits = 4), ifelse(abs(xx2) >= 10 & abs(xx2) < 100, formatC(xx2, format = "f", digits = 3), ifelse(abs(xx2) >= 100 & abs(xx2) < 1000, formatC(xx2, format = "f", digits = 2), ifelse(abs(xx2) >= 1000, formatC(xx2, format = "e", digits = 1), formatC(xx2, format = "f", digits = 1))))))
+ xx3[my.integers] <- xx2.pn[my.integers]
+ xx3
+}
+
+.su <- function(x, mat.var.in.col = TRUE, digits = 4, probs = c(0.05, 0.1, 0.25, 0.5, 0.75, 0.9), print = FALSE, names = NULL, ...){
+ 
  xvec2 <- xvec1 <- FALSE
-
+ # print(class(x))
+ 
+ if(is.list(x)){
+  # cat("this is a list\n")
+  mynames <- paste0("Var",1:length(x))
+ }
+ 
  if(is.matrix(x)){
+  # cat("this is a matrix\n")
   if(min(dim(x)) == 1){
    # xvec1 <- TRUE
    if(which(dim(x) == 1) == 2){
     mynames <- colnames(x)
+    
    } else {
     mynames <- rownames(x)
     x <- t(x)
@@ -542,39 +614,74 @@
    }
    mynames <- colnames(x)
   }
+  
   # print(mynames)
   if(is.null(mynames)) mynames <- paste("Var", seq_len(ncol(x)), sep = "")
   x <- as.data.frame(x)
   # print(x)
   # mynames <- colnames(x)
  } # end if matrix
-
- if(is.vector(x)){
+ 
+ if(is.vector(x) & !is.list(x)){
+  # cat("this is a vector\n")
   xvec2 <- TRUE
   mynames <- deparse(substitute(x))
   x <- data.frame(Var1 = x)
  } # end if vector
-
- # cat("nymanes", sep ="")
+ 
  # print(mynames)
-
- if(!is.vector(x) & !is.matrix(x) & !is.data.frame(x)){
-  stop("Provide vector, matrix, or data.frame")
+ # print(names)
+ 
+ if(!is.null(names)){
+  if(length(mynames) == length(names)){
+   mynames <- names
+  }
+ }
+ 
+ # cat("nynames\n", sep ="")
+ # print(mynames)
+ if(is.list(x)){
+  t1 <- sapply(x, function(x) c(Obs = length(x), NAs = sum(is.na(x)), Mean = mean(x, na.rm = TRUE), StDev = sd(x, na.rm = TRUE), IQR = IQR(x, na.rm = TRUE), Min = min(x, na.rm = TRUE), quantile( x, probs = probs, na.rm = TRUE ), Max = max(x, na.rm = TRUE)))
+  # print(t1)
+  # print(mynames)
+  # print(class(t1))
+  # print(is.integer(t1))
+  # print( formatC(t1, format = "f") == formatC(t1, format = "fg") )
+  # print(dim(t1))
+  # if(xvec2 & !xvec1) colnames(t1) <- mynames
+  colnames(t1) <- mynames
+  # if(print){
+  #  # t2 <- rbind(
+  #  #   formatC(t1[c(1:2),,drop = FALSE], digits = digits, format = "fg"),
+  #  #   formatC(t1[-c(1:2),,drop = FALSE], digits = digits, format = "f")
+  #  # )
+  #  print(data.frame(.my.prettyNum(t1)))
+  # }
+  if(print){
+   t2 <- data.frame(.my.prettyNum(t1))
+   colnames(t2) <- mynames
+   print(t2)
+  } 
+ } else if(!is.vector(x) & !is.matrix(x) & !is.data.frame(x)){
+  stop("Provide list, vector, matrix, or data.frame")
  } else {
   t1 <- apply(x, 2, function(x) c(Obs = length(x), NAs = sum(is.na(x)), Mean = mean(x, na.rm = TRUE), StDev = sd(x, na.rm = TRUE), IQR = IQR(x, na.rm = TRUE), Min = min(x, na.rm = TRUE), quantile( x, probs = probs, na.rm = TRUE ), Max = max(x, na.rm = TRUE)))
   # print(t1)
   # print(mynames)
-  # print(class(t1))
+  print(is.integer(t1))
+  print(class(t1))
   # print(dim(t1))
   if(xvec2 & !xvec1) colnames(t1) <- mynames
+  if(print) print(data.frame(.my.prettyNum(t1)))#t1 <- data.frame(formatC(t1, digits = digits, ...)); print(t1)
   if(print){
-   tymch <- formatC(t(t1), digits = 4, format = "f", width = 4+1)
-   tymch <- gsub(".0000","",tymch, fixed = TRUE)
-   print(tymch, quote = FALSE)
-  }
+   t2 <- data.frame(.my.prettyNum(t1))
+   colnames(t2) <- mynames
+   print(t2)
+  } 
  }
- class(t1) <- "npsf"
- return(t(t1))
+ tymch <- t(t1)
+ class(tymch) <- "sfgtrehet"
+ return(tymch)
 }
 
 .rownames.Intercept.change <- function(x){
@@ -1428,39 +1535,39 @@
 
 # end parallel computing
 
-.prepareYXZ <- function(formula, uhet = NULL, vhet = NULL, tmean = NULL, data, subset, sysnframe = 1, ...) {
+.prepareYXZ.cs <- function(formula, ln.var.u.0i = NULL, ln.var.v.0i = NULL, mean.u.0i = NULL, data, subset, sysnframe = 1, ...) {
  # needed.frame <- sys.nframe() - 1
  needed.frame <- sys.nframe() - sysnframe
  # cat("sys.nframe() = ",sys.nframe(),"\n")
  # cat("needed.frame = ",needed.frame,"\n")
  mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = needed.frame)))
- if ( is.null(uhet) ){
-  uhet <- ~ 1
+ if ( is.null(ln.var.u.0i) ){
+  ln.var.u.0i <- ~ 1
   ku <- 1
  } else {
   ku <- 17
  }
- if ( is.null(vhet) ){
-  vhet <- ~ 1
+ if ( is.null(ln.var.v.0i) ){
+  ln.var.v.0i <- ~ 1
   kv <- 1
  } else {
   kv <- 17
  }
- if ( is.null(tmean) ){
-  tmean <- ~ 1
+ if ( is.null(mean.u.0i) ){
+  mean.u.0i <- ~ 1
   kdel <- 1
  } else {
   kdel <- 17
  }
-
- form1 <- Formula(as.formula(paste("",deparse(formula, width.cutoff = 500L)," | ",uhet[2]," | ",vhet[2]," | ",tmean[2],"", sep = "")))
-
- form <- Formula(as.formula(paste("",deparse(formula, width.cutoff = 500L)," + ",uhet[2]," + ",vhet[2]," + ",tmean[2],"", sep = "")))
-
+ 
+ form1 <- Formula(as.formula(paste("",deparse(formula, width.cutoff = 500L)," | ",ln.var.u.0i[2]," | ",ln.var.v.0i[2]," | ",mean.u.0i[2],"", sep = "")))
+ 
+ form <- Formula(as.formula(paste("",deparse(formula, width.cutoff = 500L)," + ",ln.var.u.0i[2]," + ",ln.var.v.0i[2]," + ",mean.u.0i[2],"", sep = "")))
+ 
  # check if it is a matrix
  datasupplied <- !(match("data", names(mf0), 0) == 0)
-
-
+ 
+ 
  if(datasupplied){
   # begin get a logical vector equal TRUE if !missing
   # first using data and subset to get x without NA
@@ -1480,7 +1587,7 @@
   }
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
-
+  
   # get the data
   # print(form1)
   dataesample <- model.frame(form1, data = data[esample,])
@@ -1525,7 +1632,7 @@
  # if data are not supplied
  else {
   # begin get a logical vector equal TRUE if !missing
-
+  
   # first using data and subset to get XZ without NA
   mf <- mf0
   mf$formula <- formula( form )
@@ -1548,11 +1655,11 @@
   }
   # print(table(esample))
   # end get a logical vector equal TRUE if !missing
-
+  
   # get the data
   #   print(head(Y))
   #   print(head(XZ))
-
+  
   # get X
   mf <- mf0
   m <- match(c("formula"), names(mf), 0L)
@@ -1563,7 +1670,7 @@
   X <- as.matrix(model.matrix(mt, mf))
   # print(head(X))
   k <- ncol(X)
-
+  
   # get Zu
   if(ku == 1){
    Zu <- matrix(1, nrow = sum(esample), ncol = 1)
@@ -1571,7 +1678,7 @@
   }
   else {
    mf <- mf0
-   mf$formula <- formula( Formula(as.formula(paste("",deparse(formula)," + ",uhet[2],"", sep = ""))))
+   mf$formula <- formula( Formula(as.formula(paste("",deparse(formula)," + ",ln.var.u.0i[2],"", sep = ""))))
    m <- match(c("formula"), names(mf), 0L)
    mf <- mf[c(1L, m)]
    mf[[1L]] <- as.name("model.frame")
@@ -1582,7 +1689,7 @@
    ku <- ncol(Zu)
    # print(head(Zu))
   }
-
+  
   # get Zv
   if(kv == 1){
    Zv <- matrix(1, nrow = sum(esample), ncol = 1)
@@ -1590,7 +1697,7 @@
   }
   else {
    mf <- mf0
-   mf$formula <- formula( Formula(as.formula(paste("",deparse(formula)," + ",uhet[2]," + ",vhet[2],"", sep = ""))))
+   mf$formula <- formula( Formula(as.formula(paste("",deparse(formula)," + ",ln.var.u.0i[2]," + ",ln.var.v.0i[2],"", sep = ""))))
    m <- match(c("formula"), names(mf), 0L)
    mf <- mf[c(1L, m)]
    mf[[1L]] <- as.name("model.frame")
@@ -1601,7 +1708,7 @@
    kv <- ncol(Zv)
    # print(head(Zv))
   }
-
+  
   # get Zdel
   if(kdel == 1){
    Zdel <- matrix(1, nrow = sum(esample), ncol = 1)
@@ -1611,13 +1718,13 @@
    Zdel <- XZ[, -(2:(k+ku-1+kv-1)), drop = FALSE]
    # print(head(Zdel))
   }
-
-    # print(head(Zu))
-    # print(head(Zv))
-    # print(head(Zdel))
+  
+  # print(head(Zu))
+  # print(head(Zv))
+  # print(head(Zdel))
  }
  # colnames(X)[1] <- colnames(Zu)[1] <- colnames(Zv)[1] <- colnames(Zdel)[1] <- "Intercept"
-
+ 
  # if(sum(colnames(X) == "(Intercept)") > 0){
  #  # print(which(colnames(X) == "(Intercept)"))
  #  colnames(X)[which(colnames(X) == "(Intercept)")] <- "Intercept"
@@ -1634,18 +1741,18 @@
  #  # print(which(colnames(Zv) == "(Intercept)"))
  #  colnames(Zdel)[which(colnames(Zdel) == "(Intercept)")] <- "Intercept"
  # }
-
+ 
  colnames(X) <- .rownames.Intercept.change(colnames(X))
  colnames(Zu) <- .rownames.Intercept.change(colnames(Zu))
  colnames(Zv) <- .rownames.Intercept.change(colnames(Zv))
  colnames(Zdel) <- .rownames.Intercept.change(colnames(Zdel))
-
+ 
  # print(colnames(Zdel))
-
+ 
  tymch <- list(Y = Y, X = X, Zu = Zu, Zv = Zv, Zdel = Zdel, n = n, k = k, ku = ku, kv = kv, kdel = kdel, esample = esample)
  class(tymch) <- "npsf"
  return(tymch)
-
+ 
 }
 
 # Half-normal model
@@ -1966,26 +2073,7 @@
 }
 
 # library(matrixcalc)
-is.negative.definite <- function (x, tol = 1e-08)
-{
- # if (!is.square.matrix(x))
- # stop("argument x is not a square matrix")
- # if (!is.symmetric.matrix(x))
- # stop("argument x is not a symmetric matrix")
- # if (!is.numeric(x))
- # stop("argument x is not a numeric matrix")
- eigenvalues <- eigen(x, only.values = TRUE)$values
- n <- nrow(x)
- for (i in 1:n) {
-  if (abs(eigenvalues[i]) < tol) {
-   eigenvalues[i] <- 0
-  }
- }
- if (any(eigenvalues >= 0)) {
-  return(FALSE)
- }
- return(TRUE)
-}
+
 
 .mlmaximize <- function(theta0, ll, gr = NULL, hess = NULL, alternate = NULL, BHHH = F, level = 0.99, step.back = .Machine$double.eps, reltol = .Machine$double.eps, lmtol = sqrt(.Machine$double.eps), steptol = sqrt(.Machine$double.eps), digits = 4, when.backedup = sqrt(.Machine$double.eps), max.backedup = 17, print.level = 6, only.maximize = FALSE, maxit = 150, n = 100, ...){
 
@@ -2186,7 +2274,7 @@ is.negative.definite <- function (x, tol = 1e-08)
    d0 <- rep(0, length(theta0))
    # eig2 <- ifelse(eig1$values < eps1, 1, eig1$values)
    for (i in 1:length(eig1$values)){
-    d0 <- d0 + (g1%*%eig1$vectors[,i])*eig1$vectors[,i] / eig1$values[i]
+    d0 <- d0 + (g1%*%eig1$vectors[,i])%*%eig1$vectors[,i] / eig1$values[i]
    }
    # @14@ could be done easier
    # d0 <- qr.solve(-h0, g1, tol = 1e-10)
@@ -2464,6 +2552,1796 @@ is.negative.definite <- function (x, tol = 1e-08)
  return(t1)
 }
 
+.prepareYXZ.panel.simple <- function(formula, data, it, subset,
+                                     ln.var.v.it = ln.var.v.it, 
+                                     ln.var.u.0i = ln.var.u.0i, 
+                                     mean.u.0i = mean.u.0i,
+                                     print.level = 1, ...) {
+ needed.frame <- sys.nframe() - 1
+ mf0 <- match.call(expand.dots = FALSE, call = sys.call(sys.parent(n = 1)))
+ # print(mf0)
+ 
+ # check if it is a matrix
+ datasupplied <- !(match("data", names(mf0), 0) == 0)
+ subssupplied <- !(match("subset", names(mf0), 0) == 0)
+ 
+ if(subssupplied & !datasupplied){
+  stop("Cannot specify 'subset' without specifying 'data'\n")
+ }
+ 
+ itsupplied <- !(match("it", names(mf0), 0) == 0)
+ if(!itsupplied){
+  stop("Panel structure must be specified by using 'it' argument\n")
+ }
+ 
+ if(length(it) != 2){
+  stop("Invalid panel structure in 'it' argument\n")
+ }
+ 
+ if ( is.null(ln.var.v.it) ){
+  ln.var.v.it <- ~ 1
+  kvi <- 1
+ } else {
+  kvi <- 17
+ }
+ if ( is.null(ln.var.u.0i) ){
+  ln.var.u.0i <- ~ 1
+  ku0 <- 1
+ } else {
+  ku0 <- 17
+ }
+ if ( is.null(mean.u.0i) ){
+  mean.u.0i <- ~ 1
+  kdeli <- 1
+ } else {
+  kdeli <- 17
+ }
+ 
+ form3 <- as.formula(paste0("~", paste0(it, collapse = "+")))
+ form1 <- as.Formula(formula,ln.var.v.it,ln.var.u.0i,mean.u.0i,form3)
+ 
+ # print(form2)
+ 
+ if(datasupplied){
+  data.order <- as.numeric(rownames(data)) # seq_len(nrow(data))
+  
+  # print(rownames(data)[1:100])
+  # print(as.numeric(rownames(data))[1:100])
+  
+  # begin get a logical vector equal TRUE if !missing
+  # first using data and subset to get x without NA
+  mf <- mf0
+  mf$formula <- form1 #formula( form )
+  m <- match(c("formula", "data", "subset"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf[[1L]] <- as.name("model.frame")
+  mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+  mt <- attr(mf, "terms")
+  #   cat("Print mt\n")
+  #   print(mt)
+  #   cat("Print mf\n")
+  #   print(mf)
+  X <- model.matrix(mt, mf)
+  # Y <- as.matrix(model.response(mf, "numeric"))
+  # print(dim(X))
+  # X <- model.frame(mt, mf)
+  #   cat("Print X\n")
+  #   print(X)
+  #   cat("End print X\n")
+  # now get the names in the entire data
+  esample.nu <- as.numeric(rownames(X))
+  # print(esample.nu[1:100])
+  # print(old.order)
+  esample <- data.order %in% esample.nu
+  # print(length(esample))
+  # print(table(esample))
+  if(sum(esample)==0){
+   stop("no valid data points")
+  }
+  # print(table(esample))
+  # end get a logical vector equal TRUE if !missing
+  
+  # get the data
+  # print(form1)
+  #   dataesample <- model.frame(form1, data = data)
+  #   dataesample <- dataesample[esample.nu,]
+  #   print(as.numeric(rownames(dataesample)))
+  # esample1 <- esample
+  #   esample <- as.numeric(rownames(dataesample)) %in% esample.nu
+  #   # print(table(esample))
+  #   print(c(length(esample), nrow(dataesample)))
+  # dataesample <- dataesample[as.numeric(rownames(dataesample)) %in% esample.nu,]
+  # print(dim(dataesample))
+  # print(dataesample)
+  Y <- as.matrix(model.part(form1, data = mf, lhs = 1, drop = FALSE))
+  # print(length(Y))
+  # print(length(model.response(dataesample)))
+  # Y <- as.matrix( model.matrix(formula(form1, lhs = 1, rhs = 0), data = data[esample,]))
+  # print(Y)
+  X <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 1), data = mf))
+  # print(X)
+  nt <- nrow(Y)
+  k <- ncol(X)
+  # Zvi
+  if(is.null(ln.var.v.it)){
+   Zvi <- matrix(1, nrow = sum(esample), ncol = 1)
+  }
+  else {
+   Zvi <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 2), data = mf))
+   kvi <- ncol(Zvi)
+  }
+  # Zu0
+  if(is.null(ln.var.u.0i)){
+   Zu0 <- matrix(1, nrow = sum(esample), ncol = 1)
+  }
+  else {
+   Zu0 <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 3), data = mf))
+   ku0 <- ncol(Zu0)
+  }
+  # kdeli
+  if(is.null(mean.u.0i)){
+   zdeli <- matrix(1, nrow = sum(esample), ncol = 1)
+  }
+  else {
+   zdeli <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 4), data = mf))
+   kdeli <- ncol(zdeli)
+  }
+  # IT
+  itvar <- as.matrix( model.matrix(formula(form1, lhs = 0, rhs = 5), data = mf))[,-1]
+  sorted <- order(itvar[,1],itvar[,2])
+  old.order <- seq(nrow(itvar))
+  old.sorted <- order(old.order[sorted])
+  itvar <- itvar[sorted,]
+  idvar <- itvar[,1]
+  timevar <- itvar[,2]
+  ii <- unique(idvar)
+  n <- length(ii)
+  t.years <- length(unique(itvar[,2]))
+  
+  # The size of each panel
+  
+  t0 <- as.vector( by(data = itvar[,1], INDICES = itvar[,1], function(x) sum(!is.na(x))) )
+  t1 <- summary( t0 )
+  
+  # summary of the panel data
+  
+  # if(print.level >= 1){
+  #
+  #  cat("\n=================")
+  #  cat(" Summary of the panel data: \n\n", sep = "")
+  #  cat("   Number of obs       (NT) =",nt,"", "\n")
+  #  cat("   Number of groups     (N) =",n,"", "\n")
+  #  cat("   Obs per group: (T_i) min =",t1["Min."],"", "\n")
+  #  cat("                        avg =",t1["Mean"],"", "\n")
+  #  cat("                        max =",t1["Max."],"", "\n\n")
+  # }
+  
+  ids <- sort( unique(idvar) )
+  idlenmax <- t1["Max."]
+  dat.descr <- c(NT = nt, N = n, t1["Min."], t1["Mean"], t1["Max."])
+  #   print(head(Y))
+  #   print(head(X))
+  #   print(head(Zu))
+  #   print(head(Zv))
+  #   print(head(Zdel))
+ }
+ # if data are not supplied
+ else {
+  # begin get a logical vector equal TRUE if !missing
+  
+  # first using data and subset to get XZ without NA
+  mf <- mf0
+  mf$formula <- formula( formula )
+  subsetsupplied <- !(match("subset", names(mf), 0) == 0)
+  if(subsetsupplied) stop("Subset with matrices is not allowed")
+  m <- match(c("formula"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf[[1L]] <- as.name("model.frame")
+  # mf <- eval(mf, parent.frame())
+  mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+  mt <- attr(mf, "terms")
+  Y <- as.matrix(model.response(mf))
+  n <- nrow(Y)
+  XZ <- as.matrix(model.matrix(mt, mf))
+  # get a logical vector equal TRUE if !missing
+  with.na <- model.frame(mt, na.action = na.pass)
+  esample.nu <- as.numeric(rownames(XZ))
+  esample <- rownames(with.na) %in% esample.nu
+  if(sum(esample)==0){
+   stop("no valid data points")
+  }
+  # print(table(esample))
+  # end get a logical vector equal TRUE if !missing
+  
+  # get the data
+  #   print(head(Y))
+  #   print(head(XZ))
+  
+  # get X
+  mf <- mf0
+  m <- match(c("formula"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf[[1L]] <- as.name("model.frame")
+  mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+  mt <- attr(mf, "terms")
+  X <- as.matrix(model.matrix(mt, mf))
+  # print(head(X))
+  k <- ncol(X)
+  
+  # get Zvi
+  if(is.null(ln.var.v.it)){
+   Zvi <- matrix(1, nrow = sum(esample), ncol = 1)
+  }
+  else {
+   mf <- mf0
+   mf$formula <- formula( Formula(as.formula(paste("",deparse(formula)," + ",ln.var.v.it[2],"", sep = ""))))
+   m <- match(c("formula"), names(mf), 0L)
+   mf <- mf[c(1L, m)]
+   mf[[1L]] <- as.name("model.frame")
+   mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+   mt <- attr(mf, "terms")
+   XZs <- as.matrix(model.matrix(mt, mf))
+   Zvi <- XZs[, -(2:k), drop = FALSE]
+   kvi <- ncol(Zvi)
+   # print(head(Zu))
+  }
+  # get Zu0
+  if(is.null(ln.var.u.0i)){
+   Zu0 <- matrix(1, nrow = sum(esample), ncol = 1)
+  }
+  else {
+   mf <- mf0
+   mf$formula <- formula( Formula(as.formula(paste("",deparse(formula)," + ",ln.var.v.it[2]," + ",ln.var.u.0i[2],"", sep = ""))))
+   m <- match(c("formula"), names(mf), 0L)
+   mf <- mf[c(1L, m)]
+   mf[[1L]] <- as.name("model.frame")
+   mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+   mt <- attr(mf, "terms")
+   XZs <- as.matrix(model.matrix(mt, mf))
+   Zu0 <- XZs[, -(2:(k+kvi-1)), drop = FALSE]
+   ku0 <- ncol(Zu0)
+   # print(head(Zv))
+  }
+  # get zdeli
+  if(is.null(mean.u.0i)){
+   zdeli <- matrix(1, nrow = sum(esample), ncol = 1)
+  }
+  else {
+   mf <- mf0
+   mf$formula <- formula( Formula(as.formula(paste("",deparse(formula)," + ",ln.var.v.it[2]," + ",ln.var.u.0i[2]," + ",mean.u.0i[2],"", sep = ""))))
+   m <- match(c("formula"), names(mf), 0L)
+   mf <- mf[c(1L, m)]
+   mf[[1L]] <- as.name("model.frame")
+   mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
+   mt <- attr(mf, "terms")
+   XZs <- as.matrix(model.matrix(mt, mf))
+   zdeli <- XZs[, -(2:(k+kvi-1+ku0-1)), drop = FALSE]
+   kdeli <- ncol(zdeli)
+   # print(head(Zv))
+  }
+  # IT
+  itvar <- XZ[, -(2:(k+kvi-1+ku0-1+kvi-1+kdeli-1)), drop = FALSE]
+  sorted <- order(itvar[,1],itvar[,2])
+  itvar <- itvar[sorted,]
+  idvar <- itvar[,1]
+  timevar <- itvar[,2]
+  ii <- unique(idvar)
+  n <- length(ii)
+  t.years <- length(unique(itvar[,2]))
+  
+  # The size of each panel
+  
+  t0 <- as.vector( by(data = itvar[,1], INDICES = itvar[,1], function(x) sum(!is.na(x))) )
+  t1 <- summary( t0 )
+  
+  # summary of the panel data
+  
+  # if(print.level >= 1){
+  #  cat("\n=================")
+  #  cat(" Summary of the panel data: \n\n", sep = "")
+  #  cat("   Number of obs       (NT) =",nt,"", "\n")
+  #  cat("   Number of groups     (N) =",n,"", "\n")
+  #  cat("   Obs per group: (T_i) min =",t1["Min."],"", "\n")
+  #  cat("                        avg =",t1["Mean"],"", "\n")
+  #  cat("                        max =",t1["Max."],"", "\n")
+  # }
+  
+  ids <- sort( unique(idvar) )
+  idlenmax <- t1["Max."]
+  dat.descr <- c(NT = nt, N = n, t1["Min."], t1["Mean"], t1["Max."])
+  
+  #   print(head(Zu))
+  #   print(head(Zv))
+  #   print(head(Zdel))
+ }
+ 
+ # sort all
+ Y <- Y[sorted,, drop = FALSE]
+ X <- X[sorted,, drop = FALSE]
+ 
+ Zu0 <- Zu0[sorted,, drop = FALSE]
+ Zvi <- Zvi[sorted,, drop = FALSE]
+ zdeli <- zdeli[sorted,, drop = FALSE]
+ # print(head(zdeli))
+ 
+ abbr.length <- 121
+ names_x  <- abbreviate(colnames(X), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides")
+ names_u0 <- abbreviate(colnames(Zu0), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides")
+ names_vi <- abbreviate(colnames(Zvi), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides")
+ names_udeli <- abbreviate(colnames(zdeli), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides")
+ # print(names_udeli)
+ max.name.length <- max(nchar(c(names_x,names_u0,names_vi,names_udeli)))
+ 
+ names_u0 <- colnames(Zu0)
+ names_udeli <- colnames(zdeli)
+ 
+ # print(names_udeli)
+ 
+ # print(c(dim(Zv0), length(idvar)))
+ 
+ # print(as.vector(unlist( by(data = Zv0[,-1,drop = F], INDICES = idvar, function(x) apply(x, 2, sd)) )))
+ 
+ if(!is.null(mean.u.0i)){
+  # print(as.vector(unlist(by(data = zdeli[,-1, drop = F], INDICES = idvar, FUN = function(x) apply(x, 2, sd)))))
+  if(sum(as.vector(unlist(by(data = zdeli[,-1, drop = F], INDICES = idvar, FUN = function(x) apply(x, 2, sd)))), na.rm = TRUE) > 0){
+   stop("Time-varying variable(s) in 'mean.u.0i'", call. = FALSE)
+  } 
+ }
+ zdeli <- matrix(unlist(by(zdeli, idvar, colMeans)), nrow = n, byrow = TRUE)
+ colnames(zdeli) <- names_udeli
+ # print(head(zdeli))
+ 
+ 
+ 
+ if(!is.null(ln.var.u.0i)){
+  # print(as.vector(unlist(by(data = Zu0[,-1, drop = F], INDICES = idvar, FUN = function(x) apply(x, 2, sd)))))
+  if(sum(as.vector(unlist(by(data = Zu0[,-1, drop = F], INDICES = idvar, FUN = function(x) apply(x, 2, sd)))), na.rm = TRUE) > 0){
+   stop("Time-varying variable(s) in 'ln.var.u.0i'", call. = FALSE)
+  }
+ }
+ Zu0 <- matrix(unlist(by(Zu0, idvar, colMeans)), nrow = n, byrow = TRUE)
+ colnames(Zu0) <- names_u0
+ # print(head(Zu0))
+ 
+ 
+ # esample <- esample[sorted,, drop = FALSE]
+ # esample.nu <- esample.nu[sorted]
+ 
+ # colnames(X)[1] <- colnames(Zvi)[1] <- colnames(Zu0)[1] <- colnames(zdeli)[1] <- "(Intercept)"
+ 
+ 
+ 
+ tymch <- list(Formula = form1, Y = Y, X = X,
+               nt = nt, n = n, Kb = k,
+               idvar = idvar, timevar = timevar, ii = ii, 
+               ids = ids, idlenmax = idlenmax,
+               t0 = t0, itvar = itvar,
+               dat.descr = dat.descr, t_i = t1, old.sorted = old.sorted,
+               Zvi = Zvi, Zu0 = Zu0, Zdeli = zdeli,
+               Kvi = kvi, Ku0 = ku0, Kdeli = kdeli,
+               esample = esample, esample.nu = esample.nu)
+ 
+ # cat("3\n")
+ # print(head(zdeli))
+ 
+ if(print.level >= 1){
+  est.spd.left <- floor( (max.name.length+42-29) / 2 )
+  est.spd.right <- max.name.length+42-29 - est.spd.left
+  # cat("\n------------")
+  # cat(" Summary of the panel data: ------------\n\n", sep = "")
+  # cat("\n------------ Summary of the panel data: ----------\n\n", sep = "")
+  cat("\n",rep("-", est.spd.left)," Summary of the panel data: ",rep("-", est.spd.right),"\n\n", sep ="")
+  cat("   Number of obs       (NT) =",nt,"", "\n")
+  cat("   Number of groups     (N) =",n,"", "\n")
+  cat("   Obs per group: (T_i) min =",dat.descr[3],"", "\n")
+  cat("                        avg =",dat.descr[4],"", "\n")
+  cat("                        max =",dat.descr[5],"", "\n")
+ }
+ # cat("0")
+ class(tymch) <- "npsf"
+ return(tymch)
+ 
+}
+
+# Log-likelihood
+
+.ll.panel <- function(theta, prod, coef.fixed, my.n, Ktheta, k, kv, ku, kdel, yit, zvit, zui, xit, zdeli, model, timevar, maxT, ids, idvar, t0, eff.time.invariant = FALSE, mean.u.0i.zero = FALSE) {
+ 
+ # print(theta)
+
+ # theta <- theta[!coef.fixed]
+ # print(coef.fixed)
+ s <- ifelse(prod, -1, 1)
+ 
+ beta <- theta[1:k]
+ gv <- theta[(k+1):(k+kv)]
+ gu <- theta[(k+kv+1):(k+kv+ku)]
+ 
+ eit <- as.vector( yit - xit%*%beta )
+ # print(summary(as.vector(eit)))
+ sigu2i <- as.vector( exp(zui%*%gu) )
+ sigv2it <- as.vector( exp(zvit%*%gv) )
+ 
+ if(!mean.u.0i.zero){
+  delta <- theta[(k+kv+ku+1):(k+kv+ku+kdel)]
+  mui <- as.vector( zdeli%*%delta )
+ } else {
+  mui <- rep(0, my.n)
+ }
+ # print(k+kv+ku+kdel)
+ # print(kdel)
+ # print(Ktheta)
+ 
+ maxT_all <- maxT
+ 
+ if(eff.time.invariant){
+  Git <- rep(1, length(timevar))
+ } else {
+  if(model == "BC1992"){
+   # print(theta)
+   # print(c( Ktheta) )
+   # print(length(theta))
+   # print(theta[c( Ktheta) ])
+   # eta <- theta[12 ]
+   # cat("eta = ", theta[11 ],"\n")
+   # print(eta)
+   eta <- theta[c( Ktheta )]
+   Git = exp(-eta*(timevar - maxT_all))
+  } else if(model == "K1990modified"){
+   eta <- theta[c( (Ktheta-1) : (Ktheta) )]
+   Git = 1 + eta[1]*(timevar - maxT_all) + eta[2]*(timevar - maxT_all)^2
+  } else if(model == "K1990"){
+   eta <- theta[c( (Ktheta-1) : (Ktheta) )]
+   Git = (1 + exp(eta[1]*timevar + eta[2]*timevar^2))^(-1)
+  } else {
+   stop("Unknown model\n")
+  }
+  # cat("eta\n")
+  # print(eta)
+ }
+ 
+ # define indices
+ m.end <- cumsum(t0)
+ m.begin <- c(1,(m.end+1)[-my.n])
+
+ # Log-likelihood
+ llf = 0
+ for(i in 1:length(ids)){
+  # cat("i = ", i, "ll = ",llf,"\n")
+  sample.i <- (m.begin[i]):(m.end[i])
+  ei = eit[sample.i]
+  sigv2i = sigv2it[sample.i]
+  Gi = Git[sample.i]
+  Ti = length(ei)
+  lmdi = mui[i]/sigu2i[i]
+  sstart = (1/sigu2i[i] + sum(Gi^2/sigv2i))
+  
+  llf = llf - 1/2*log(sstart) - 1/2*(mui[i]*lmdi + sum(ei^2/sigv2i)) + 1/2*((lmdi + s*sum(ei*Gi/sigv2i))^2)/sstart - Ti/2 * log(2*pi) - 1/2*sum(log(sigv2i)) - 1/2*log(sigu2i[i]) - pnorm(mui[i]/sqrt(sigu2i[i]), log.p = TRUE) + pnorm((lmdi + s*sum(ei*Gi/sigv2i))/sqrt(sstart), log.p = TRUE)
+  
+  # if (i == 2){
+   # cat("\n")
+   # print(Gi)
+   # cat("sigu2i[i]\n")
+   # print(sigu2i[i] )
+   # print(sigv2i)
+   # cat("1/2*log(sstart)\n")
+   # print(1/2*log(sstart))
+   # cat("1/2*(mui[i]*lmdi + sum(ei^2/sigv2i))\n")
+   # print(1/2*(mui[i]*lmdi + sum(ei^2/sigv2i)))
+   # cat("1/2*((lmdi + s*sum(ei*Gi/sigv2i))^2)/sstart\n")
+   # print(1/2*((lmdi + s*sum(ei*Gi/sigv2i))^2)/sstart)
+   # cat("1/2*sum(log(sigv2i))\n")
+   # print(1/2*sum(log(sigv2i)))
+   # cat("1/2*log(sigu2i[i])\n")
+   # print(1/2*log(sigu2i[i]))
+   # cat("pnorm(mui[i]/sqrt(sigu2i[i]), log.p = TRUE)\n")
+   # print(pnorm(mui[i]/sqrt(sigu2i[i]), log.p = TRUE))
+   # cat("pnorm((lmdi + s*sum(ei*Gi/sigv2i))/sqrt(sstart), log.p = TRUE)\n")
+   # print(pnorm((lmdi + s*sum(ei*Gi/sigv2i))/sqrt(sstart), log.p = TRUE))
+   # cat("\n")
+  # }
+ }
+ 
+ return(llf)
+}
+
+.gr.hess.panel <- function(theta, prod, coef.fixed, my.n, Ktheta, k, kv, ku, kdel, yit, zvit, zui, xit, zdeli, model, timevar, maxT, ids, idvar, t0, eff.time.invariant = FALSE, mean.u.0i.zero = FALSE) {
+ 
+ s <- ifelse(prod, -1, 1)
+ beta <- theta[1:k]
+ gv <- theta[(k+1):(k+kv)]
+ gu <- theta[(k+kv+1):(k+kv+ku)]
+ 
+ eit <- as.vector( yit - xit%*%beta )
+ sigu2i <- as.vector( exp(zui%*%gu) )
+ sigv2it <- as.vector( exp(zvit%*%gv) )
+ 
+ if(!mean.u.0i.zero){
+  delta <- theta[(k+kv+ku+1):(k+kv+ku+kdel)]
+  mui <- as.vector( zdeli%*%delta )
+  lmdi = mui/sigu2i
+ } else {
+  mui <- lmdi <- rep(0, my.n)
+ }
+ 
+ 
+ maxT_all <- maxT
+ 
+ if(eff.time.invariant){
+  Git <- rep(1, length(timevar))
+ } else {
+  if(model == "BC1992"){
+   # print(theta)
+   # print(c( Ktheta) )
+   # print(length(theta))
+   # print(theta[c( Ktheta) ])
+   # eta <- theta[12 ]
+   # cat("eta = ", theta[11 ],"\n")
+   # print(eta)
+   eta <- theta[c( Ktheta )]
+   Git = exp(-eta*(timevar - maxT_all))
+  } else if(model == "K1990modified"){
+   eta <- theta[c( (Ktheta-1) : (Ktheta) )]
+   Git = 1 + eta[1]*(timevar - maxT_all) + eta[2]*(timevar - maxT_all)^2
+  } else if(model == "K1990"){
+   eta <- theta[c( (Ktheta-1) : (Ktheta) )]
+   Git = (1 + exp(eta[1]*timevar + eta[2]*timevar^2))^(-1)
+  } else {
+   stop("Unknown model\n")
+  }
+  # cat("eta\n")
+  # print(eta)
+ }
+ # Keta <- length(coef.fixed) - Ktheta
+ # cat.print(Keta)
+ # cat.print(length(coef.fixed))
+ # cat.print(Ktheta)
+ # # cat("Git\n")
+ # print(Git)
+ 
+ # define indices
+ m.end <- cumsum(t0)
+ m.begin <- c(1,(m.end+1)[-my.n])
+ 
+ gb = ggu = ggv = gdel = geta = 0
+ 
+ Hb = Hbgv = Hbgu = Hbdel = Hbeta = Hgvgu = Hgvdel = Hgv = Hdel = Hdelgu = Hdeleta = Hetagu = Hgu = Hetagv = Heta = 0;
+ # Hb = Hbgv = Hbgu = Hbdel = Hbeta = Hgvgu = Hgvdel = Hgv = Hdel = Hdelgu = Hdeleta = Hetagu = Hgu = Hetagv = Heta = 0;
+ # if(eff.time.invariant) Hbeta <- matrix(0, nrow = Keta, ncol = k)
+ 
+ for(i in 1:length(ids)){
+
+  sample.i <- (m.begin[i]):(m.end[i])
+  ei = eit[sample.i]
+  sigv2i = sigv2it[sample.i]
+  Gi = Git[sample.i]
+  
+  sstart = (1/sigu2i[i] + sum(Gi^2/sigv2i))
+  
+  xi = xit[sample.i, , drop = FALSE]; 
+  zvi = zvit[sample.i, , drop = FALSE];
+  Ti = length(ei)
+  timevari = timevar[sample.i]
+  c1 = (1/sigu2i[i] + sum(Gi^2/sigv2i))^(-1);
+  c2 = ei*Gi/sigv2i; 
+  c2s = sum(c2);
+  c3 = t(xi)%*%(Gi/sigv2i)
+  a1i = mui[i]/sqrt(sigu2i[i]); 
+  a2i = (lmdi[i] + s*sum(ei*Gi/sigv2i))*sqrt(c1)
+  d1 = dnorm(a1i)/pnorm(a1i); 
+  d2 = dnorm(a2i)/pnorm(a2i)
+  d3 = (1 - d2*(a2i + d2)) # this is A
+  d4 = d1*(a1i + d1)
+  
+  if(!eff.time.invariant){
+   if(model == "BC1992"){
+    tBC1 = (timevari - maxT_all[sample.i]);
+   } else if (model == "K1990modified"){
+    tBC2 = cbind((timevari - maxT_all[sample.i]), (timevari - maxT_all[sample.i])^2);
+   } else if (model == "K1990"){
+    Gk = (Gi^(-1)-1)
+    tSK = cbind(timevari, timevari^2)
+   } else {
+    stop("Unknown model\n")
+   }
+  }
+  
+  # if (i == 2){
+  #  cat("\n")
+  #  cat("Gi\n")
+  #  print(Gi)
+  #  cat(" c1*c3%*%t(c3)*d3\n")
+  #  print( c1*c3%*%t(c3)*d3)
+  #  cat.print(c1)
+  #  cat.print(c3)
+  #  cat.print(d3)
+  #  cat.print(a2i)
+  #  cat.print(d2)
+  #  cat("head(xi)\n")
+  #  print(head(xi))
+  #  cat("sigu2i[i]\n")
+  #  print(sigu2i[i] )
+  #  print(sigv2i)
+  #  cat("1/2*log(sstart)\n")
+  #  print(1/2*log(sstart))
+  #  cat("1/2*(mui[i]*lmdi + sum(ei^2/sigv2i))\n")
+  #  print(1/2*(mui[i]*lmdi + sum(ei^2/sigv2i)))
+  #  cat("1/2*((lmdi + s*sum(ei*Gi/sigv2i))^2)/sstart\n")
+  #  print(1/2*((lmdi + s*sum(ei*Gi/sigv2i))^2)/sstart)
+  #  cat("1/2*sum(log(sigv2i))\n")
+  #  print(1/2*sum(log(sigv2i)))
+  #  cat("1/2*log(sigu2i[i])\n")
+  #  print(1/2*log(sigu2i[i]))
+  #  cat("pnorm(mui[i]/sqrt(sigu2i[i]), log.p = TRUE)\n")
+  #  print(pnorm(mui[i]/sqrt(sigu2i[i]), log.p = TRUE))
+  #  cat("pnorm((lmdi + s*sum(ei*Gi/sigv2i))/sqrt(sstart), log.p = TRUE)\n")
+  #  print(pnorm((lmdi + s*sum(ei*Gi/sigv2i))/sqrt(sstart), log.p = TRUE))
+  #  cat("\n")
+  # }
+  
+  # Gradient
+  
+  gb = gb + t(xi)%*%((ei/sigv2i)- s*(Gi/sigv2i)*(lmdi[i]*c1 + s*c2s*c1 + sqrt(c1)*d2))
+  ggu = ggu + zui[i,,drop=FALSE]/sigu2i[i]*(0.5*c1 + mui[i]*(0.5*mui[i] + 0.5*d1*sqrt(sigu2i[i]) - sqrt(c1)*d2) + a2i*(c1*a2i/2 - sqrt(c1)*mui[i] + c1*d2/2)) - zui[i,,drop=FALSE]*0.5
+  ggv = ggv + t(zvi)%*%(0.5*c1*(Gi^2/sigv2i) + 0.5*(ei^2/sigv2i) - 0.5*rep.int(1, Ti) + a2i*sqrt(c1)*((a2i + d2)*0.5*sqrt(c1)*(Gi^2/sigv2i) - s*(ei*Gi/sigv2i)) - s*sqrt(c1)*d2*(ei*Gi/sigv2i))
+  gdel = gdel + zdeli[i,,drop=FALSE]/sigu2i[i] *(mui[i]*(c1/sigu2i[i] - 1) + s*c2s*c1 - d1 *sqrt(sigu2i[i]) + d2*sqrt(c1))
+  
+  # Hessian
+  
+  Hb = Hb - t(xi)%*%sweep(xi, 1, sigv2i, "/") + c1*c3%*%t(c3)*d3
+  
+  Hbgu = Hbgu + s*c3%*%zui[i,,drop=FALSE]*c1*(lmdi[i]*d3 - c1/sigu2i[i]*(lmdi[i] + s*sum(c2)) + sqrt(c1)/(2*sigu2i[i])*d2*(a2i*(a2i + d2) - 1))
+  Hbdel = Hbdel - s*c3%*%(zdeli[i,]/sigu2i[i]*d3*c1)
+  Hbgv = Hbgv + t(xi)%*%(-sweep(zvi, 1,ei/sigv2i, "*") + s*sweep(zvi, 1, Gi/sigv2i, "*")*(sqrt(c1)*(a2i + d2))) - s*(t(xi)%*%(Gi/sigv2i))%*%t(t(zvi)%*%(-s*c1*c2*d3 + (c1^1.5*(Gi^2/sigv2i))*(a2i + 0.5*d2*(1 - a2i*(a2i + d2)))))
+  Hgvgu = Hgvgu + t(zvi)%*%(c1*s*c2*(mui[i]*d3 - sqrt(c1)*a2i/2*(1+d3)) + c1^1.5*a2i*0.5*(Gi^2/sigv2i)*(sqrt(c1)*a2i*0.5*(3+d3) - mui[i]*(1+d3)) + 0.5*c1^1.5*(Gi^2/sigv2i)*(sqrt(c1) + d2*(1.5*sqrt(c1)*a2i - mui[i])) - 0.5*c1^1.5*s*d2*c2)%*%zui[i,,drop=FALSE]/sigu2i[i]
+  Hgvdel = Hgvdel + t(zvi)%*%(-s*c1*c2*d3 + (Gi^2/sigv2i)*(0.5*c1^1.5*(a2i*(1+d3) + d2)))%*%zdeli[i,]/sigu2i[i]
+  Hgv = Hgv +  t(zvi)%*%sweep(zvi,1,Gi^2/sigv2i, "*")*0.5*c1*(-d2*a2i - a2i^2 -1) + t(zvi)%*%(Gi^2/sigv2i)%*%t(t(zvi)%*%(Gi^2/sigv2i))*0.5*c1^2*(1 + 0.5*a2i^2*(3+d3) + d2*1.5*a2i) - 0.5*t(zvi)%*%sweep(zvi,1,ei^2/sigv2i, "*") + t(zvi)%*%sweep(zvi,1,c2, "*")*s*sqrt(c1)*(d2 + a2i) - (d2+a2i*(1+d3))*0.5*c1^1.5*s*(t(zvi)%*%(c2)%*%t(t(zvi)%*%(Gi^2/sigv2i)) + t(zvi)%*%(Gi^2/sigv2i)%*%t(t(zvi)%*%(c2))) + t(zvi)%*%(c2)%*%t(t(zvi)%*%(c2))*c1*d3
+  Hdel = Hdel + t(zdeli[i,,drop=FALSE]/sigu2i[i] *( - 1 + d3*c1/sigu2i[i] + d4))%*%zdeli[i,,drop=FALSE]
+  Hdelgu =  Hdelgu + t(zdeli[i,,drop=FALSE])%*%zui[i,,drop=FALSE]/sigu2i[i]*(c1^1.5/sigu2i[i]*0.5*a2i*(1+d3) - mui[i]*c1/sigu2i[i]*(1+d3) + d2*sqrt(c1)*(0.5*c1/sigu2i[i] - 1) - 0.5*d1*(mui[i]*(a1i + d1) - sqrt(sigu2i[i])) + mui[i] - s*c1*sum(c2))
+  Hgu = Hgu + (c1/sigu2i[i]*(0.5*c1 + (sqrt(c1)*a2i - mui[i])^2) - 0.5*(c1 + (sqrt(c1)*a2i - mui[i])^2) + d1*mui[i]/4*(mui[i]*(a1i + d1) - sqrt(sigu2i[i])) + d2*(-d2*2*c1/sigu2i[i]*(mui[i]/sqrt(2) - sqrt(c1/8)*a2i)^2 - c1*a2i/sigu2i[i]*(mui[i] - sqrt(c1)*a2i/2)^2 + sqrt(c1)*mui[i]*(1 - c1/sigu2i[i]) - c1*a2i/2*(1 - 1.5*c1/sigu2i[i])))*t(zui[i,,drop=FALSE])%*%zui[i,,drop=FALSE]/sigu2i[i]
+  
+  if(!eff.time.invariant){
+   if(model == "BC1992"){
+    geta = geta + c1*sum(Gi^2*tBC1/sigv2i) - s*sqrt(c1)*d2*sum(ei*Gi*tBC1/sigv2i) + sqrt(c1)*a2i*(sqrt(c1)*(a2i + d2)*sum(Gi^2*tBC1/sigv2i) - s*sum(ei*Gi*tBC1/sigv2i))
+    Hbeta = Hbeta + s*t(xi)%*%(Gi*tBC1/sigv2i)*sqrt(c1)*(a2i + d2) - s*t(xi)%*%(Gi/sigv2i)*c1*(-s*sum(c2*tBC1)*d3 + sqrt(c1)*a2i*(1 + d3)*sum(Gi^2*tBC1/sigv2i) + sqrt(c1)*d2*sum(Gi^2*tBC1/sigv2i))
+    Hdeleta = Hdeleta + t((sum(Gi^2*tBC1/sigv2i)*c1^1.5*(a2i*(1+d3) + d2)-s*c1*sum(c2*tBC1)*d3)*zdeli[i,,drop=FALSE]/sigu2i[i])
+    Hetagu = Hetagu + t((sum(Gi^2*tBC1/sigv2i)*c1^1.5/sigu2i[i]*(sqrt(c1) -a2i*mui[i]*(1+d3) + sqrt(c1)*a2i^2*0.5*(3+d3) - d2*(mui[i] - 1.5*a2i*sqrt(c1))) + s*c1/sigu2i[i]*sum(c2*tBC1)*(mui[i]*d3 - d2*0.5*sqrt(c1) - 0.5*sqrt(c1)*a2i*(1+d3)))*zui[i,,drop=FALSE])
+    Hetagv = Hetagv - t(zvi)%*%(Gi^2*tBC1/sigv2i)*c1*(1 + a2i^2 + a2i*d2) + sum(Gi^2*tBC1/sigv2i)*t(zvi)%*%(Gi^2/sigv2i)*c1^2*(1 + 0.5*a2i^2*(3 + d3) + 1.5*a2i*d2) + t(zvi)%*%(c2*tBC1)*s*sqrt(c1)*(d2 + a2i) + sum(c2*tBC1)*t(zvi)%*%(c2)*c1*d3 - (a2i*(1+d3) + d2)*s*c1^1.5*(0.5*sum(c2*tBC1)*t(zvi)%*%(Gi^2/sigv2i) + sum(Gi^2*tBC1/sigv2i)*t(zvi)%*%(c2))
+    Heta = Heta - 2*c1*sum(Gi^2*tBC1^2/sigv2i)*(1 + a2i^2 + d2*a2i) + c1^2*sum(Gi^2*tBC1/sigv2i)^2*(2 + a2i^2*(3 + d3) + 3*d2*a2i) + sum(c2*tBC1^2)*s*sqrt(c1)*(d2 + a2i) - 2*s*c1^1.5*sum(c2*tBC1)*sum(Gi^2*tBC1/sigv2i)*(d2 + a2i*(1 + d3)) + sum(c2*tBC1)^2*c1*d3
+    
+   } else if(model == "K1990modified"){
+    geta =  geta - c1*t(Gi/sigv2i)%*%tBC2 + 
+     s*sqrt(c1)*d2*t(ei/sigv2i)%*%tBC2 - 
+     sqrt(c1)*a2i*(sqrt(c1)*(a2i + d2)*t(Gi/sigv2i)%*%tBC2 - s*t(ei/sigv2i)%*%tBC2)
+    Hbeta = Hbeta - s*t(xi)%*%sweep(tBC2, 1, sigv2i, "/")*sqrt(c1)*(a2i + d2) - s*(t(xi)%*%(Gi/sigv2i))%*%t(t(tBC2)%*%(c1*(s*(ei/sigv2i)*d3 - sqrt(c1)*a2i*(1 + d3)*(Gi/sigv2i) - sqrt(c1)*d2*(Gi/sigv2i))))
+    Hdeleta = Hdeleta + t(zdeli[i,,drop=FALSE])%*%(t(t(tBC2)%*%(s*c1*(ei/sigv2i)*d3 - c1^1.5*(a2i*(1+d3) + d2)*(Gi/sigv2i)))/sigu2i[i])
+    Hetagu = Hetagu + t(zui[i,,drop=FALSE])%*%(- t(Gi/sigv2i)%*%tBC2*c1^1.5/sigu2i[i]*(sqrt(c1) -a2i*mui[i]*(1+d3) + sqrt(c1)*a2i^2*0.5*(3+d3) - d2*(mui[i] - 1.5*a2i*sqrt(c1))) - t(ei/sigv2i)%*%tBC2*s*c1/sigu2i[i]*(mui[i]*d3 - d2*0.5*sqrt(c1) - 0.5*sqrt(c1)*a2i*(1+d3)))
+    Hetagv = Hetagv + t(zvi)%*%sweep(tBC2, 1, Gi/sigv2i, "*")*c1*(1 + a2i^2 + a2i*d2) - (t(zvi)%*%(Gi^2/sigv2i))%*%(t(Gi/sigv2i)%*%tBC2)*c1^2*(1 + 0.5*a2i^2*(3 + d3) + 1.5*a2i*d2) - t(zvi)%*%sweep(tBC2, 1, ei/sigv2i, "*")*s*sqrt(c1)*(d2 + a2i) - (t(zvi)%*%(c2))%*%(t(ei/sigv2i)%*%tBC2)*c1*d3 + (a2i*(1+d3) + d2)*s*c1^1.5*(0.5*(t(zvi)%*%(Gi^2/sigv2i))%*%(t(ei/sigv2i)%*%tBC2) + (t(zvi)%*%(c2))%*%(t(Gi/sigv2i)%*%tBC2))
+    Heta = Heta - c1*(1 + a2i^2 + a2i*d2)*t(tBC2)%*%sweep(tBC2, 1, sigv2i, "/") + c1^2*(2 + a2i^2*(3 + d3) + d2*a2i*3)*t(t(Gi/sigv2i)%*%tBC2)%*%(t(Gi/sigv2i)%*%tBC2) - c1^1.5*s*(d2+a2i*(1+d3))*t(t(ei/sigv2i)%*%tBC2)%*%(t(Gi/sigv2i)%*%tBC2) + c1*d3*t(t(ei/sigv2i)%*%tBC2)%*%(t(ei/sigv2i)%*%tBC2) - c1^1.5*s*(d2 + a2i*(1+d3))*t(t(Gi/sigv2i)%*%tBC2)%*%(t(ei/sigv2i)%*%tBC2)
+    
+   } else if(model == "K1990"){
+    geta =  geta + c1*t(Gi^3*(Gi^(-1)-1)/sigv2i)%*%tSK -  s*sqrt(c1)*d2*t(ei*Gi^2*(Gi^(-1)-1)/sigv2i)%*%tSK + sqrt(c1)*a2i*(sqrt(c1)*(a2i + d2)*t(Gi^3*(Gi^(-1)-1)/sigv2i)%*%tSK - s*t(ei*Gi^2*(Gi^(-1)-1)/sigv2i)%*%tSK)
+    Hbeta = Hbeta +  s*t(xi)%*%sweep(tSK, 1, Gi^2*Gk/sigv2i, "*")*sqrt(c1)*(a2i + d2) - s*(t(xi)%*%(Gi/sigv2i))%*%t(t(tSK)%*%(c1*(-s*(ei*Gi^2*Gk/sigv2i)*d3 + sqrt(c1)*a2i*(1 + d3)*(Gi^3*Gk/sigv2i) + sqrt(c1)*d2*(Gi^3*Gk/sigv2i))))
+    
+    Hdeleta = Hdeleta + t(zdeli[i,,drop=FALSE])%*%(s*t(t(tSK)%*%(-s*c1*(c2*Gi*Gk)*d3 + c1^1.5*(a2i*(1+d3) + d2)*(Gi^3*Gk/sigv2i)))/sigu2i[i])
+    
+    Hetagu = Hetagu + t(zui[i,,drop=FALSE])%*%(t(Gi^3*Gk/sigv2i)%*%tSK*c1^1.5/sigu2i[i]*(sqrt(c1) -a2i*mui[i]*(1+d3) + sqrt(c1)*a2i^2*0.5*(3+d3) - d2*(mui[i] - 1.5*a2i*sqrt(c1))) + t(c2*Gi*Gk)%*%tSK*s*c1/sigu2i[i]*(mui[i]*d3 - d2*0.5*sqrt(c1) - 0.5*sqrt(c1)*a2i*(1+d3)))
+    
+    Hetagv = Hetagv - t(zvi)%*%sweep(tSK, 1, Gi^3*Gk/sigv2i, "*")*c1*(1 + a2i^2 + a2i*d2) + (t(zvi)%*%(Gi^2/sigv2i))%*%(t(Gi^3*Gk/sigv2i)%*%tSK)*c1^2*(1 + 0.5*a2i^2*(3 + d3) + 1.5*a2i*d2) + t(zvi)%*%sweep(tSK, 1, c2*Gi*Gk, "*")*s*sqrt(c1)*(d2 + a2i) + (t(zvi)%*%(c2))%*%(t(c2*Gi*Gk)%*%tSK)*c1*d3 - (a2i*(1+d3) + d2)*s*c1^1.5*(0.5*(t(zvi)%*%(Gi^2/sigv2i))%*%(t(c2*Gi*Gk)%*%tSK) + (t(zvi)%*%(c2))%*%(t(Gi^3*Gk/sigv2i)%*%tSK))
+    
+    Heta = Heta + c1*(1 + a2i^2 + a2i*d2)*t(tSK)%*%sweep(tSK, 1, Gi^3*Gk*(1- 3*Gi*Gk)/sigv2i, "*") + c1^2*(2 + a2i^2*(3 + d3) + d2*a2i*3)*t(t(Gi^3*Gk/sigv2i)%*%tSK)%*%(t(Gi^3*Gk/sigv2i)%*%tSK) - s*sqrt(c1)*(a2i + d2)*t(tSK)%*%sweep(tSK, 1, ei*Gi^2*Gk*(1 - 2*Gi*Gk)/sigv2i, "*") - c1^1.5*s*(d2 + a2i*(1 + d3))*(t(t(ei*Gi^2*Gk/sigv2i)%*%tSK)%*%(t(Gi^3*Gk/sigv2i)%*%tSK) + t(t(Gi^3*Gk/sigv2i)%*%tSK)%*%(t(ei*Gi^2*Gk/sigv2i)%*%tSK)) + c1*d3*t(t(ei*Gi^2*Gk/sigv2i)%*%tSK)%*%(t(ei*Gi^2*Gk/sigv2i)%*%tSK)
+    # print(geta)
+   }
+   else {
+    stop("Unknown model\n")
+   }
+  }
+  
+  # if(i == 2){
+  #  cat("Hb\n")
+  #  print(Hb)
+  # }
+
+ }
+ 
+ 
+ 
+ if(mean.u.0i.zero){
+  
+  if(eff.time.invariant){
+   H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu)),
+              rbind(Hbgv, 	Hgv,		t(Hgvgu)),
+              rbind(Hbgu, 	Hgvgu,		Hgu))
+  } else {
+   H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu),	t(Hbeta)),
+              rbind(Hbgv, 	Hgv,		t(Hgvgu),	t(Hetagv)),
+              rbind(Hbgu, 	Hgvgu,		Hgu,		 	t(Hetagu)),
+              rbind(Hbeta,	Hetagv,		Hetagu,		Heta ))
+  }
+ } else {
+  
+  if(eff.time.invariant){
+   H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu),		t(Hbdel)),
+              rbind(Hbgv, 	Hgv,		t(Hgvgu),		t(Hgvdel)),
+              rbind(Hbgu, 	Hgvgu,		Hgu,			Hdelgu),
+              rbind(Hbdel,	Hgvdel,		t(Hdelgu),		Hdel))
+   
+  } else {
+   H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu),		t(Hbdel),	t(Hbeta)),
+              rbind(Hbgv, 	Hgv,		t(Hgvgu),		t(Hgvdel),	t(Hetagv)),
+              rbind(Hbgu, 	Hgvgu,		Hgu,			Hdelgu, 	t(Hetagu)),
+              rbind(Hbdel,	Hgvdel,		t(Hdelgu),		Hdel,		t(Hdeleta) ),
+              rbind(Hbeta,	Hetagv,		Hetagu,			Hdeleta,	Heta ))
+  }
+  
+ }
+ 
+ # if(eff.time.invariant){
+ #  grad <- rbind(gb, as.matrix(ggv),t(as.matrix(ggu)), t(as.matrix(gdel)))
+ #  H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu),		t(Hbdel)),
+ #             rbind(Hbgv, 	Hgv,		t(Hgvgu),		t(Hgvdel)),
+ #             rbind(Hbgu, 	Hgvgu,		Hgu,			Hdelgu),
+ #             rbind(Hbdel,	Hgvdel,		t(Hdelgu),		Hdel))
+ # } else {
+ #  grad <- rbind(gb, as.matrix(ggv),t(as.matrix(ggu)), t(as.matrix(gdel)), t(geta))
+ #  H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu),		t(Hbdel),	t(Hbeta)),
+ #             rbind(Hbgv, 	Hgv,		t(Hgvgu),		t(Hgvdel),	t(Hetagv)),
+ #             rbind(Hbgu, 	Hgvgu,		Hgu,			Hdelgu, 	t(Hetagu)),
+ #             rbind(Hbdel,	Hgvdel,		t(Hdelgu),		Hdel,		t(Hdeleta) ),
+ #             rbind(Hbeta,	Hetagv,		Hetagu,			Hdeleta,	Heta ))
+ # }
+ 
+ grad <- rbind(gb, as.matrix(ggv),t(as.matrix(ggu)), t(as.matrix(gdel)), t(geta))
+ grad <- as.vector(grad)
+ 
+ # cat.print(Hbeta)
+ # 
+ # H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu),		t(Hbdel),	t(Hbeta)), 
+ #            rbind(Hbgv, 	Hgv,		t(Hgvgu),		t(Hgvdel),	t(Hetagv)),
+ #            rbind(Hbgu, 	Hgvgu,		Hgu,			Hdelgu, 	t(Hetagu)), 
+ #            rbind(Hbdel,	Hgvdel,		t(Hdelgu),		Hdel,		t(Hdeleta) ),
+ #            rbind(Hbeta,	Hetagv,		Hetagu,			Hdeleta,	Heta ))
+ 
+ 
+ grad <- grad[!coef.fixed]
+ # print(H)
+ # H <- H[!coef.fixed,!coef.fixed]
+ # print(H)
+ 
+ # if(mean.u.0i.zero){
+ #  grad <- grad[-(k+kv+ku+kdel)]
+ #  H <- H[-(k+kv+ku+kdel),-(k+kv+ku+kdel)]
+ # } 
+ 
+ # print(length(grad))
+ # print(dim(H))
+ # print(length(theta))
+ 
+ 
+ names(grad) <- colnames(H) <- rownames(H) <- names(theta)
+ return(list(grad = grad, hessian1 = H))
+ 
+}
+
+# Gradient
+
+.gr.panel <- function(theta, prod, coef.fixed, my.n, Ktheta, k, kv, ku, kdel, yit, zvit, zui, xit, zdeli, model, timevar, maxT, ids, idvar, t0, eff.time.invariant = FALSE, mean.u.0i.zero = FALSE) {
+ s <- ifelse(prod, -1, 1)
+ beta <- theta[1:k]
+ gv <- theta[(k+1):(k+kv)]
+ gu <- theta[(k+kv+1):(k+kv+ku)]
+ 
+ eit <- as.vector( yit - xit%*%beta )
+ sigu2i <- as.vector( exp(zui%*%gu) )
+ sigv2it <- as.vector( exp(zvit%*%gv) )
+ 
+ if(!mean.u.0i.zero){
+  delta <- theta[(k+kv+ku+1):(k+kv+ku+kdel)]
+  mui <- as.vector( zdeli%*%delta )
+  lmdi = mui/sigu2i
+ } else {
+  mui <- lmdi <- rep(0, my.n)
+ }
+ 
+ maxT_all <- maxT
+ 
+ if(eff.time.invariant){
+  Git <- rep(1, length(timevar))
+ } else {
+  if(model == "BC1992"){
+   # print(theta)
+   # print(c( Ktheta) )
+   # print(length(theta))
+   # print(theta[c( Ktheta) ])
+   # eta <- theta[12 ]
+   # cat("eta = ", theta[11 ],"\n")
+   # print(eta)
+   eta <- theta[c( Ktheta )]
+   Git = exp(-eta*(timevar - maxT_all))
+  } else if(model == "K1990modified"){
+   eta <- theta[c( (Ktheta-1) : (Ktheta) )]
+   Git = 1 + eta[1]*(timevar - maxT_all) + eta[2]*(timevar - maxT_all)^2
+  } else if(model == "K1990"){
+   eta <- theta[c( (Ktheta-1) : (Ktheta) )]
+   Git = (1 + exp(eta[1]*timevar + eta[2]*timevar^2))^(-1)
+  } else {
+   stop("Unknown model\n")
+  }
+  # cat("eta\n")
+  # print(eta)
+ }
+ 
+ # define indices
+ m.end <- cumsum(t0)
+ m.begin <- c(1,(m.end+1)[-my.n])
+ 
+ # Gradient
+ gb = 0; ggu = 0; ggv = 0; gdel = 0; geta = 0
+ for(i in 1:length(ids)){
+  # maxT <- t0[i]
+  sample.i <- (m.begin[i]):(m.end[i])
+  ei = eit[sample.i]
+  sigv2i = sigv2it[sample.i]
+  Gi = Git[sample.i]
+  
+  xi = xit[sample.i, , drop = FALSE]; 
+  zvi = zvit[sample.i, , drop = FALSE];
+  Ti = length(ei)
+  timevari = timevar[sample.i]
+  c1 = (1/sigu2i[i] + sum(Gi^2/sigv2i))^(-1); 
+  c2 = sum(ei*Gi/sigv2i);
+  a1i = mui[i]/sqrt(sigu2i[i]); 
+  a2i = (lmdi[i] + s*sum(ei*Gi/sigv2i))*sqrt(c1)
+  d1 = dnorm(a1i)/pnorm(a1i); 
+  d2 = dnorm(a2i)/pnorm(a2i)
+  
+  if(!eff.time.invariant){
+   if(model == "BC1992"){
+    tBC1 = (timevari - maxT_all[sample.i]);
+   } else if (model == "K1990modified"){
+    tBC2 = cbind((timevari - maxT_all[sample.i]), (timevari - maxT_all[sample.i])^2);
+   } else if (model == "K1990"){
+    tSK = cbind(timevari, timevari^2)
+   } else {
+    stop("Unknown model\n")
+   }
+  }
+  
+  gb = gb + t(xi)%*%((ei/sigv2i)- s*(Gi/sigv2i)*(lmdi[i]*c1 + s*c2*c1 + sqrt(c1)*d2))
+  ggu = ggu + zui[i,,drop=FALSE]/sigu2i[i]*(0.5*c1 + mui[i]*(0.5*mui[i] + 0.5*d1*sqrt(sigu2i[i]) - sqrt(c1)*d2) + a2i*(c1*a2i/2 - sqrt(c1)*mui[i] + c1*d2/2)) - zui[i,,drop=FALSE]*0.5
+  ggv = ggv + t(zvi)%*%(0.5*c1*(Gi^2/sigv2i) + 0.5*(ei^2/sigv2i) - 0.5*rep.int(1, Ti) + a2i*sqrt(c1)*((a2i + d2)*0.5*sqrt(c1)*(Gi^2/sigv2i) - s*(ei*Gi/sigv2i)) - s*sqrt(c1)*d2*(ei*Gi/sigv2i))
+  gdel = gdel + zdeli[i,,drop=FALSE]/sigu2i[i] *(mui[i]*(c1/sigu2i[i] - 1) + s*c2*c1 - d1 *sqrt(sigu2i[i]) + d2*sqrt(c1))
+  
+  if(!eff.time.invariant){
+   if(model == "BC1992"){
+    geta = geta + c1*sum(Gi^2*tBC1/sigv2i) - s*sqrt(c1)*d2*sum(ei*Gi*tBC1/sigv2i) + sqrt(c1)*a2i*(sqrt(c1)*(a2i + d2)*sum(Gi^2*tBC1/sigv2i) - s*sum(ei*Gi*tBC1/sigv2i))
+   } else if(model == "K1990modified"){
+    geta =  geta - c1*t(Gi/sigv2i)%*%tBC2 + 
+     s*sqrt(c1)*d2*t(ei/sigv2i)%*%tBC2 - 
+     sqrt(c1)*a2i*(sqrt(c1)*(a2i + d2)*t(Gi/sigv2i)%*%tBC2 - s*t(ei/sigv2i)%*%tBC2)
+   } else if(model == "K1990"){
+    geta =  geta + c1*t(Gi^3*(Gi^(-1)-1)/sigv2i)%*%tSK -  s*sqrt(c1)*d2*t(ei*Gi^2*(Gi^(-1)-1)/sigv2i)%*%tSK + sqrt(c1)*a2i*(sqrt(c1)*(a2i + d2)*t(Gi^3*(Gi^(-1)-1)/sigv2i)%*%tSK - s*t(ei*Gi^2*(Gi^(-1)-1)/sigv2i)%*%tSK)
+    # print(geta)
+   }
+   else {
+    stop("Unknown model\n")
+   }
+  }
+ }
+ grad <- rbind(gb, as.matrix(ggv),t(as.matrix(ggu)), t(as.matrix(gdel)), t(geta))
+ grad <- grad[!coef.fixed]
+ grad <- as.vector(grad)
+ names(grad) <- names(theta)
+ return(grad)
+}
+
+# .gr.panel <- function(theta, prod, coef.fixed, my.n, Ktheta, k, kv, ku, kdel, yit, zvit, zui, xit, zdeli, model, timevar, maxT, ids, idvar, t0, eff.time.invariant = FALSE, mean.u.0i.zero = FALSE){
+#  numDeriv::grad(func = .ll.panel, x = theta, prod = prod, my.n = my.n, k = k, kv = kv, ku = ku, kdel = kdel, yit = yit, zvit = zvit, zui = zui, xit = xit, zdeli = zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0)
+# }
+
+# Hessian
+
+.hess.panel <- function(theta, prod, coef.fixed, my.n, Ktheta, k, kv, ku, kdel, yit, zvit, zui, xit, zdeli, model, timevar, maxT, ids, idvar, t0, eff.time.invariant = FALSE, mean.u.0i.zero = FALSE) {
+ s <- ifelse(prod, -1, 1)
+ beta <- theta[1:k]
+ gv <- theta[(k+1):(k+kv)]
+ gu <- theta[(k+kv+1):(k+kv+ku)]
+ 
+ eit <- as.vector( yit - xit%*%beta )
+ sigu2i <- as.vector( exp(zui%*%gu) )
+ sigv2it <- as.vector( exp(zvit%*%gv) )
+ 
+ if(!mean.u.0i.zero){
+  delta <- theta[(k+kv+ku+1):(k+kv+ku+kdel)]
+  mui <- as.vector( zdeli%*%delta )
+  lmdi = mui/sigu2i
+ } else {
+  mui <- lmdi <- rep(0, my.n)
+ }
+
+ maxT_all <- maxT
+ 
+ if(eff.time.invariant){
+  Git <- rep(1, length(timevar))
+ } else {
+  if(model == "BC1992"){
+   # print(theta)
+   # print(c( Ktheta) )
+   # print(length(theta))
+   # print(theta[c( Ktheta) ])
+   # eta <- theta[12 ]
+   # cat("eta = ", theta[11 ],"\n")
+   # print(eta)
+   eta <- theta[c( Ktheta )]
+   Git = exp(-eta*(timevar - maxT_all))
+  } else if(model == "K1990modified"){
+   eta <- theta[c( (Ktheta-1) : (Ktheta) )]
+   Git = 1 + eta[1]*(timevar - maxT_all) + eta[2]*(timevar - maxT_all)^2
+  } else if(model == "K1990"){
+   eta <- theta[c( (Ktheta-1) : (Ktheta) )]
+   Git = (1 + exp(eta[1]*timevar + eta[2]*timevar^2))^(-1)
+  } else {
+   stop("Unknown model\n")
+  }
+  # cat("eta\n")
+  # print(eta)
+ }
+ 
+ # define indices
+ m.end <- cumsum(t0)
+ m.begin <- c(1,(m.end+1)[-my.n])
+ 
+ # Hessian
+ Hb = Hbgv = Hbgu = Hbdel = Hbeta = Hgvgu = Hgvdel = Hgv = Hdel = Hdelgu = Hdeleta = Hetagu = Hgu = Hetagv = Heta = 0;
+ 
+ for(i in 1:length(ids)){
+  sample.i <- (m.begin[i]):(m.end[i])
+  # maxT <- maxT_all[sample.i]
+  xi = xit[sample.i, , drop=FALSE]; 
+  zvi = zvit[sample.i, , drop=FALSE];
+  ei = eit[sample.i]; 
+  sigv2i = sigv2it[sample.i]
+  Gi = Git[sample.i]; 
+  Ti = length(ei); 
+  timevari = timevar[sample.i];
+  
+  if(!eff.time.invariant){
+   if(model == "BC1992"){
+    tBC1 = (timevari - maxT_all[sample.i]);
+   } else if (model == "K1990modified"){
+    tBC2 = cbind((timevari - maxT_all[sample.i]), (timevari - maxT_all[sample.i])^2);
+   } else if (model == "K1990"){
+    Gk = (Gi^(-1)-1)
+    tSK = cbind(timevari, timevari^2)
+   } else {
+    stop("Unknown model\n")
+   }
+  }
+
+  c1 = (1/sigu2i[i] + sum(Gi^2/sigv2i))^(-1); 
+  c2 = ei*Gi/sigv2i; 
+  c3 = t(xi)%*%(Gi/sigv2i)
+  a1i = mui[i]/sqrt(sigu2i[i]); 
+  a2i = (lmdi[i] + s*sum(ei*Gi/sigv2i))*sqrt(c1)
+  d1 = dnorm(a1i)/pnorm(a1i); 
+  d2 = dnorm(a2i)/pnorm(a2i); 
+  d3 = (1 - d2*(a2i + d2)); # this is A
+  d4 = d1*(a1i + d1)
+  
+  Hb = Hb - t(xi)%*%sweep(xi, 1, sigv2i, "/") + c1*c3%*%t(c3)*d3
+  
+  Hbgu = Hbgu + s*c3%*%zui[i,,drop=FALSE]*c1*(lmdi[i]*d3 - c1/sigu2i[i]*(lmdi[i] + s*sum(c2)) + sqrt(c1)/(2*sigu2i[i])*d2*(a2i*(a2i + d2) - 1))
+  Hbdel = Hbdel - s*c3%*%(zdeli[i,]/sigu2i[i]*d3*c1)
+  Hbgv = Hbgv + t(xi)%*%(-sweep(zvi, 1,ei/sigv2i, "*") + s*sweep(zvi, 1, Gi/sigv2i, "*")*(sqrt(c1)*(a2i + d2))) - s*(t(xi)%*%(Gi/sigv2i))%*%t(t(zvi)%*%(-s*c1*c2*d3 + (c1^1.5*(Gi^2/sigv2i))*(a2i + 0.5*d2*(1 - a2i*(a2i + d2)))))
+  Hgvgu = Hgvgu + t(zvi)%*%(c1*s*c2*(mui[i]*d3 - sqrt(c1)*a2i/2*(1+d3)) + c1^1.5*a2i*0.5*(Gi^2/sigv2i)*(sqrt(c1)*a2i*0.5*(3+d3) - mui[i]*(1+d3)) + 0.5*c1^1.5*(Gi^2/sigv2i)*(sqrt(c1) + d2*(1.5*sqrt(c1)*a2i - mui[i])) - 0.5*c1^1.5*s*d2*c2)%*%zui[i,,drop=FALSE]/sigu2i[i]
+  Hgvdel = Hgvdel + t(zvi)%*%(-s*c1*c2*d3 + (Gi^2/sigv2i)*(0.5*c1^1.5*(a2i*(1+d3) + d2)))%*%zdeli[i,]/sigu2i[i]
+  Hgv = Hgv +  t(zvi)%*%sweep(zvi,1,Gi^2/sigv2i, "*")*0.5*c1*(-d2*a2i - a2i^2 -1) + t(zvi)%*%(Gi^2/sigv2i)%*%t(t(zvi)%*%(Gi^2/sigv2i))*0.5*c1^2*(1 + 0.5*a2i^2*(3+d3) + d2*1.5*a2i) - 0.5*t(zvi)%*%sweep(zvi,1,ei^2/sigv2i, "*") + t(zvi)%*%sweep(zvi,1,c2, "*")*s*sqrt(c1)*(d2 + a2i) - (d2+a2i*(1+d3))*0.5*c1^1.5*s*(t(zvi)%*%(c2)%*%t(t(zvi)%*%(Gi^2/sigv2i)) + t(zvi)%*%(Gi^2/sigv2i)%*%t(t(zvi)%*%(c2))) + t(zvi)%*%(c2)%*%t(t(zvi)%*%(c2))*c1*d3
+  Hdel = Hdel + t(zdeli[i,,drop=FALSE]/sigu2i[i] *( - 1 + d3*c1/sigu2i[i] + d4))%*%zdeli[i,,drop=FALSE]
+  Hdelgu =  Hdelgu + t(zdeli[i,,drop=FALSE])%*%zui[i,,drop=FALSE]/sigu2i[i]*(c1^1.5/sigu2i[i]*0.5*a2i*(1+d3) - mui[i]*c1/sigu2i[i]*(1+d3) + d2*sqrt(c1)*(0.5*c1/sigu2i[i] - 1) - 0.5*d1*(mui[i]*(a1i + d1) - sqrt(sigu2i[i])) + mui[i] - s*c1*sum(c2))
+  Hgu = Hgu + (c1/sigu2i[i]*(0.5*c1 + (sqrt(c1)*a2i - mui[i])^2) - 0.5*(c1 + (sqrt(c1)*a2i - mui[i])^2) + d1*mui[i]/4*(mui[i]*(a1i + d1) - sqrt(sigu2i[i])) + d2*(-d2*2*c1/sigu2i[i]*(mui[i]/sqrt(2) - sqrt(c1/8)*a2i)^2 - c1*a2i/sigu2i[i]*(mui[i] - sqrt(c1)*a2i/2)^2 + sqrt(c1)*mui[i]*(1 - c1/sigu2i[i]) - c1*a2i/2*(1 - 1.5*c1/sigu2i[i])))*t(zui[i,,drop=FALSE])%*%zui[i,,drop=FALSE]/sigu2i[i]
+  
+  if(!eff.time.invariant){
+   if(model == "BC1992"){
+    Hbeta = Hbeta + s*t(xi)%*%(Gi*tBC1/sigv2i)*sqrt(c1)*(a2i + d2) - s*t(xi)%*%(Gi/sigv2i)*c1*(-s*sum(c2*tBC1)*d3 + sqrt(c1)*a2i*(1 + d3)*sum(Gi^2*tBC1/sigv2i) + sqrt(c1)*d2*sum(Gi^2*tBC1/sigv2i))
+    Hdeleta = Hdeleta + t((sum(Gi^2*tBC1/sigv2i)*c1^1.5*(a2i*(1+d3) + d2)-s*c1*sum(c2*tBC1)*d3)*zdeli[i,,drop=FALSE]/sigu2i[i])
+    Hetagu = Hetagu + t((sum(Gi^2*tBC1/sigv2i)*c1^1.5/sigu2i[i]*(sqrt(c1) -a2i*mui[i]*(1+d3) + sqrt(c1)*a2i^2*0.5*(3+d3) - d2*(mui[i] - 1.5*a2i*sqrt(c1))) + s*c1/sigu2i[i]*sum(c2*tBC1)*(mui[i]*d3 - d2*0.5*sqrt(c1) - 0.5*sqrt(c1)*a2i*(1+d3)))*zui[i,,drop=FALSE])
+    Hetagv = Hetagv - t(zvi)%*%(Gi^2*tBC1/sigv2i)*c1*(1 + a2i^2 + a2i*d2) + sum(Gi^2*tBC1/sigv2i)*t(zvi)%*%(Gi^2/sigv2i)*c1^2*(1 + 0.5*a2i^2*(3 + d3) + 1.5*a2i*d2) + t(zvi)%*%(c2*tBC1)*s*sqrt(c1)*(d2 + a2i) + sum(c2*tBC1)*t(zvi)%*%(c2)*c1*d3 - (a2i*(1+d3) + d2)*s*c1^1.5*(0.5*sum(c2*tBC1)*t(zvi)%*%(Gi^2/sigv2i) + sum(Gi^2*tBC1/sigv2i)*t(zvi)%*%(c2))
+    Heta = Heta - 2*c1*sum(Gi^2*tBC1^2/sigv2i)*(1 + a2i^2 + d2*a2i) + c1^2*sum(Gi^2*tBC1/sigv2i)^2*(2 + a2i^2*(3 + d3) + 3*d2*a2i) + sum(c2*tBC1^2)*s*sqrt(c1)*(d2 + a2i) - 2*s*c1^1.5*sum(c2*tBC1)*sum(Gi^2*tBC1/sigv2i)*(d2 + a2i*(1 + d3)) + sum(c2*tBC1)^2*c1*d3
+    
+   } else if (model == "K1990modified"){
+    Hbeta = Hbeta - s*t(xi)%*%sweep(tBC2, 1, sigv2i, "/")*sqrt(c1)*(a2i + d2) - s*(t(xi)%*%(Gi/sigv2i))%*%t(t(tBC2)%*%(c1*(s*(ei/sigv2i)*d3 - sqrt(c1)*a2i*(1 + d3)*(Gi/sigv2i) - sqrt(c1)*d2*(Gi/sigv2i))))
+    Hdeleta = Hdeleta + t(zdeli[i,,drop=FALSE])%*%(t(t(tBC2)%*%(s*c1*(ei/sigv2i)*d3 - c1^1.5*(a2i*(1+d3) + d2)*(Gi/sigv2i)))/sigu2i[i])
+    Hetagu = Hetagu + t(zui[i,,drop=FALSE])%*%(- t(Gi/sigv2i)%*%tBC2*c1^1.5/sigu2i[i]*(sqrt(c1) -a2i*mui[i]*(1+d3) + sqrt(c1)*a2i^2*0.5*(3+d3) - d2*(mui[i] - 1.5*a2i*sqrt(c1))) - t(ei/sigv2i)%*%tBC2*s*c1/sigu2i[i]*(mui[i]*d3 - d2*0.5*sqrt(c1) - 0.5*sqrt(c1)*a2i*(1+d3)))
+    Hetagv = Hetagv + t(zvi)%*%sweep(tBC2, 1, Gi/sigv2i, "*")*c1*(1 + a2i^2 + a2i*d2) - (t(zvi)%*%(Gi^2/sigv2i))%*%(t(Gi/sigv2i)%*%tBC2)*c1^2*(1 + 0.5*a2i^2*(3 + d3) + 1.5*a2i*d2) - t(zvi)%*%sweep(tBC2, 1, ei/sigv2i, "*")*s*sqrt(c1)*(d2 + a2i) - (t(zvi)%*%(c2))%*%(t(ei/sigv2i)%*%tBC2)*c1*d3 + (a2i*(1+d3) + d2)*s*c1^1.5*(0.5*(t(zvi)%*%(Gi^2/sigv2i))%*%(t(ei/sigv2i)%*%tBC2) + (t(zvi)%*%(c2))%*%(t(Gi/sigv2i)%*%tBC2))
+    Heta = Heta - c1*(1 + a2i^2 + a2i*d2)*t(tBC2)%*%sweep(tBC2, 1, sigv2i, "/") + c1^2*(2 + a2i^2*(3 + d3) + d2*a2i*3)*t(t(Gi/sigv2i)%*%tBC2)%*%(t(Gi/sigv2i)%*%tBC2) - c1^1.5*s*(d2+a2i*(1+d3))*t(t(ei/sigv2i)%*%tBC2)%*%(t(Gi/sigv2i)%*%tBC2) + c1*d3*t(t(ei/sigv2i)%*%tBC2)%*%(t(ei/sigv2i)%*%tBC2) - c1^1.5*s*(d2 + a2i*(1+d3))*t(t(Gi/sigv2i)%*%tBC2)%*%(t(ei/sigv2i)%*%tBC2)
+    
+   } else if (model == "K1990"){
+    Hbeta = Hbeta +  s*t(xi)%*%sweep(tSK, 1, Gi^2*Gk/sigv2i, "*")*sqrt(c1)*(a2i + d2) - s*(t(xi)%*%(Gi/sigv2i))%*%t(t(tSK)%*%(c1*(-s*(ei*Gi^2*Gk/sigv2i)*d3 + sqrt(c1)*a2i*(1 + d3)*(Gi^3*Gk/sigv2i) + sqrt(c1)*d2*(Gi^3*Gk/sigv2i))))
+    
+    Hdeleta = Hdeleta + t(zdeli[i,,drop=FALSE])%*%(s*t(t(tSK)%*%(-s*c1*(c2*Gi*Gk)*d3 + c1^1.5*(a2i*(1+d3) + d2)*(Gi^3*Gk/sigv2i)))/sigu2i[i])
+    
+    Hetagu = Hetagu + t(zui[i,,drop=FALSE])%*%(t(Gi^3*Gk/sigv2i)%*%tSK*c1^1.5/sigu2i[i]*(sqrt(c1) -a2i*mui[i]*(1+d3) + sqrt(c1)*a2i^2*0.5*(3+d3) - d2*(mui[i] - 1.5*a2i*sqrt(c1))) + t(c2*Gi*Gk)%*%tSK*s*c1/sigu2i[i]*(mui[i]*d3 - d2*0.5*sqrt(c1) - 0.5*sqrt(c1)*a2i*(1+d3)))
+    
+    Hetagv = Hetagv - t(zvi)%*%sweep(tSK, 1, Gi^3*Gk/sigv2i, "*")*c1*(1 + a2i^2 + a2i*d2) + (t(zvi)%*%(Gi^2/sigv2i))%*%(t(Gi^3*Gk/sigv2i)%*%tSK)*c1^2*(1 + 0.5*a2i^2*(3 + d3) + 1.5*a2i*d2) + t(zvi)%*%sweep(tSK, 1, c2*Gi*Gk, "*")*s*sqrt(c1)*(d2 + a2i) + (t(zvi)%*%(c2))%*%(t(c2*Gi*Gk)%*%tSK)*c1*d3 - (a2i*(1+d3) + d2)*s*c1^1.5*(0.5*(t(zvi)%*%(Gi^2/sigv2i))%*%(t(c2*Gi*Gk)%*%tSK) + (t(zvi)%*%(c2))%*%(t(Gi^3*Gk/sigv2i)%*%tSK))
+    
+    Heta = Heta + c1*(1 + a2i^2 + a2i*d2)*t(tSK)%*%sweep(tSK, 1, Gi^3*Gk*(1- 3*Gi*Gk)/sigv2i, "*") + c1^2*(2 + a2i^2*(3 + d3) + d2*a2i*3)*t(t(Gi^3*Gk/sigv2i)%*%tSK)%*%(t(Gi^3*Gk/sigv2i)%*%tSK) - s*sqrt(c1)*(a2i + d2)*t(tSK)%*%sweep(tSK, 1, ei*Gi^2*Gk*(1 - 2*Gi*Gk)/sigv2i, "*") - c1^1.5*s*(d2 + a2i*(1 + d3))*(t(t(ei*Gi^2*Gk/sigv2i)%*%tSK)%*%(t(Gi^3*Gk/sigv2i)%*%tSK) + t(t(Gi^3*Gk/sigv2i)%*%tSK)%*%(t(ei*Gi^2*Gk/sigv2i)%*%tSK)) + c1*d3*t(t(ei*Gi^2*Gk/sigv2i)%*%tSK)%*%(t(ei*Gi^2*Gk/sigv2i)%*%tSK)
+   } else {
+    stop("Unknown model\n")
+   }
+  }
+ }
+ 
+ # if(eff.time.invariant){
+ #  H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu),		t(Hbdel)), 
+ #             rbind(Hbgv, 	Hgv,		t(Hgvgu),		t(Hgvdel)),
+ #             rbind(Hbgu, 	Hgvgu,		Hgu,			Hdelgu), 
+ #             rbind(Hbdel,	Hgvdel,		t(Hdelgu),		Hdel))
+ # } else {
+ #  H <- cbind(rbind(Hb,	t(Hbgv),	t(Hbgu),		t(Hbdel),	t(Hbeta)), 
+ #             rbind(Hbgv, 	Hgv,		t(Hgvgu),		t(Hgvdel),	t(Hetagv)),
+ #             rbind(Hbgu, 	Hgvgu,		Hgu,			Hdelgu, 	t(Hetagu)), 
+ #             rbind(Hbdel,	Hgvdel,		t(Hdelgu),		Hdel,		t(Hdeleta) ),
+ #             rbind(Hbeta,	Hetagv,		Hetagu,			Hdeleta,	Heta ))
+ # }
+
+  H <- H[!coef.fixed,!coef.fixed]
+ # print(H)
+ 
+ # if(mean.u.0i.zero){
+ #  grad <- grad[-(k+kv+ku+kdel)]
+ #  H <- H[-(k+kv+ku+kdel),-(k+kv+ku+kdel)]
+ # } 
+ 
+ # print(length(grad))
+ # print(dim(H))
+ # print(length(theta))
+ 
+ 
+ colnames(H) <- rownames(H) <- names(theta)
+ return(H)
+}
+
+# .hess.panel <- function(theta, prod, my.n, k, kv, ku, kdel, yit, zvit, zui, xit, zdeli, model, timevar, maxT, ids, idvar, t0, eff.time.invariant = FALSE){
+#  numDeriv::hessian(func = .ll.panel, x = theta, prod = prod, my.n = my.n, k = k, kv = kv, ku = ku, kdel = kdel, yit = yit, zvit = zvit, zui = zui, xit = xit, zdeli = zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0)
+# }
+# 
+# .hess.panel <- function(theta, prod, my.n, k, kv, ku, kdel, yit, zvit, zui, xit, zdeli, model, timevar, maxT, ids, idvar, t0, eff.time.invariant = FALSE){
+#  hessian1(func = .ll.panel, at = theta, prod = prod, my.n = my.n, k = k, kv = kv, ku = ku, kdel = kdel, yit = yit, zvit = zvit, zui = zui, xit = xit, zdeli = zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0)
+# }
+
+.is.negative.definite <- function (x, tol = 1e-16)
+{
+ # if (!is.square.matrix(x))
+ # stop("argument x is not a square matrix")
+ # if (!is.symmetric.matrix(x))
+ # stop("argument x is not a symmetric matrix")
+ # if (!is.numeric(x))
+ # stop("argument x is not a numeric matrix")
+ eigenvalues <- eigen(x, only.values = TRUE)$values
+ # cat("Eigenvalues\n")
+ # print(eigenvalues)
+ n <- nrow(x)
+ for (i in 1:n) {
+  if (abs(eigenvalues[i]) < tol) {
+   eigenvalues[i] <- 0
+  }
+ }
+ if (any(eigenvalues >= 0)) {
+  return(FALSE)
+ }
+ return(TRUE)
+}
+
+.make.neg.def <- function(hess){
+ # K4 <- ncol(hess)
+ # h0_ <- matrix(0, K4, K4)
+ eigen1 <- eigen( hess )
+ # eigen.val <- abs(eigen1$values)
+ #   for( i in seq_len( K4 ) ){
+ #     h0_ <- h0_ - abs(eigen1$values[i]) * eigen1$vectors[,i] %*% t(eigen1$vectors[,i])
+ #     # h0_ <- h0_ - eigen.val[i] * eigen1$vectors[,i] %*% t(eigen1$vectors[,i])
+ #   }
+ return(-crossprod(t(eigen1$vectors)*abs(eigen1$values), t(eigen1$vectors)))
+}
+
+.make.invertible <- function(hess){
+ K <- ncol(hess)
+ ok <- FALSE
+ adj <- sqrt(.Machine$double.eps)
+ # tr0 <- sum( 1/eigen(H,only.values = T)$values )
+ i <- 0
+ while(!ok & i < 1000){
+  i <- 1 + i
+  hess <- hess + adj*diag(rep(1, K))
+  mytry <- tryCatch( solve(-hess), error = function(e) e )
+  ok <- !inherits( mytry, "error")
+  # print(mytry)
+  # ok <- all(diag(H) != 0)
+  adj <- adj * 2
+  # print(adj)
+ }
+ # print(c(i, adj))
+ return(hess)
+}
+
+.make.zero.one <- function(qq){
+ for (i in 1:length(qq)) {
+  qqq <- qq[i]
+  if(abs(qqq) > 1){
+   while(abs(qqq) > 1){
+    qqq <- qqq / 10
+   }
+   qq[i] <- qqq
+  }
+ }
+ return(qq)
+}
+
+.mlmaximize.panel <- function(theta0, ll, gr = NULL, hess = NULL, gr.hess = NULL, alternate = NULL, BHHH = F, level = 0.99, step.back = .Machine$double.eps^.5, reltol =  sqrt(.Machine$double.eps) , lmtol =  sqrt(.Machine$double.eps) , steptol =  .Machine$double.eps, digits = 4, when.backedup = sqrt(.Machine$double.eps), max.backedup = 17, print.level = 6, only.maximize = FALSE, maxit = 150, n = 100, ...){
+ 
+ theta00 <- theta0
+ 
+ k4 <- length(theta0)
+ 
+ # if(print.level >= 6){
+ #  cat("\n=================")
+ #  cat(" Initial values:\n\n", sep = "")
+ #  print(theta0)
+ # }
+ # 
+ # if(print.level >= 2){
+ #  cat("\n=================")
+ #  cat(" Maximization:\n\n", sep = "")
+ # }
+ 
+ # step.back = 2^-217
+ 
+ ll0 <- ll(theta0, ...)
+ ltol <- reltol * (abs(ll0) + reltol)
+ # print(ltol)
+ typf <- ll0
+ theta1 <- theta0
+ 
+ iter <- iter.total <- backedup <- backedups <- wasconcave <- wasconcaves <- 0
+ 
+ if( is.na(ll0) | ll0 == -Inf ){
+  if(print.level >= 2){
+   cat("Could not compute ll at starting values: trying something else\n")
+  }
+  iter1 <- backedups
+  repeat{
+   iter1 <- iter1 + 1
+   theta0 <- theta0 * runif(length(theta0), 0.98, 1.02) # not sure what to do here
+   ll0 <- ll( theta0, ... )
+   if(!is.na(ll0)) break
+   if(iter1 == 55){
+    stop("it's not gonna happen...")
+   }
+  }
+  # backedups <- iter1
+ }
+ 
+ delta1 <- gHg <- s1 <- 1
+ h1 <- tryCatch( 2, error = function(e) e )
+ cant.invert.hess <- FALSE
+ 
+ if(print.level >= 2){
+  cat(paste("Iteration ",formatC(iter, width = 3)," (at starting values):       log likelihood = ",format(ll0, digits = 13),"\n\n", sep = ""), sep = "")
+ }
+ 
+ repeat{
+  iter.total <- iter.total + 1
+  # cat("backedup = ",backedup," backedups = ",backedups,"\n", sep = "")
+  if(print.level >= 6){
+   print(theta0)
+  }
+  
+  # cumulate how many times did it backed-up in a row
+  if(s1 < when.backedup){
+   backedup <- backedup + 1
+  } else {
+   backedup <- 0
+  }
+  # print(s1)
+  # cumulate how many times was concave
+  if( inherits(h1, "error") ){
+   wasconcave <- wasconcave + 1
+  } else {
+   wasconcave <- 0
+  }
+  
+  # try different values if was concave more than @@@ times
+  if(wasconcave == max.backedup){
+   # start over
+   if(print.level >= 2){
+    cat("Not concave ",max.backedup," times in a row: trying something else (not concave ",wasconcaves+1," times in total)\n")
+   }
+   iter <- wasconcave <- backedup <- 0
+   wasconcaves <- wasconcaves + 1
+   theta0 <- theta0*runif(length(theta0), 0.9999, 1.0001) # not sure what to do here
+   ll0 <- ll( theta0, ... )
+   # if(print.theta) print(theta0)
+   if(print.level >= 2){
+    cat(paste("Iteration ",formatC(iter, width = 3),"  (at slightly perturbed starting values):       log likelihood = ",format(ll0, digits = 13),"\n\n", sep = ""), sep = "")
+   }
+  }
+  
+  # try different values if backed-up more than @@@ times
+  if(backedup == max.backedup){
+   # start over
+   if(print.level >= 2){
+    cat("Backed-up ",max.backedup," times in a row: trying something else (backup-up ",backedups+1," times in total)\n", sep = "")
+   }
+   iter <- backedup <- wasconcave <- 0
+   backedups <- backedups + 1
+   wasconcaves <- wasconcaves + 1
+   theta0 <- theta0*runif(length(theta0), 0.9999, 1.0001) # not sure what to do here
+   ll0 <- ll( theta0, ... )
+   if(print.level >= 6){
+    print(theta0)
+   }
+   if(print.level >= 2){
+    cat(paste("Iteration ",formatC(iter, width = 3)," (at slightly perturbed starting values):       log likelihood = ",format(ll0, digits = 13),"\n\n", sep = ""), sep = "")
+   }
+  }
+  
+  # see if it calculated ll
+  if( is.na(ll0) | ll0 == -Inf | ll0 == Inf | ll0 == 0 ){
+   if(print.level >= 2){
+    cat("Could not compute ll: trying something else\n")
+   }
+   iter1 <- backedups
+   repeat{
+    iter1 <- iter1 + 1
+    # theta0 <- c( cons0, beta0, mu = 0, eta = 0, lnsv2 = -1*iter1/2, lnsu2 = -1*iter1/2)
+    theta0 <- theta00*runif(length(theta0), 0.9999, 1.0001) # not sure what to do here
+    ll0 <- ll( theta0, ... )
+    if(!is.na(ll0) & ll0 != 0) break
+    if(iter1 == 15){
+     stop("it's not gonna happen... could not compute at initial and find feasible values")
+    }
+   }
+   iter <- backedup <- 0
+   backedups <- iter1
+   if(print.level >= 2){
+    cat(paste("Iteration ",formatC(iter, width = 3)," (at slightly perturbed starting values):       log likelihood = ",format(ll0, digits = 13),"\n\n", sep = ""), sep = "")
+   }
+  }
+  if(backedups == 5){
+   stop("it's not gonna happen... backuped 5 times")
+  }
+  if(wasconcaves == 5){
+   stop("it's not gonna happen... not concave 5 times")
+  }
+  iter <- iter + 1
+  delta3 <- 1
+  # step 2: direction vector
+  
+  # previous theta
+  
+  if(iter.total > 1) theta1 <- theta0 - s1 * d0
+  
+  # BHHH (faster, but different):
+  # The Hessian is approximated as the negative
+  # of the sum of the outer products of the gradients
+  # of individual observations,
+  # -t(gradient) %*% gradient = - crossprod( gradient )
+
+  # gradient and hessian together
+  g1_h0 <- gr.hess(theta0, ...)
+  g1 <- g1_h0$grad
+  h0 <- g1_h0$hessian
+  
+  
+  # gradient and hessian separately
+  # g1 <- gr(theta0, ...)
+  # # print(g1)
+  # if(!is.null(alternate)) BHHH <- floor(iter/alternate) %% 2 == 1
+  # h0 <- hess(theta0,  ...)
+  
+  # print(h0)
+  
+  
+  # check if negative definite
+
+  
+  # eigen1 <- eigen( h0 )
+  # # eigen.tol <- k4 * max(abs(eigen1$values)) * .Machine$double.eps # this is for positive definiteness
+  # eigen.val <- ifelse(eigen1$values < .Machine$double.eps^.1, 0, eigen1$values)
+  # eigen.val <- eigen1$values
+  # # hess.pos.def <- sum(eigen1$values > eigen.tol) == k4
+  # hess.neg.def <- !any(eigen.val >= 0)
+  # 1. replace negative with small ones
+  # eigen.val <- ifelse(eigen1$values < 0, .0001, eigen.val)
+  # 2. replace negative with absolut values
+  # eigen.val <- abs(eigen1$values)
+
+  
+  hess.neg.def <- .is.negative.definite(h0)
+  h00 <- h0
+  if(!hess.neg.def) h0 <- .make.neg.def(h0)
+  # print(hess.neg.def)
+  # make it negative definite if it is not already
+  # if(!hess.neg.def){
+  #  # cat(" !hess.neg.def; k4 =",k4,"length(eigen1$vectors[,i]) = ",length(eigen1$vectors[,1]),"\n")
+  #  h0_ <- matrix(0, k4, k4)
+  #  # eigen1 <- eigen( h0 )
+  #  for( i in seq_len( k4 ) ){
+  #   # h0_ <- h0_ - abs(eigen1$values[i]) * eigen1$vectors[,i] %*% t(eigen1$vectors[,i])
+  #   h0_ <- h0_ - eigen.val[i] * crossprod(t(eigen1$vectors[,i]))
+  #  }
+  #  h0.old <- h0
+  #  h0 <- h0_
+  # }
+  # print( is.negative.definite(h0) )
+  # remember hessian and negative of its inverse from previous iter that could have been inverted
+  # if( !cant.invert.hess ){
+  #  h0_previous <- h0
+  #  h1_previous <- h1
+  # }
+  # easier to invert positive definite matrix
+  # h1 <- tryCatch( qr.solve(-h0, tol = 1e-16), error = function(e) e )
+  h1 <- tryCatch( solve(-h0), error = function(e) e )
+  if(inherits(h1, "error")) h0 <- .make.invertible(h0)
+  h1 <- solve(-h0)
+  # print(diag(h1))
+  # check if it can be inverted
+  cant.invert.hess <- FALSE
+  cant.invert.hess <- inherits(h1, "error")
+  # print(cant.invert.hess)
+  if( cant.invert.hess ){
+   # # print(h1)
+   # if(print.level >= 2){
+   #  cat(paste("cannot invert Hessian, using eigenvalues\n", sep = ""), sep = "")
+   # }
+   # # this was just to get the uninvertable hessian
+   # # return(list(hess = h0, grad = g1))
+   # # stop("this")
+   # # @14@ this
+   # eig1 <- eigen( -h0_previous )
+   # d0 <- rep(0, length(theta0))
+   # # eig2 <- ifelse(eig1$values < eps1, 1, eig1$values)
+   # for (i in 1:length(eig1$values)){
+   #  d0 <- d0 + (g1%*%eig1$vectors[,i])%*%eig1$vectors[,i] / eig1$values[i]
+   # }
+   # # @14@ could be done easier
+   # # d0 <- qr.solve(-h0, g1, tol = 1e-134)
+   # # print(g1)
+   # # print(dim(g1))
+   # # print(d0)
+   # # print(dim(d0))
+   # gHg <- sum( as.vector(g1) * d0)
+   # # in the part of the ortogonal subspace where the eigenvalues
+   # # are negative or small positive numbers, use steepest ascent
+   # # in other subspace use NR step
+   # # d0 <- ifelse(eigen(-h0, only.values = TRUE)$values < reltol, g1, d0)
+   # gg <- sqrt( crossprod(g1) )
+   # gHg <- gg
+   # # d0 <- g1
+   # # d0
+  } else {
+   # print(h1)
+   # cat("dim H_inv",dim(h1)," length g1 ", length(g1), "\n")
+   d0 <- as.vector( h1 %*% g1 )
+   # d0 <- g1 # steepest
+   gg <- sqrt( crossprod(g1) )
+   # h1.old <- solve(-h0.old)
+   gHg <- as.vector( t(g1) %*% h1 %*% g1 )
+  }
+  # gg_scaled <- gg * max( crossprod(theta0), crossprod(theta1) ) / max( abs(ll0), abs(typf))
+  # theta_rel <- max( abs(theta0 - theta1) / apply( cbind( abs(theta0),abs(theta1) ), 1, max) )
+  theta_rel <- max( abs(theta0 - theta1) / (abs(theta1)+1) )
+  
+  
+  # begin stopping criteria calculated using new values of g1 and h1
+  # if(s1 > when.backedup*10^-100 & delta1 != 17.17){ # if(s1 > when.backedup*10^-100 & !cant.invert.hess){
+  if(s1 > when.backedup*1e-10 & delta1 != 17.17){ # if(s1 > when.backedup*10^-100 & !cant.invert.hess){
+   if(abs(gHg) < lmtol & iter.total > 1){
+    if(print.level >= 2){
+     cat("\nConvergence given abs(gHg) = ",abs(gHg)," < lmtol\n", sep = "")
+    }
+    break
+   }
+   if(theta_rel < steptol*1e-100 & iter.total > 2){
+    # print(theta_rel)
+    if(print.level >= 2){
+     cat("\nConvergence given relative change in theta = ",theta_rel," < steptol\n", sep = "")
+    }
+    break
+   }
+  }
+  # end stopping criteria
+  
+  
+  # use steepest ascent when backed-up
+  if(s1 < when.backedup | delta1 == 17.17){ # was 1e-3
+   # print("try this\n\n")
+   ll0 <- ll( theta1, ... )
+   eig1 <- eigen( -h0 )
+   # cat("Gradient\n")
+   # print(g1)
+   # cat("Eigenvalues of the Hessian\n")
+   # print(eig1$values)
+   # cat("step before transformation 0\n")
+   # print(d0)
+   d0 <- as.vector( solve(-.make.neg.def(h0)) %*% g1 )
+   # cat("step before transformation 1\n")
+   # print(d0)
+   # d0 <- ifelse(eig1$values < reltol, 0, d0)
+   d0 <- ifelse(eig1$values < -1e-2, 0, d0)
+   # d0 <- ifelse(abs(d0) > 1, .make.zero.one(d0), d0)
+   # cat("step after transformation\n")
+   # print(d0)
+   # cat("\n\n")
+   # theta0 <- theta0 - 1 * d0
+  }
+  
+  
+  
+  # print(d0)
+  # step 3: new guess
+  # a: s = 1
+  # b: funct(theta0 + d0) > funct(theta0)
+  s1 <- 1
+  # s1_ <- Inf
+  # try.back.up.n <- 30
+  # s1s <- 2^(3:-11)#seq(-5-1e-4, 5-1e-4, length.out = try.back.up.n)
+  # my.loc.ll.max <- -1e100
+  # for(qq in 1:15){
+  #  theta1_ <- theta0 + s1s[qq] * d0
+  #  ll1_ <- ll( theta1_, ... )
+  #  if(is.finite(ll1_) & ll1_> my.loc.ll.max & ll1_ - my.loc.ll.max < 1e6){
+  #   my.loc.ll.max <- ll1_
+  #   s1_ <- s1s[qq]
+  #  }
+  # }
+  # if(is.finite(s1_)){
+  #  s1 <- s1_
+  #  cat("opt s1 =", s1_,"opt ll ==",my.loc.ll.max, "ll before =" ,ll0,"\n")
+  # } 
+  # print(s1)
+  # print(d0)
+  # print(dim(d0))
+  # print(theta0)
+  # print(dim(theta0))
+  theta1 <- theta0 + s1 * d0
+  # print(12)
+  # print(theta1)
+  ll1 <- ll( theta1, ... )
+  # print(13)
+  delta2 <- ll1 - ll0
+  flag <- (!is.na(delta2) & is.finite(delta2) & delta2 > 0 & delta2 < 1e+7)
+  # begin Cases
+  if( flag ){
+   # begin Case 1: f(theta1) > f(theta0)
+   ll.temp <- ll0
+   # check if s1 = 2, 3, ... increases f even more
+   while( flag ){
+    if(print.level >= 6){
+     cat(paste("\t\tCase 1: s = ",s1,", delta = ",delta2,"\n", sep = ""), sep = "")
+    }
+    # cat("ll1 from before = ",ll1,"\n")
+    ll0 <- ll1
+    s1 <- s1 + 1
+    theta1 <- theta0 + s1 * d0
+    ll1 <- ll( theta1, ... )
+    delta2 <- ll1 - ll0
+    flag <- (!is.na(delta2) & is.finite(delta2) & delta2 > 0)
+    if(is.infinite(ll1)){
+     cat("s1 = ",s1,"\n")
+     cat("ll1 = ",ll1,"\n")
+     cat("ll0 = ",ll0,"\n")
+     cat("ll.temp = ",ll.temp,"\n")
+     cat("ll( theta0, ... ) = ",ll( theta0, ... ),"\n")
+     cat("ll( theta1, ... ) = ",ll( theta1, ... ),"\n")
+     # s1 <- s1 - 1
+    }
+   }
+   # overall delta
+   delta1 <- ll0 - ll.temp
+   delta_rel <- abs(delta1 / ll.temp)
+   # print(delta_rel)
+   s1 <- s1 - 1
+   # overwrite the values
+   theta0 <- theta0 + s1 * d0
+   # end Case 1: f(theta1) > f(theta0)
+  } else {
+   # begin Case 2: f(theta1) < f(theta0)
+   # check only if s1=1/2 increases f
+   s1 <- 0.5
+   # s1_ <- Inf
+   # try.back.up.n <- 30
+   # s1s <- s1s <- 2^(3:-26)#seq(1e-10, 1-1e-4, length.out = try.back.up.n)
+   # my.loc.ll.max <- -1e100
+   # for(qq in 1:try.back.up.n){
+   #  theta1_ <- theta0 + s1s[qq] * d0
+   #  ll1_ <- ll( theta1_, ... )
+   #  if(is.finite(ll1_) & ll1_> my.loc.ll.max & ll1_ - my.loc.ll.max  < 1e7){
+   #   my.loc.ll.max <- ll1_
+   #   s1_ <- s1s[qq]
+   #  }
+   # }
+   # if(is.finite(s1_)){
+   #  s1 <- s1_
+   #  cat("opt s1 =", s1_,"opt ll ==",my.loc.ll.max, "ll before =" ,ll0,"\n")
+   # }
+   theta1 <- theta0 + s1 * d0
+   ll1 <- ll( theta1, ... )
+   # cat(" ll1 = ",ll1,", ll0 = ",ll0,", s = ",s1,"\n", sep = "")
+   delta2 <- ll1 - ll0
+   if(print.level >= 6){
+    cat(paste("\t\tCase 2: s = ",s1,", delta = ",delta2,"\n", sep = ""), sep = "")
+   }
+   flag2 <- (!is.na(delta2) & is.finite(delta2) & delta2 > 0)
+   # end Case 2: f(theta1) < f(theta0)
+   if( flag2 ){
+    # begin Case 2a: f(theta1) > f(theta0)
+    ll.temp <- ll0
+    # check if s1=1/2^2,1/2^3,... increases f even more
+    while( flag2 ){
+     if(print.level >= 6){
+      cat(paste("\t\t\tCase 2a: s = ",s1,", delta = ",delta2,"\n", sep = ""), sep = "")
+     }
+     ll0 <- ll1
+     s1 <- 0.5 * s1
+     theta1 <- theta0 + s1 * d0
+     ll1 <- ll( theta1, ... )
+     # cat(" ll1 = ",ll1,", ll0 = ",ll0,", s = ",s1,"\n", sep = "")
+     delta2 <- ll1 - ll0
+     flag2 <- (!is.na(delta2) & is.finite(delta2) & delta2 > ltol)
+    }
+    # overall delta
+    delta1 <- ll0 - ll.temp
+    delta_rel <- abs(delta1 / ll.temp)
+    # print(delta_rel)
+    s1 <- 2 * s1
+    # overwrite the values
+    theta0 <- theta0 + s1 * d0
+    # end Case 2a: f(theta1) > f(theta0)
+   } else {
+    # begin Case 2b: f(theta1) < f(theta0)
+    ll.temp <- ll0
+    # try s1=1/2^2,1/2^3,... so that f(theta1) > f(theta0)
+    while ( !flag2 & s1 > step.back^2 ){
+     s1 <- 0.5 * s1
+     theta1 <- theta0 + s1 * d0
+     ll1 <- ll( theta1, ... )
+     delta2 <- ll1 - ll0
+     if(print.level >= 6){
+      cat(paste("\t\t\tCase 2b: s = ",s1,", delta = ",delta2,"\n", sep = ""), sep = "")
+     }
+     flag2 <- (!is.na(delta2) & is.finite(delta2) & delta2 > 0)
+    }
+    if( !flag2 | s1 < step.back^2 ){
+     # stop("provide different starting values")
+     delta1 <- 17.17
+    } else {
+     # overwrite the values
+     delta1 <- delta2
+     delta_rel <- abs(delta1 / ll.temp)
+     ll0 <- ll1
+     theta0 <- theta0 + s1 * d0
+    }
+    # end Case 2b: f(theta1) < f(theta0)
+   }
+  }
+  
+  
+  if(print.level >= 2){
+   if( cant.invert.hess ){
+    cat(paste("Iteration ",formatC(iter, width = 3)," (hessian is ",ifelse(BHHH, "BHHH", "analytical"),", ",formatC(iter.total, width = 3)," in total):   log likelihood = ",format(ll0, digits = 13)," (not concave)\n", sep = ""), sep = "")
+   } else if (s1 <= when.backedup) {
+    cat(paste("Iteration ",formatC(iter, width = 3)," (hessian is ",ifelse(BHHH, "BHHH", "analytical"),", ",formatC(iter.total, width = 3)," in total):   log likelihood = ",format(ll0, digits = 13)," (backed up)\n", sep = ""), sep = "")
+   } else {
+    cat(paste("Iteration ",formatC(iter, width = 3)," (hessian is ",ifelse(BHHH, "BHHH", "analytical"),", ",formatC(iter.total, width = 3)," in total):   log likelihood = ",format(ll0, digits = 13),"\n", sep = ""), sep = "")
+   }
+  }
+  
+  # printing criteria
+  if(print.level >= 5){
+   if( cant.invert.hess ){
+    cat(paste(" (in iter ",formatC(iter, width = 3),": delta = ",format(delta1, digits = 6),"; s = ",format(s1, digits = 6),"; quasi-gHg = ",format(gHg, digits = 6),"; theta_rel_change = ",format(theta_rel, digits = 6),")\n\n", sep = ""), sep = "")
+    if(print.level >= 6.5){
+     print(theta0)
+    }
+   } else {
+    cat(paste(" (in iter ",formatC(iter, width = 3),": delta = ",format(delta1, digits = 6),"; s = ",format(s1, digits = 6),"; gHg = ",format(abs(gHg), digits = 6),"; theta_rel_change = ",format(theta_rel, digits = 6),")\n\n", sep = ""), sep = "")
+    if(print.level >= 5.5){
+     print(theta0)
+    }
+   }
+   cat("Par\n")
+   print(theta0)
+   cat("Gradient\n")
+   print(g1)
+   cat("\n")
+  }
+  # print(s1)
+  if(s1 > when.backedup & !cant.invert.hess){ # if(s1 > when.backedup^2 & !cant.invert.hess){
+   # ltol <- reltol * (abs(ll0) + reltol)
+   # print(cant.invert.hess)
+   if(delta1 > 0 & !is.na(delta_rel) & delta_rel < ltol*1e-16 & iter.total > 1){
+    if(print.level >= 2){
+     cat("\nConvergence given delta = ",delta_rel," < dtol\n", sep = "")
+    }
+    g1_h0 <- gr.hess(theta0, ...)
+    g1 <- g1_h0$grad
+    h0 <- g1_h0$hessian
+    
+    # g1 <- gr(theta0, ...)
+    # h0 <- hess(theta0,  ...)
+    # h1 <- tryCatch( qr.solve(-h0), error = function(e) e )
+    break
+   }
+  }
+  if(iter.total > maxit){
+   cat("\n Maximum number of iterations (",iter.total,") reached without convergence\n", sep = "")
+   cat(" Only 'theta' from iteration ",iter," will be returned\n\n", sep = "")
+   print(theta0)
+   return(list(par = theta0, converged = 0))
+   break
+   cat(" Only 'theta' from iteration ",iter," will be returned\n", sep = "")
+  }
+ } # end repeat
+ 
+ if( !only.maximize & !cant.invert.hess){
+  names(ll0) <- NULL
+  colnames(h1) <- rownames(h1) <- names(g1) <- names(theta0)
+  
+  # sqrt(crossprod(g1))
+  
+  b0 <- theta0
+  suppressWarnings( sd0 <- sqrt( diag( h1 ) ) )
+  sd.nas <- is.na(sd0)
+  # cat.print(sum(sd.nas))
+  if(sum(sd.nas) > 0){
+   sd1 <- sqrt(diag( solve(-.make.neg.def(h00), tol = 1e-268 ) ))
+   sd0[sd.nas] <- sd1[sd.nas]
+  }
+  # cat.print(diag( solve(-.make.neg.def(h00) ) ))
+  # cat("1\n")
+  # cat.print(diag( solve(-.make.invertible(h00) ) ))
+  # cat.print(diag( solve(-.make.neg.def(h00), tol =1e-68 ) ))
+  t0 <- b0 / sd0
+  p0 <- pt(abs(t0), n-length(b0), lower.tail = FALSE) * 2
+  t10 <- qt((1-0.01*level)/2, n-length(b0), lower.tail = FALSE)
+  t17 <- cbind( b0, sd0, t0, p0, b0 - t10*sd0, b0 + t10*sd0)
+  # t17 <- cbind( b0, sd0, t0, p0)
+  colnames(t17) <- c("Estimate", "Std. Error", "t value", "Pr(>|t|)", paste("",level,"_CI_LB", sep = ""), paste("",level,"_CI_UB", sep = ""))
+  # colnames(t17) <- c("Estimate", "Std. Error", "t value", "Pr(>|t|)")
+  # t17
+  
+  if(print.level >= 2){
+   cat(paste("\nFinal log likelihood = ",format(ll0, digits = 13),"\n\n", sep = ""), sep = "")
+  }
+  # cat(paste("Stoc. frontier normal/",distribution,"\n", sep = ""), sep = "")
+  if(print.level >= 7){
+   cat("\nCoefficients:\n\n", sep = "")
+   printCoefmat(t17[,1:4], digits = digits)
+  }
+  
+  return(list(par = theta0, table = t17, gradient = g1, vcov = h1, ll = ll0, gg = gg, gHg = gHg, theta_rel_ch = theta_rel, converged = 1))
+ } else {
+  return(list(par = theta0, gradient = g1, vcov = h1, ll = ll0, gg = gg, gHg = gHg, theta_rel_ch = theta_rel, converged = 1))
+ }
+ 
+}
+
+# Print the estimation results
+.printpanel2nd = function(x, digits, kb, kvi, ku0, kdeli, model, eff.time.invariant, mean.u.0i.zero, na.print = "NA", max.name.length, mycutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), mysymbols = c("***", "**", "*", ".", " ")){
+ 
+ Cf = cbind(ifelse(x[,1, drop = F]> 999, formatC(x[,1, drop = F], digits = 1, format = "e",width = 10), formatC(x[,1, drop = F], digits = digits, format = "f", width = 10)),
+            ifelse(x[,2, drop = F]>999, formatC(x[,2, drop = F], digits = 1, format = "e", width = 10), formatC(x[,2, drop = F], digits = digits, format = "f", width = 10)),
+            ifelse(x[,3, drop = F]>999, formatC(x[,3, drop = F], digits = 1, format = "e", width = 7), formatC(x[,3, drop = F], digits = 2, format = "f", width = 7)),
+            ifelse(x[,4, drop = F]>999, formatC(x[,4, drop = F], digits = 1, format = "e", width = 10), formatC(x[,4, drop = FALSE], digits = digits, format = "f", width = 10)),
+            formatC(mysymbols[findInterval(x = x[,4], vec = mycutpoints)], flag = "-"))
+ 
+ row.names(Cf) <- formatC(row.names(Cf), width = max(nchar(row.names(Cf))), flag = "-")
+ cat("",rep(" ", max.name.length+6),"Coef.        SE       z       P>|z|\n", sep = "")
+ dimnames(Cf)[[2]] <- rep("", dim(Cf)[[2]])
+ cat("",rep("_", max.name.length+42-1),"", "\n", "Frontier", "\n", sep = "")
+ print.default(Cf[1:kb,,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+ 
+ 
+ cat("",rep("-", max.name.length+42-1),"", "\n", "Random noise component: log(sigma_vit^2)", "\n", sep = "")
+ print.default(Cf[(kb+1):(kb+kvi),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+ 
+ cat("",rep("-", max.name.length+42-1),"", "\n", "Inefficiency component: log(sigma_u0i^2)", "\n", sep = "")
+ 
+ cat("(id-specific time-invariant)", "\n", sep = "")
+ print.default(Cf[(kb+kvi+1):(kb+kvi+ku0),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+ 
+ if(!mean.u.0i.zero){
+  cat("",rep("-", max.name.length+42-1),"", "\n", "Inefficiency component: conditional mean of the ", "\n", sep = "")
+  cat("truncated-normal distribution", "\n", sep = "")
+  cat("(id-specific time-invariant)", "\n", sep = "")
+  print.default(Cf[(kb+kvi+ku0+1):(kb+kvi+ku0+kdeli),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+ } else {
+  kdeli <- 0
+ }
+ 
+
+ if(!eff.time.invariant){
+  if(model == "BC1992"){
+   Keta <- 1
+   components <- "component"
+  } else {
+   Keta <- 2
+   components <- "components"
+  }
+  cat(rep("-", max.name.length+42-1),"\n Decay ",components,"\n", sep = "")
+  cat("(function of inefficiency time variation)", "\n", sep = "")
+  print.default(Cf[(kb+kvi+ku0+kdeli+1):(kb+kvi+ku0+kdeli+Keta),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+ } else {
+  Keta <- 0
+ }
+ 
+ if(nrow(x) > kb+kvi+ku0+kdeli+Keta){
+  cat("",rep("-", max.name.length+42-1),"", "\n", "Auxiliary parameters", "\n", sep = "")
+  print.default(Cf[(kb+kvi+ku0+kdeli+Keta+1):nrow(x),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+  
+ }
+ 
+ cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
+ invisible(x)
+}
+
+# Technical efficiencies and prediction intervals
+.u2efftnm.panel <- function( eit, sigv2it, sigu2i, mui, Git, alpha = alpha, prod = prod, cost.eff.less.one, ids, idvar, timevar, t0, it.names) {
+ # if(prod){sn = -1} else {sn = 1}
+ sn <- sn1 <- ifelse(prod, -1, 1)
+ if(!prod & cost.eff.less.one) sn <- -1
+ # sn <- -1
+ 
+ te_jlms_mean <- te_jlms_mode <- te_bc <- te_l <- te_u <- c()
+ 
+ # define indices
+ m.end <- cumsum(t0)
+ m.begin <- c(1,(m.end+1)[-length(t0)])
+ 
+ for(i in 1:length(ids)){
+  
+  
+ # for(i in ids){
+  # sample.i <- idvar == i
+  sample.i <- (m.begin[i]):(m.end[i])
+  ei = eit[sample.i]; 
+  sigv2i = sigv2it[sample.i]
+  Gi = Git[sample.i];
+  
+  s2i = (1/sigu2i[i] + sum(Gi^2/sigv2i))^(-1)
+  mi = (mui[i]/sigu2i[i] + sn1*sum(ei*Gi/sigv2i))*s2i
+  zi <- mi / sqrt(s2i)
+  
+  point.est.mean <- mi + sqrt(s2i) * dnorm(zi) / pnorm(zi)
+  point.est.mode <- ifelse( mi >= 0, mi, 0 )
+  
+  # if(i < 2){
+  #  cat("\n current i = ",i ,"\n")
+  #  cat.print(sample.i)
+  #  cat.print(ei)
+  #  cat.print(mui[i])
+  #  cat.print(sigv2i)
+  #  cat.print(Gi)
+  #  cat.print(s2i)
+  #  cat.print(mi)
+  #  cat.print(zi)
+  #  cat("\n")
+  # }
+  
+  te_jlms_mean <- append(te_jlms_mean, exp(sn*Gi*point.est.mean))
+  te_jlms_mode <- append(te_jlms_mode, exp(sn*Gi*point.est.mode))
+  te_bc <- append(te_bc, exp(sn*mi*Gi + 0.5*s2i*Gi^2) * pnorm(zi + sn * sqrt(s2i)*Gi)/pnorm(zi))
+  zl    <- qnorm( 1 - alpha / 2 * pnorm(zi) )
+  zu    <- qnorm( 1 - ( 1 - alpha/2 ) * pnorm(zi) )
+  te_l  <- append(te_l, exp(Gi*(sn*mi - zl*sqrt(s2i))))
+  te_u  <- append(te_u, exp(Gi*(sn*mi - zu*sqrt(s2i))))
+ }
+ tymch <- data.frame(idvar, timevar, te_l, te_jlms_mean, te_jlms_mode, te_bc, te_u)
+ colnames(tymch) <- c(it.names, "Lower bound","JLMS", "Mode", "BC","Upper bound" )
+ row.names(tymch) <- NULL
+ return(tymch)
+}
 
 # truncreg ---------------------------------------------------------------------
 

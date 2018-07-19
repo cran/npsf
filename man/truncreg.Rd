@@ -57,14 +57,32 @@ truncreg(formula, data, subset,
 
 \value{
  \code{truncreg} returns a list of class \code{npsf} containing the following elements:
+ \item{call}{
+   call. 'truncreg.cs'.
+  }
+  \item{model}{
+   character. Unevaluated call to function \code{truncreg}.
+  }
   \item{coef}{
    numeric. Named vector of ML parameter estimates.
+  }
+  \item{table}{
+  matrix. Table with results.
   }
  \item{vcov}{
   matrix. Estimated covariance matrix of ML estimator. 
  }
- \item{loglik}{
+ \item{ll}{
   numeric. Value of log-likelihood at ML estimates.
+ }
+ \item{lmtol}{
+ numeric. Convergence criterion: tolerance for the scaled gradient.
+ }
+ \item{LM}{
+ numeric. Value of the scaled gradient.
+ }
+ \item{esttime}{
+ numeric. Estimation time.
  }
  \item{marg.effects}{
   data frame. Contains unit-specific marginal effects of exogenous variables. 
@@ -72,7 +90,19 @@ truncreg(formula, data, subset,
  \item{sigma}{
   numeric. estimate of sigma.
  }
-  \item{nontruncsample}{
+ \item{LL}{
+ numeric. The lower limit for left-truncation
+ }
+ \item{UL}{
+ numeric. The upper limit for left-truncation
+ }
+ \item{n}{
+ numeric. Number of observations (used in regression).
+ }
+ \item{n.full}{
+ numeric. Number of observations (used and not used in regression).
+ }
+ \item{nontruncsample}{
    logical. Returns TRUE if the observation in user supplied data is in the estimation subsample and in non-truncated part of the sample, and FALSE otherwise.
  }
  \item{esample}{
@@ -81,7 +111,7 @@ truncreg(formula, data, subset,
 }
 
 \author{
- Oleg Badunenko <obadunen@uni-koeln.de>
+ Oleg Badunenko <oleg.badunenko@port.ac.uk>
 }
 
 \seealso{

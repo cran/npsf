@@ -161,7 +161,7 @@ Simar L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{E
 }
 
 \author{
-Oleg Badunenko <obadunen@uni-koeln.de>, Pavlo Mozharovskyi <pavlo.mozharovskyi@univ-rennes1.fr>
+Oleg Badunenko <oleg.badunenko@port.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@ensai.fr>
 
 }
 
@@ -212,7 +212,7 @@ t3 <- nptestrts(Y2 ~ X2,
 # ===  Parallel computing ===
 # ===========================
 
-# Perform previous test but use 4 cores and
+# Perform previous test but use 8 cores and
 # cluster type SOCK
 
 t3 <-  nptestrts(y1 + y2 + y3 ~ x1 + x2 + x3 + x4 + x5,

@@ -2,7 +2,7 @@ importFrom("stats", "IQR", "as.formula", "bw.SJ", "coef", "cov",
             "dnorm", "lm", "model.frame", "model.matrix",
             "model.response", "na.omit", "na.pass", "pnorm",
             "printCoefmat", "pt", "qnorm", "qt", "quantile", "rnorm",
-            "runif", "sd", "var")
+            "runif", "sd", "var", "resid")
 importFrom("utils", "installed.packages")
 importFrom("stats", "nobs")
 import(Formula)
