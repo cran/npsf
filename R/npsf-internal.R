@@ -685,7 +685,7 @@
 }
 
 .rownames.Intercept.change <- function(x){
- x <- gsub("(Intercept)","intercept",x, fixed = TRUE)
+ # x <- gsub("(Intercept)","intercept",x, fixed = TRUE)
  x
 }
 
@@ -1899,21 +1899,26 @@
 
 
 # Technical efficiencies and prediction intervals
-.u2efftnm <- function( e, su, sv, mu, alpha = 0.05, prod) {
+
+.u2efftnm <- function( e, su, sv, mu, alpha = 0.05, prod, cost.eff.less.one) {
  # if(prod){sn = -1} else {sn = 1}
- sn <- ifelse(prod, -1, 1)
- s  <- sqrt(su^2 + sv^2);  m1 <- (sn*su^2 * e + mu*sv^2)/s^2
- s1 <- su * sv / s;  z  <- m1 / s1
+ sn <- sn1 <- ifelse(prod, -1, 1)
+ if(!prod & cost.eff.less.one) sn1 <- -1
+ s  <- sqrt(su^2 + sv^2)
+ m1 <- (sn*su^2 * e + mu*sv^2)/s^2
+ s1 <- su * sv / s
+ z  <- m1 / s1
  point.est.mean <- m1 + s1 * dnorm(-z) / pnorm(z)
  point.est.mode <- ifelse( m1 >= 0, m1, 0 )
- te_jlms_mean <- exp( sn*point.est.mean)
- te_jlms_mode <- exp( sn*point.est.mode)
+ te_jlms_mean <- exp( sn1*point.est.mean)
+ te_jlms_mode <- exp( sn1*point.est.mode)
  zl    <- qnorm( 1 - alpha / 2 * pnorm(z) )
  zu    <- qnorm( 1 - ( 1 - alpha/2 ) * pnorm(z) )
- te_l  <- exp( sn*m1 - zl * s1 )
- te_u  <- exp( sn*m1 - zu * s1 )
- te_bc <- exp( sn*m1 + .5 * s1^2) * pnorm( sn*s1 + z ) / pnorm(z)
+ te_l  <- exp( sn1*m1 + sn1* zl * s1 )
+ te_u  <- exp( sn1*m1 + sn1* zu * s1 )
+ te_bc <- exp( sn1*m1 + .5 * s1^2) * pnorm( sn1*s1 + z ) / pnorm(z)
  tymch <- data.frame(te_l, te_jlms_mean, te_jlms_mode,te_bc,te_u)
+ if(!prod & !cost.eff.less.one) tymch <- data.frame(te_u, te_jlms_mean, te_jlms_mode,te_bc,te_l)
  colnames(tymch) <- c("Lower bound","JLMS", "Mode", "BC","Upper bound" )
  return(tymch)
 }
@@ -3936,6 +3941,8 @@
   # begin stopping criteria calculated using new values of g1 and h1
   # if(s1 > when.backedup*10^-100 & delta1 != 17.17){ # if(s1 > when.backedup*10^-100 & !cant.invert.hess){
   if(s1 > when.backedup*1e-10 & delta1 != 17.17){ # if(s1 > when.backedup*10^-100 & !cant.invert.hess){
+   # cat.print(abs(gHg))
+   # cat.print(lmtol)
    if(abs(gHg) < lmtol & iter.total > 1){
     if(print.level >= 2){
      cat("\nConvergence given abs(gHg) = ",abs(gHg)," < lmtol\n", sep = "")
@@ -4174,7 +4181,7 @@
     break
    }
   }
-  if(iter.total > maxit){
+  if(iter.total >= maxit){
    cat("\n Maximum number of iterations (",iter.total,") reached without convergence\n", sep = "")
    cat(" Only 'theta' from iteration ",iter," will be returned\n\n", sep = "")
    print(theta0)
@@ -4264,13 +4271,13 @@
  if(!eff.time.invariant){
   if(model == "BC1992"){
    Keta <- 1
-   components <- "component"
+   components <- "Component"
   } else {
    Keta <- 2
-   components <- "components"
+   components <- "Components"
   }
-  cat(rep("-", max.name.length+42-1),"\n Decay ",components,"\n", sep = "")
-  cat("(function of inefficiency time variation)", "\n", sep = "")
+  cat(rep("-", max.name.length+42-1),"\n Function of inefficiency time change \n", sep = "")
+  # cat("(function of inefficiency time evolution)", "\n", sep = "")
   print.default(Cf[(kb+kvi+ku0+kdeli+1):(kb+kvi+ku0+kdeli+Keta),,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
  } else {
   Keta <- 0
@@ -4290,10 +4297,10 @@
 .u2efftnm.panel <- function( eit, sigv2it, sigu2i, mui, Git, alpha = alpha, prod = prod, cost.eff.less.one, ids, idvar, timevar, t0, it.names) {
  # if(prod){sn = -1} else {sn = 1}
  sn <- sn1 <- ifelse(prod, -1, 1)
- if(!prod & cost.eff.less.one) sn <- -1
+ if(!prod & cost.eff.less.one) sn1 <- -1
  # sn <- -1
  
- te_jlms_mean <- te_jlms_mode <- te_bc <- te_l <- te_u <- c()
+ u_mean <- te_jlms_mean <- te_jlms_mode <- te_bc <- te_l <- te_u <- c()
  
  # define indices
  m.end <- cumsum(t0)
@@ -4309,8 +4316,8 @@
   sigv2i = sigv2it[sample.i]
   Gi = Git[sample.i];
   
-  s2i = (1/sigu2i[i] + sum(Gi^2/sigv2i))^(-1)
-  mi = (mui[i]/sigu2i[i] + sn1*sum(ei*Gi/sigv2i))*s2i
+  s2i <- (1/sigu2i[i] + sum(Gi^2/sigv2i))^(-1)
+  mi <- (mui[i]/sigu2i[i] + sn*sum(ei*Gi/sigv2i))*s2i
   zi <- mi / sqrt(s2i)
   
   point.est.mean <- mi + sqrt(s2i) * dnorm(zi) / pnorm(zi)
@@ -4329,16 +4336,18 @@
   #  cat("\n")
   # }
   
-  te_jlms_mean <- append(te_jlms_mean, exp(sn*Gi*point.est.mean))
-  te_jlms_mode <- append(te_jlms_mode, exp(sn*Gi*point.est.mode))
-  te_bc <- append(te_bc, exp(sn*mi*Gi + 0.5*s2i*Gi^2) * pnorm(zi + sn * sqrt(s2i)*Gi)/pnorm(zi))
+  u_mean <- append(u_mean, Gi*point.est.mean)
+  te_jlms_mean <- append(te_jlms_mean, exp(sn1*Gi*point.est.mean))
+  te_jlms_mode <- append(te_jlms_mode, exp(sn1*Gi*point.est.mode))
+  te_bc <- append(te_bc, exp(sn1*mi*Gi + 0.5*s2i*Gi^2) * pnorm(zi + sn1 * sqrt(s2i)*Gi)/pnorm(zi))
   zl    <- qnorm( 1 - alpha / 2 * pnorm(zi) )
   zu    <- qnorm( 1 - ( 1 - alpha/2 ) * pnorm(zi) )
-  te_l  <- append(te_l, exp(Gi*(sn*mi - zl*sqrt(s2i))))
-  te_u  <- append(te_u, exp(Gi*(sn*mi - zu*sqrt(s2i))))
+  te_l  <- append(te_l, exp(Gi*(sn1*mi - zl*sqrt(s2i))))
+  te_u  <- append(te_u, exp(Gi*(sn1*mi - zu*sqrt(s2i))))
  }
- tymch <- data.frame(idvar, timevar, te_l, te_jlms_mean, te_jlms_mode, te_bc, te_u)
- colnames(tymch) <- c(it.names, "Lower bound","JLMS", "Mode", "BC","Upper bound" )
+ tymch <- data.frame(idvar, timevar, te_l, te_jlms_mean, te_jlms_mode, te_bc, te_u, u_mean)
+ # tymch <- data.frame(idvar, timevar, te_l, te_jlms_mean, te_jlms_mode, te_bc, te_u, u_mean)
+ colnames(tymch) <- c(it.names, "Lower bound","JLMS", "Mode", "BC","Upper bound", "u")
  row.names(tymch) <- NULL
  return(tymch)
 }

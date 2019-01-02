@@ -1,13 +1,18 @@
+npsf v0.4.2 (Release date: 2019-01-02)
+
+• Fixed various bugs
+
 npsf v0.4.1 (Release date: 2018-07-19)
 
 * Added sf panel data models
   * In all models, user optionally
-    * can make all components heteroskedastic,
+    * can make all components heteroskedastic and 
+      specify the heterskedasticity function,
     * choose between normal-half-normal and
     * normal-truncated normal model, and
     * specify conditional mean function
-  * 1st generation models: time-invariant inefficiency
-  * 2nd generation models: time-variant inefficiency with
+  * 1st generation panel data models: time-invariant inefficiency
+  * 2nd generation panel data models: time-variant inefficiency with
     parametric function of inefficiency evolution
 
 npsf v0.3.1 (Release date: 2018-01-17)

@@ -257,8 +257,8 @@ my.it       <- c("id","year")
 
 # translog ----------------------------------------------------------------
 formu <- log(TC) ~ (log(Y1) + log(Y2) + log(W1) + log(W2) + trend)^2 +
- I(log(Y1)^2) + I(log(Y2)^2) + I(log(W1)^2) + I(log(W2)^2) +
- trend + I(trend^2)
+ I(0.5*log(Y1)^2) + I(0.5*log(Y2)^2) + I(0.5*log(W1)^2) + I(0.5*log(W2)^2) +
+ trend + I(0.5*trend^2)
 
 # Cobb-Douglas ------------------------------------------------------------
 # formu <- log(TC) ~ log(Y1) + log(Y2) + log(W1) + log(W2) + trend + I(trend^2)
@@ -297,9 +297,12 @@ t0_1st_0 <- sf(formu, data = banks00_07, it = my.it, subset = year > 2000,
                eff.time.invariant = TRUE, 
                mean.u.0i.zero = TRUE)
 
-
-
 # Note efficiencies are time-invariant
+
+# confidence intervals for efficiencies -----------------------------------
+
+head(t0_1st_0$efficiencies, 20)
+
 
 # normal-truncated normal -------------------------------------------------
 

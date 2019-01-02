@@ -11,6 +11,13 @@ sf <- function(formula, data, it = NULL, subset,
                reltol = 1e-8, lmtol = sqrt(.Machine$double.eps),
                digits = 4, print.level = 4) {
  
+ # prefixes for the names will be:
+ # lnVARu0i_
+ # lnVARuit_
+ # lnVARv0i_
+ # lnVARvit_
+ # mean_u0i_
+ 
  if (level < 0 | level > 99.99) {
   stop("'level' must be between 0 and 99.99 inclusive", call. = FALSE)
  }
@@ -55,22 +62,39 @@ sf <- function(formula, data, it = NULL, subset,
   # names_zu <-  abbreviate(colnames(Zu), 9, strict = TRUE, dot = FALSE)
   # names_zv <-  abbreviate(colnames(Zv), 9, strict = TRUE, dot = FALSE)
   Zu_colnames <- abbreviate(colnames(Zu), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides")
-  names_zu <- paste0("logVu_", abbreviate(colnames(Zu), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides"))
-  names_zv <- paste0("logVv_", abbreviate(colnames(Zv), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides"))
+  names_zu <- paste0("lnVARu0i_", abbreviate(colnames(Zu), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides"))
+  names_zv <- paste0("lnVARv0i_", abbreviate(colnames(Zv), abbr.length, strict = TRUE, dot = FALSE, method = "both.sides"))
   
   if(distribution == "t"){
    # names_del <- abbreviate(colnames(Zdel), 9, strict = T, dot = F)
    kdel <- ncol(Zdel)
-   names_del <- paste0("mu_", abbreviate(colnames(Zdel), 9, strict = TRUE, dot = FALSE))
+   names_del <- paste0("mean_u0i_", abbreviate(colnames(Zdel), 9, strict = TRUE, dot = FALSE))
    if(kdel == 1){
-    if(names_del == "mu_intercept"){
-     names_del <- "mu"
-    }
+    # if(names_del == "mu_intercept"){
+    #  names_del <- "mu"
+    # }
    }
   } else {
    names_del <- NULL
    kdel <- 0
   }
+  
+  if(is.null(names_del)){
+   coef.names.full <- c(
+    names_x,
+    paste("lnVARv0i_",c("(Intercept)", names_zv[-1]),"", sep = ""),
+    paste("lnVARu0i_",c("(Intercept)", names_zu[-1]),"", sep = "")
+   )
+  } else {
+   coef.names.full <- c(
+    names_x,
+    paste("lnVARv0i_",c("(Intercept)", names_zv[-1]),"", sep = ""),
+    paste("lnVARu0i_",c("(Intercept)", names_zu[-1]),"", sep = ""),
+    paste("mean_u0i_",c("(Intercept)", names_del[-1]),"", sep = "")
+   )
+  }
+  
+  coef.names.full.output <- c(names_x, names_zv, names_zu, names_del)
   
   # starting values
   ols <- lm(y ~ 0 + X)
@@ -103,8 +127,8 @@ sf <- function(formula, data, it = NULL, subset,
   } else {
    theta0 <- start.val
   }
-  rownames(theta0) <- c(names_x, names_zv, names_zu, names_del)
-  
+  rownames(theta0) <- coef.names.full#c(names_x, names_zv, names_zu, names_del)
+
   max.name.length <- max(nchar(rownames(theta0)))
   
   # print(theta0)
@@ -247,12 +271,12 @@ sf <- function(formula, data, it = NULL, subset,
   
   if(distribution == "h"){
    # eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod), digits = digits)
-   eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod)
+   eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod, cost.eff.less.one = cost.eff.less.one)
    mu = NULL
   } else {
    mu <- Zdel%*%obj$par[-c(1:(k+kv+ku))]
    # eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod), digits = digits)
-   eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod)
+   eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod, cost.eff.less.one = cost.eff.less.one)
   }
   
   # Marginal effects
@@ -345,7 +369,7 @@ sf <- function(formula, data, it = NULL, subset,
   
   model.correct <- model %in% c("K1990","K1990modified","BC1992")
   if( !model.correct ){
-   stop("'model' is invalid")
+   stop("'model' is not supported")
   }
   
   steptol = .Machine$double.eps
@@ -416,9 +440,9 @@ sf <- function(formula, data, it = NULL, subset,
   
   coef.names.full.no.eta <- c(
    names_x,
-   paste("ln_vit_var_",c("Intercept", names_vi[-1]),"", sep = ""),
-   paste("ln_u0_var_",c("Intercept", names_u0[-1]),"", sep = ""),
-   paste("u0_mean_",c("Intercept", names_udeli[-1]),"", sep = "")
+   paste("lnVARvit_",c("(Intercept)", names_vi[-1]),"", sep = ""),
+   paste("lnVARu0i_",c("(Intercept)", names_u0[-1]),"", sep = ""),
+   paste("mean_u0i_",c("(Intercept)", names_udeli[-1]),"", sep = "")
   )
   
   coef.names.full.no.eta.output <- c(
@@ -576,7 +600,7 @@ sf <- function(formula, data, it = NULL, subset,
   
   # obj  <- obj10
   
-  # otimization -------------------------------------------------------------
+  # optimization -------------------------------------------------------------
   
   if(print.level >= 2){
    my.message <- paste0(" Optimization using 'mlmaximize': ")
@@ -592,7 +616,7 @@ sf <- function(formula, data, it = NULL, subset,
   # print(theta0)
   # print(length(theta0))
   
-  obj <- eval(parse(text = paste(".mlmaximize.panel(theta0, .ll.panel, gr = .gr.panel, hess = .hess.panel, gr.hess = .gr.hess.panel, coef.fixed = coef.fixed, prod = prod, my.n = n, Ktheta = Ktheta, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, mean.u.0i.zero = mean.u.0i.zero, model = model, timevar = my.t, maxT = maxT, ids = ids, idvar = idvar, print.level = print.level, t0 = t0, reltol  = reltol, steptol = steptol, max.backedup = 17, maxit = maxit, when.backedup = .Machine$double.eps)", sep = "")))
+  obj <- eval(parse(text = paste(".mlmaximize.panel(theta0, .ll.panel, gr = .gr.panel, hess = .hess.panel, gr.hess = .gr.hess.panel, coef.fixed = coef.fixed, prod = prod, my.n = n, Ktheta = Ktheta, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, mean.u.0i.zero = mean.u.0i.zero, model = model, timevar = my.t, maxT = maxT, ids = ids, idvar = idvar, print.level = print.level, t0 = t0, reltol  = reltol, lmtol = lmtol, steptol = steptol, max.backedup = 17, maxit = maxit, when.backedup = .Machine$double.eps)", sep = "")))
   
   
   
@@ -616,22 +640,22 @@ sf <- function(formula, data, it = NULL, subset,
    se_sigv <- (0.5*sigv) * sqrt(obj$vcov[Kb+1,Kb+1])
    se_sigu <- (0.5*sigu) * sqrt(obj$vcov[Kb+Kvi+1,Kb+Kvi+1])
    
-   cat("sigv = ",sigv,"se_sigv = ",se_sigv,"\n")
-   cat("sigu = ",sigu,"se_sigu = ",se_sigu,"\n")
+   # cat("sigv = ",sigv,"se_sigv = ",se_sigv,"\n")
+   # cat("sigu = ",sigu,"se_sigu = ",se_sigu,"\n")
    
    # SE for lambda
    lmd <- sqrt(exp(obj$par[Kb+Kvi+1] - obj$par[Kb+1]))
    glmd <- c(0.5*lmd, -0.5*lmd)
    se_lmd <- as.vector( sqrt( t(glmd) %*% obj$vcov[c((Kb+1),(Kb+Kvi+1)), c((Kb+1),(Kb+Kvi+1))] %*% glmd))
    
-   cat("lmd = ",lmd,"se_lmd = ",se_lmd,"\n")
+   # cat("lmd = ",lmd,"se_lmd = ",se_lmd,"\n")
    
    # SE for gamma
    gam <- exp(obj$par[Kb+Kvi+1])/(exp(obj$par[Kb+Kvi+1]) + exp(obj$par[Kb+1]))
    ggam <- c(gam*(1 - gam), -gam^2/lmd^2)
    se_gam <- as.vector( sqrt( t(ggam) %*% obj$vcov[c((Kb+1),(Kb+Kvi+1)), c((Kb+1),(Kb+Kvi+1))] %*% ggam))
    
-   cat("gam = ",gam,"se_gam = ",se_gam,"\n")
+   # cat("gam = ",gam,"se_gam = ",se_gam,"\n")
   }
   
   par.aux <- output <- NULL
@@ -813,11 +837,11 @@ sf <- function(formula, data, it = NULL, subset,
   # colnames(obj$vcov)[1:(Kb+Kvi+Ku0+Kdeli)] <- rownames(obj$vcov)[1:(Kb+Kvi+Ku0+Kdeli)] <- names(theta0)#c(names_x, names_zv, names_zu, names_del)
   # colnames(obj$vcov) <- rownames(obj$vcov) <- names(theta0)#c(names_x, names_zv, names_zu, names_del)
   
-  temp <- list(call = match.call(), model = paste0("sf_p_2_",model), coef = obj$par[names(par) %in% colnames(obj$vcov)], table = output, vcov = obj$vcov, ll = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = obj$converged, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, Kb = Kb, Kvi=Kvi,Ku0=Ku0,Kdeli =Kdeli, fitted = as.vector(unname(X%*%obj$par[1:Kb])), yobs = as.vector(y), xobs = X, esample = esample)
+  temp <- list(call = match.call(), model = paste0("sf_p_2_",model), coef = obj$par, table = output, vcov = obj$vcov, ll = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = obj$converged, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, Kb = Kb, Kvi=Kvi,Ku0=Ku0,Kdeli =Kdeli, fitted = as.vector(unname(X%*%obj$par[1:Kb])), yobs = as.vector(y), xobs = X, esample = esample)
+  # print(temp)
   if (obj$converged == 2){
    temp$delta_rel <- obj$delta_rel
    temp$ltol <- obj$ltol
-   
   }
   if (obj$converged == 3){
    temp$theta_rel_ch <- obj$theta_rel_ch

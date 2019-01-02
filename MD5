@@ -1,14 +1,14 @@
-4be5d95af04a7a86b755cc8c592b3200 *ChangeLog
-21ee5d599dce0ee5c78b71f1dec2b3fb *DESCRIPTION
+74518b56eb60df26985189059cc17439 *ChangeLog
+5a43cb8abe19ab35411ffc086df5e953 *DESCRIPTION
 eab1165792329bb10aa011ceb908e75e *NAMESPACE
 a9851dc595511d3ab92feb91eae8037c *R/coef.npsf.R
 dd83114d9e8c30ab640972c89938f41e *R/nobs.npsf.R
-dae4adaeb7aa31b060347c9855c6ae6f *R/npsf-internal.R
+a4b596e9857e0b7507c5aacfe86bae77 *R/npsf-internal.R
 a0958861438296725fcb29e54e665104 *R/nptestind.R
 e2434d8cdd8b2f3f5bfc3f332cdc3f4c *R/nptestrts.R
 343b49c797003a405f4bfc2c2a8a6a93 *R/print.npsf.R
 05f09e558b812ed3a59c67f0fc811120 *R/print.summary.npsf.R
-7e362ed4d26d3cc13f1f10a0e578ca50 *R/sf.R
+cd4e47abc68bcc5f2473b09bac3758c8 *R/sf.R
 7daa9a748d01e93d7f758c2071662f9f *R/summary.npsf.R
 630bad71e0f6756fcc46c1aa1050e2c0 *R/tenonradial.R
 cccbfb94882777324f5e7f9f732cd8a2 *R/teradial.R
@@ -32,7 +32,7 @@ a8ebbf2e3c8f7cccaedb58a78d652160 *man/coef.npsf.Rd
 e781297f122324d420dd9e5c1816284b *man/nptestind.Rd
 9ec447c795085f47e245a89492d3ec2b *man/nptestrts.Rd
 a872ac8e9757b9eacaf516b7edff64dd *man/pwt56.Rd
-e6bcc2e9db14dab824c0c90adba20f79 *man/sf.Rd
+cb7ce1d5bd9f06f3cb696e3ef5674e1f *man/sf.Rd
 cff68c08273e603479e31369f070a66e *man/summary.npsf.Rd
 487f3a319456da02bd6bb7a4dd0a7873 *man/tenonradial.Rd
 d0c8dadcb23605e09fa0b716cd47f9c1 *man/teradial.Rd
