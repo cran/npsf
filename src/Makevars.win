@@ -1,4 +1,4 @@
 PKG_CPPFLAGS = -I"nllpk"
 SOURCES_CPP = radial.cpp nonradial.cpp nllpk/routines.cpp nllpk/simplexMethod.cpp
-SOURCES_C = init.c
+SOURCES_C = init.c fourcomp.c
 OBJECTS = $(SOURCES_CPP:.cpp=.o) $(SOURCES_C:.c=.o)

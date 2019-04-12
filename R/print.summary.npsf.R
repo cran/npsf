@@ -35,8 +35,8 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
   stop( gettextf("There is no model in '%s'.", deparse(substitute(x))) )
  }
  mymodel <- x$model
- # possible.models <- c("teradial", "tenonradial", "teradialbc", "nptestrts", "nptestind", "sfsc")
- valid.model <- mymodel %in% c("teradial", "tenonradial", "teradialbc", "nptestrts", "nptestind", "sfsc", "truncreg.cs") # possible.models
+ # possible.models <- c("teradial", "tenonradial", "teradialbc", "nptestrts", "nptestind", "sf_sc")
+ valid.model <- mymodel %in% c("teradial", "tenonradial", "teradialbc", "nptestrts", "nptestind", "sf_sc", "truncreg.cs", "sf_p_1", "sf_p_2_K1990", "sf_p_2_K1990modified", "sf_p_2_BC1992","sf_p_4comp_homosk") # possible.models
  if(!valid.model){
   stop( gettextf("Not valid model in '%s'.", deparse(substitute(x))) )
  }
@@ -218,7 +218,7 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
   # end nptestrts
  }
  # sf sross-sectional -----------------------------------------------------------
- if(mymodel == "sfsc"){
+ if(mymodel == "sf_sc"){
   # begin sf sross-sectional
   if(print.level >= 1 & winw > 50){
    if(x$convergence == 1){#x$LM < x$lmtol){
@@ -236,6 +236,7 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
    cat("Final log likelihood = ",formatC(x$loglik,digits=7,format="f"),"\n",  sep = "")
    # model
    max.name.length <- max(nchar(row.names(x$table)))
+   
    cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
    if(x$prod){
     cat("\nCross-sectional stochastic (production) frontier model\n",  sep = "")}
@@ -284,6 +285,10 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
   }
   # end sf sross-sectional
  }
+
+# truncreg ----------------------------------------------------------------
+
+ 
  if (mymodel == "truncreg.cs"){
   # begin sf truncreg
   if(print.level >= 1 & winw > 50){
@@ -355,5 +360,186 @@ print.summary.npsf <- function( x, digits = NULL, print.level = NULL, ... ) {
  #  cat("Log likelihood = ",formatC(x$ll,digits=4,format="f"),"\n",  sep = "")
  #  cat("____________________________________________________\n")
 
+
+ # sf panel 1 and 2 gen ----------------------------------------------------------
+ if( mymodel %in% c("sf_p_1", paste0("sf_p_2_",c("K1990", "K1990modified", "BC1992"))) ){
+  # begin sf panel
+  if(print.level >= 1 & winw > 50){
+   if(x$convergence == 1){#x$LM < x$lmtol){
+    cat("Convergence given g*inv(H)*g' = ",formatC(x$LM,digits=2,format="e")," < lmtol(",formatC(x$lmtol,digits=1,format="e"),")\n", sep = "")
+   } else if (x$convergence == 2){
+    cat("\nConvergence given relative change in log likelihood = ",formatC(x$delta_rel,digits=2,format="e")," < ltol(",formatC(x$ltol,digits=1,format="e"),")\n", sep = "")
+   } else if (x$convergence == 3){
+    cat("\nConvergence given relative change in parameters = ",x$theta_rel," < steptol(",formatC(x$steptol,digits=2,format="e"),")\n", sep = "")
+   } else if (x$convergence == 0) {
+    cat("'optim' did it\n", sep = "")
+   } else {
+    stop("Smothing went wrong")
+   }
+   .timing(x$esttime, "Log likelihood maximization completed in ")
+   cat("Final log likelihood = ",formatC(x$ll,digits=7,format="f"),"\n",  sep = "")
+   # model
+   max.name.length <- max(nchar(row.names(x$table)))
+   
+   myeff <- ifelse(x$prod, "technical", "cost")
+   
+   my.gen <- "2nd"
+   if(mymodel == "sf_p_1") my.gen <- "1st"
+   cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
+   cat("\nStochastic ",myeff," frontier panel data (",my.gen," gen.) model\n",  sep = "")
+   cat("\nDistributional assumptions\n\n", sep = "")
+   Assumptions <- rep("heteroskedastic",2)
+   if(is.null(x$ln.var.v.it)) Assumptions[1] <- "homoskedastic"
+   if(is.null(x$ln.var.u.0i)) Assumptions[2] <- "homoskedastic"
+   Distribution = c("normal ", "half-normal ")
+   if(!is.null(x$mean.u.0i)){
+    Distribution[2] <- "truncated-normal "
+   }
+   a1 <- data.frame(
+    Component = c("Random noise:","Inefficiency:"),
+    Distribution = Distribution,
+    Assumption = Assumptions
+   )
+   print(x$assumptions, quote = FALSE, right = FALSE)
+   
+   if(print.level >= 1){
+    est.spd.left <- floor( (max.name.length+42-29) / 2 )
+    est.spd.right <- max.name.length+42-29 - est.spd.left
+    # cat("\n------------")
+    # cat(" Summary of the panel data: ------------\n\n", sep = "")
+    # cat("\n------------ Summary of the panel data: ----------\n\n", sep = "")
+    cat("\n",rep("-", est.spd.left)," Summary of the panel data: ",rep("-", est.spd.right),"\n\n", sep ="")
+    cat("   Number of obs       (NT) =",x$nt,"", "\n")
+    cat("   Number of groups     (N) =",x$n,"", "\n")
+    cat("   Obs per group: (T_i) min =",x$dat.descr[3],"", "\n")
+    cat("                        avg =",x$dat.descr[4],"", "\n")
+    cat("                        max =",x$dat.descr[5],"", "\n")
+   }
+   
+   if(print.level >= 1){
+    # cat("\n---------------")
+    # max.name.length <- max(nchar(row.names(output)))
+    est.rez.left <- floor( (max.name.length+42-22) / 2 )
+    est.rez.right <- max.name.length+42-22 - est.rez.left
+    cat("\n",rep("-", est.rez.left)," Estimation results: ",rep("-", est.rez.right),"\n\n", sep ="")
+    # cat("\n--------------- Estimation results: --------------\n\n", sep = "")
+    # .printgtresfhet(output, digits = digits, Kb, Kv0, Ku0, Kvi, Kui, na.print = "NA", max.name.length)
+    .printpanel2nd(x = x$table, digits = 4, kb = x$Kb, kvi = x$Kvi, ku0 = x$Ku0, kdeli = x$Kdeli, eff.time.invariant = x$eff.time.invariant, mean.u.0i.zero = x$mean.u.0i.zero, model = mymodel, na.print = "NA", max.name.length = max.name.length, mycutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), mysymbols = c("***", "**", "*", ".", " "))
+    
+    # cat.print(output)
+   }
+   
+   if(!x$eff.time.invariant){
+    if(mymodel == "sf_p_2_BC1992"){
+     my.etas <- "f"
+    } else if(mymodel == "sf_p_2_K1990modified"){
+     my.etas <- "d and e"
+    } else if(mymodel == "sf_p_2_K1990"){
+     my.etas <- "b and c"
+    }
+    
+    cat("\n",x$model.no,"Pay attention to interpretation of",my.etas,"\n")
+    cat(" Function of inefficiency change over time is\n ",x$time.fn," \n")
+   }
+   
+   sum.te <- paste0(" Summary of ",myeff," efficiencies: ")
+   est.cle.left <- floor( (max.name.length+42-nchar(sum.te)-1) / 2 )
+   est.cle.right <- max.name.length+42-nchar(sum.te) -1- est.cle.left
+   if(est.cle.left <= 0) est.cle.left <- 1
+   if(est.cle.right <= 0) est.cle.right <- 1
+   cat("\n",rep("-", est.cle.left),sum.te,rep("-", est.cle.right),"\n\n", sep ="")
+   
+   # cat("",rep(" ", est.eff.left+1),"JLMS:= exp(-E[ui|ei])\n", sep = "")
+   # cat("",rep(" ", est.eff.left+1),"Mode:= exp(-M[ui|ei])\n", sep = "")
+   # cat("",rep(" ", est.eff.left+3),"BC:= E[exp(-ui)|ei]\n", sep = "")
+   
+   eff1 <- data.frame(x$efficiencies[,4:6])
+   colnames(eff1) <- c("exp(-E[ui|ei])", "exp(-M[ui|ei])", "E[exp(-ui)|ei]")
+   
+   .su(eff1, print = TRUE, width = 5, format = "fg", drop0trailing = FALSE, names = c("exp(-E[ui|ei])", "exp(-M[ui|ei])", "E[exp(-ui)|ei]"))
+   
+  }
+ }
+ 
+ # sf panel 4 components  ----------------------------------------------------------
+ if( mymodel == "sf_p_4comp_homosk" ){
+  # begin sf panel
+  if(print.level >= 1 & winw > 50){
+   if(x$convergence == 1){#x$LM < x$lmtol){
+    cat("Convergence given g*inv(H)*g' = ",formatC(x$LM,digits=2,format="e")," < lmtol(",formatC(x$lmtol,digits=1,format="e"),")\n", sep = "")
+   } else if (x$convergence == 2){
+    cat("\nConvergence given relative change in log likelihood = ",formatC(x$delta_rel,digits=2,format="e")," < ltol(",formatC(x$ltol,digits=1,format="e"),")\n", sep = "")
+   } else if (x$convergence == 3){
+    cat("\nConvergence given relative change in parameters = ",x$theta_rel," < steptol(",formatC(x$steptol,digits=2,format="e"),")\n", sep = "")
+   } else if (x$convergence == 0) {
+    cat("'optim' did it\n", sep = "")
+   } else {
+    stop("Smothing went wrong")
+   }
+   .timing(x$esttime, "Log likelihood maximization completed in ")
+   cat("Final log likelihood = ",formatC(x$ll,digits=7,format="f"),"\n",  sep = "")
+   # model
+   max.name.length <- max(nchar(row.names(x$table)))
+   
+   myeff <- ifelse(x$prod, "technical", "cost")
+   
+   Kv0 <- Ku0 <- Kvi <- Kui <- 1
+   
+   if(print.level >= 1){
+    cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
+    cat("\nStochastic ",ifelse(x$prod, "production", "cost")," frontier 4 components model\n",  sep = "")
+    cat("\nDistributional assumptions\n\n", sep = "")
+    Assumptions <- rep("heteroskedastic",4)
+    if(Kv0==1) Assumptions[1] <- "homoskedastic"
+    if(Ku0==1) Assumptions[2] <- "homoskedastic"
+    if(Kvi==1) Assumptions[3] <- "homoskedastic"
+    if(Kui==1) Assumptions[4] <- "homoskedastic"
+    a1 <- data.frame(
+     Component = c("Random effects:","Persistent ineff.: ","Random noise:","Transient ineff.: "),
+     Distribution = c("normal", "half-normal  ","normal", "half-normal  "),
+     Assumption = Assumptions
+    )
+    toinclude <- rep(TRUE,4)
+    print(a1[toinclude,], quote = FALSE, right = FALSE)
+   }
+   
+   if(print.level >= 1){
+    est.spd.left <- floor( (max.name.length+42-29) / 2 )
+    est.spd.right <- max.name.length+42-29 - est.spd.left
+    # cat("\n------------")
+    # cat(" Summary of the panel data: ------------\n\n", sep = "")
+    # cat("\n------------ Summary of the panel data: ----------\n\n", sep = "")
+    cat("\n",rep("-", est.spd.left)," Summary of the panel data: ",rep("-", est.spd.right),"\n\n", sep ="")
+    cat("   Number of obs       (NT) =",x$nt,"", "\n")
+    cat("   Number of groups     (N) =",x$n,"", "\n")
+    cat("   Obs per group: (T_i) min =",x$dat.descr[3],"", "\n")
+    cat("                        avg =",x$dat.descr[4],"", "\n")
+    cat("                        max =",x$dat.descr[5],"", "\n")
+   }
+  
+   
+    # cat("\n---------------")
+    # max.name.length <- max(nchar(row.names(output)))
+    est.rez.left <- floor( (max.name.length+42-22) / 2 )
+    est.rez.right <- max.name.length+42-22 - est.rez.left
+    cat("\n",rep("-", est.rez.left)," Estimation results: ",rep("-", est.rez.right),"\n\n", sep ="")
+    # cat("\n--------------- Estimation results: --------------\n\n", sep = "")
+    .printgtresfhet(x$table, digits = digits, x$Kb, Kv0, Ku0, Kvi, Kui, na.print = "NA", max.name.length)
+   
+    sum.te <- paste0(" Summary of ",myeff," efficiencies: ")
+    est.cle.left <- floor( (max.name.length+42-nchar(sum.te)-1) / 2 )
+    est.cle.right <- max.name.length+42-nchar(sum.te) -1- est.cle.left
+    if(est.cle.left <= 0) est.cle.left <- 1
+    if(est.cle.right <= 0) est.cle.right <- 1
+    cat("\n",rep("-", est.cle.left),sum.te,rep("-", est.cle.right),"\n\n", sep ="")
+    if(x$prod){
+     .su(list(x$te_i0,x$te_it,x$te_over), print = TRUE, width = 5, format = "fg", drop0trailing = FALSE, names = c("Persistent", "Transient", "Overall"))
+    } else {
+     .su(list(x$ce_i0,x$ce_it,x$ce_over), print = TRUE, width = 5, format = "fg", drop0trailing = FALSE, names = c("Persistent", "Transient", "Overall"))
+    }
+   
+  }
+ }
+ 
   invisible( x )
 }

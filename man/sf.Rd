@@ -15,6 +15,9 @@ sf(formula, data, it = NULL, subset,
  ln.var.u.0i        = NULL,
  ln.var.v.0i        = NULL,
  ln.var.v.it        = NULL,  
+ simtype = c("halton", "rnorm"), halton.base = 2, R = 500,
+ initialize.halton = TRUE, my.leap = NULL,
+ simtype_GHK = c("halton", "runif"), R_GHK = 1000,
  cost.eff.less.one  = FALSE, level = 95, marg.eff = FALSE,
  start.val = NULL, maxit = 199, report.ll.optim = 10, 
  reltol = 1e-8, lmtol = sqrt(.Machine$double.eps),
@@ -37,13 +40,13 @@ sf(formula, data, it = NULL, subset,
  logical. If \code{TRUE}, the estimates of parameters of stochastic production frontier model and of technical efficiencies are returned; if \code{FALSE}, the estimates of parameters of stochastic cost frontier model and of cost efficiencies are returned.
  }
  \item{model}{
- character. Three panel data models are estimated for now. "K1990" (see Kumbhakar, 1990), "K1990modified" and "BC1992" (see Battese and Coelli, 1992). They specify common evolution of inefficiency.  Deffault is "K1990". The time functions are "( 1 + exp(b*t + c*t^2) )^-1", "1 + d*(t-T_i) + e*(t-T_i)^2", and "exp( -f*(t-T_i) )", respectively.
+ character. Five panel data models are estimated for now. "K1990" and "K1990modified" (see Kumbhakar, 1990), "BC1992" (see Battese and Coelli, 1992), "4comp" (see Badunenko and Kumbhakar (2016) and Filippini and Greene, 2016). They specify common evolution of inefficiency.  Deffault is "K1990". The time functions are "( 1 + exp(b*t + c*t^2) )^-1", "1 + d*(t-T_i) + e*(t-T_i)^2", and "exp( -f*(t-T_i) )", respectively.
  }
  \item{distribution}{
  either \code{"h"} (half-normal) or \code{"t"} (truncated normal), specifying the distribution of inefficiency term.
  }
  \item{eff.time.invariant}{
- logical. If \code{TRUE}, the 1st generation of panel data models is estimated, otherwise, the 2nd generation of panel data models is estimated.
+ logical. If \code{TRUE}, the 1st generation of panel data models is estimated, otherwise, the 2nd generation or 4 components panel data model is estimated.
  }
  \item{mean.u.0i.zero}{
  logical. If \code{TRUE}, normal-half normal model is estimated, otherwise, normal-truncated model is estimated.
@@ -59,6 +62,27 @@ sf(formula, data, it = NULL, subset,
  }
  \item{ln.var.v.it}{
  one-sided formula; e.g. \code{ln.var.v.it ~ z1 + z2}. Specifies exogenous variables entering the expression for variance of random noise error component. If \code{NULL}, random noise component is assumed to be homoskedastic, i.e. \eqn{\sigma_v^2 = exp(\gamma[0])}. Time invariant variables are expected.
+ }
+ \item{simtype}{
+ character. Type of random deviates for the 4 components model. 'halton' draws are default.  One can specify 'rnorm.'
+ }
+ \item{halton.base}{
+ numeric.  The prime number which is the base for the Halton draws. Should be less then 102.  Default is 2.
+ }
+ \item{R}{
+ numeric.  Number of draws.  Default is 500.  Can be time consuming.
+ }
+ \item{initialize.halton}{
+ logical.  If TRUE, the Halton draws use different base for each id.  Then \code{halton.base} is ignored.  Function \code{\link{halton}} from \code{\link{randtoolbox}} package is used.  Otherwise, N*R Halton draws come from the same base. Function \code{\link{sHalton}} from \code{sfsmisc} package is used.
+ }
+ \item{my.leap}{
+ if \code{initialize.halton} is FALSE, \code{my.leap} draws are skipped. See \code{\link{sHalton}}.  By default none are skipped.
+ }
+ \item{simtype_GHK}{
+ character. Type of random deviates for use in GHK for efficiency estimating by approximation. 'halton' draws are default.  One can specify 'runif.'
+ }
+ \item{R_GHK}{
+ numeric.  Number of draws for GHK.  Default is 1000.  Can be time consuming.
  }
  \item{cost.eff.less.one}{
  logical. If \code{TRUE}, and \code{prod = FALSE}, reported cost efficiencies are larger than one. Interpretation: by what factor is total cost larger than the potential total cost.
@@ -90,7 +114,7 @@ sf(formula, data, it = NULL, subset,
  \item{print.level}{
   numeric. 1 - print estimation results. 2 - print optimization details. 3 - print summary of point estimates of technical or cost efficiencies. 7 - print unit-specific point and interval estimates of technical or cost efficiencies. Default is 4.
  }
-  }
+}
   
   
 \details{
@@ -135,11 +159,16 @@ If \code{marg.eff = TRUE} and \code{distribution = "h"}, the marginal effect of 
 
 
 \references{
+
+Badunenko, O. and Kumbhakar, S.C. (2016), When, Where and How to Estimate Persistent and Transient Efficiency in Stochastic Frontier Panel Data Models, \emph{European Journal of Operational Research}, \bold{255}(1), 272--287.
+
 Battese, G., Coelli, T. (1988), Prediction of firm-level technical effiiencies with a generalized frontier production function and panel data. \emph{Journal of Econometrics}, \bold{38}, 387--399.
 
 Battese, G., Coelli, T. (1992), Frontier production functions, technical efficiency and panel data: With application to paddy farmers in India. \emph{Journal of Productivity Analysis}, \bold{3}, 153--169.
 
 Caudill, S., Ford, J., Gropper, D. (1995), Frontier estimation and firm-specific inefficiency measures in the presence of heteroscedasticity. \emph{Journal of Business and Economic Statistics}, \bold{13}, 105--111.
+
+Filippini, M. and Greene, W.H. (2016), Persistent and transient productive inefficiency: A maximum simulated likelihood approach. \emph{Journal of Productivity Analysis}, \bold{45} (2), 187--196.
 
 Horrace, W. and Schmidt, P. (1996), On ranking and selection from independent truncated normal distributions. \emph{Journal of Productivity Analysis}, \bold{7}, 257--282.
 
@@ -451,6 +480,25 @@ t_ntn_BC1992 <- sf(formu, data = banks00_07, it = my.it,
                    ln.var.u.0i = ln.var.u.0i,
                    cost.eff.less.one = FALSE)
 
+# 4 component model ------------------------------------------------------
+
+# Note, R should better be more than 200, this is just for illustration.
+# This is the model that takes long to be estimated.  
+# For the following example, 'mlmaximize' required 357 iterations and
+# took 8 minutes.  
+# The time will increase with more data and more parameters.
+
+formu <- log(TC) ~ log(Y1) + log(Y2) + log(W1) + log(W2) + trend
+
+t_4comp <- sf(formu, data = banks00_07, it = my.it, 
+              subset = year >= 2001 & year < 2006,
+              prod = my.prod, model = "4comp",
+              R = 200, initialize.halton = TRUE, 
+              lmtol = 1e-5, maxit = 500, print.level = 4)
+
+# @e_i0, @e_it, and @e_over give efficiencies, 
+# where @ is either 'c' or 't' for cost or production function.
+# e.g., t_ntn_4comp$ce_i0 from last model, gives persistent cost efficiencies
 
 # Panel data examples end -------------------------------------------------
 
@@ -464,5 +512,6 @@ t_ntn_BC1992 <- sf(formu, data = banks00_07, it = my.it,
 \keyword{ Heteroskedasticity }
 \keyword{ Truncated normal }
 \keyword{ Half normal }
+\keyword{ Halton draws }
 \keyword{ Parametric efficiency analysis }
 \keyword{ summary }

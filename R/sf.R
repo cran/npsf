@@ -6,6 +6,9 @@ sf <- function(formula, data, it = NULL, subset,
                ln.var.u.0i        = NULL,
                ln.var.v.0i        = NULL,
                ln.var.v.it        = NULL,  
+               simtype = c("halton", "rnorm"), halton.base = 2, R = 500,
+               initialize.halton = TRUE, my.leap = NULL,
+               simtype_GHK = c("halton", "runif"), R_GHK = 1000,
                cost.eff.less.one  = FALSE, level = 95, marg.eff = FALSE,
                start.val = NULL, maxit = 199, report.ll.optim = 10, 
                reltol = 1e-8, lmtol = sqrt(.Machine$double.eps),
@@ -341,7 +344,7 @@ sf <- function(formula, data, it = NULL, subset,
   
   colnames(obj$vcov) <- rownames(obj$vcov) <- c(names_x, names_zv, names_zu, names_del)
   
-  temp <- list(call = match.call(), model = "sfsc", coef = par[names(par) %in% colnames(obj$vcov)], table = output, vcov = obj$vcov, loglik = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = convergence, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, sigmas_u = sigmas_u, sigmas_v = sigmas_v, mu = mu, k = k, kv = kv, ku = ku, kdel = kdel, distribution = distribution, fitted = as.vector(unname(xbeta)), yobs = y, xobs = X, esample = esample)
+  temp <- list(call = match.call(), model = "sf_sc", coef = par[names(par) %in% colnames(obj$vcov)], table = output, vcov = obj$vcov, loglik = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = convergence, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, sigmas_u = sigmas_u, sigmas_v = sigmas_v, n = n, mu = mu, k = k, kv = kv, ku = ku, kdel = kdel, distribution = distribution, fitted = as.vector(unname(xbeta)), yobs = y, xobs = X, esample = esample)
   if (convergence == 2){
    temp$delta_rel <- obj$delta_rel
    temp$ltol <- obj$ltol
@@ -367,7 +370,7 @@ sf <- function(formula, data, it = NULL, subset,
   
   if(eff.time.invariant) model <- "K1990"
   
-  model.correct <- model %in% c("K1990","K1990modified","BC1992")
+  model.correct <- model %in% c("K1990", "K1990modified", "BC1992", "4comp")
   if( !model.correct ){
    stop("'model' is not supported")
   }
@@ -378,6 +381,9 @@ sf <- function(formula, data, it = NULL, subset,
   # cat("0\n")
   
   if(mean.u.0i.zero) mean.u.0i <- NULL
+  if(model == "4comp"){
+   ln.var.v.it <- ln.var.u.0i <- mean.u.0i <- NULL
+  }
   
   YXZ <- .prepareYXZ.panel.simple(formula = formula, data, it, subset, ln.var.v.it = ln.var.v.it, ln.var.u.0i = ln.var.u.0i, mean.u.0i = mean.u.0i, sysnframe = sys.nframe())
   
@@ -449,158 +455,166 @@ sf <- function(formula, data, it = NULL, subset,
    names_x,names_vi,names_u0,names_udeli
   )
   
+  if(model == "4comp"){
+   coef.names.full <- coef.names.full.no.eta <- c(
+    names_x, "ln_lmd", "ln_sig", "lnVARv0","lnVARu0")
+  }
+  
   coef.fixed <- rep( FALSE, length(coef.names.full.no.eta) )
   
   # print(coef.names)
   
   # cat("1\n")
+
+  # model: 1st and 2nd gen --------------------------------------------------
+  if( model %in% c("K1990", "K1990modified", "BC1992")){
+   
+  # starting values 1st and 2nd gen -----------------------------------------
   
-  # starting values ---------------------------------------------------------
-  
-  # run OLS anyways
-  ols <- lm(y ~ X - 1)
-  ols.r1 <- resid(ols)
-  ols.r1_mean <- as.vector(by(ols.r1, idvar, mean))
-  ols.coef <- c(coef(ols))
-  names(ols.coef)[1] <- "(Intercept)"
-  # print(model)
-  # cat("eff.time.invariant = ", eff.time.invariant,"\n")
-  theta0 <- c(1.0*ols.coef, .75*coef(lm(log(ols.r1^2) ~ Zvi - 1)), .75*coef(lm(log(ols.r1_mean^2) ~ Zu0 - 1)), 0, rep(0, (ncol(Zdeli)-1)))
-  names(theta0) <- c(coef.names.full.no.eta)
-  
-  
-  if(model == "K1990"){
-   if(eff.time.invariant) {
-    coef.fixed <- c(coef.fixed, rep(TRUE, 2))
-    model.no <- "0"
-    coef.names.output <- c(coef.names.full.no.eta.output)
-    time.fn <- "Constant over time"
-   } else {
-    coef.fixed <- c(coef.fixed, rep(FALSE, 2))
-    theta0 <- c(theta0, rep(0, 2))
-    model.no <- "`"
-    names(theta0) <- c(coef.names.full.no.eta, paste0(c("b","c"),model.no))
-    coef.names.output <- c(coef.names.full.no.eta.output,paste0(c("b","c"),model.no) )
-    time.fn <- "( 1 + exp(b*t + c*t^2) )^-1"
+   # run OLS anyways
+   ols <- lm(y ~ X - 1)
+   ols.r1 <- resid(ols)
+   ols.r1_mean <- as.vector(by(ols.r1, idvar, mean))
+   ols.coef <- c(coef(ols))
+   names(ols.coef)[1] <- "(Intercept)"
+   # print(model)
+   # cat("eff.time.invariant = ", eff.time.invariant,"\n")
+   theta0 <- c(1.0*ols.coef, .75*coef(lm(log(ols.r1^2) ~ Zvi - 1)), .75*coef(lm(log(ols.r1_mean^2) ~ Zu0 - 1)), 0, rep(0, (ncol(Zdeli)-1)))
+   names(theta0) <- c(coef.names.full.no.eta)
+   
+   
+   if(model == "K1990"){
+    if(eff.time.invariant) {
+     coef.fixed <- c(coef.fixed, rep(TRUE, 2))
+     model.no <- "0"
+     coef.names.output <- c(coef.names.full.no.eta.output)
+     time.fn <- "Constant over time"
+    } else {
+     coef.fixed <- c(coef.fixed, rep(FALSE, 2))
+     theta0 <- c(theta0, rep(0, 2))
+     model.no <- "`"
+     names(theta0) <- c(coef.names.full.no.eta, paste0(c("b","c"),model.no))
+     coef.names.output <- c(coef.names.full.no.eta.output,paste0(c("b","c"),model.no) )
+     time.fn <- "( 1 + exp(b*t + c*t^2) )^-1"
+    }
    }
-  }
-  
-  if(model == "K1990modified"){
-   if(eff.time.invariant) {
-    coef.fixed <- c(coef.fixed, rep(TRUE, 2))
-    model.no <- "0"
-    coef.names.output <- c(coef.names.full.no.eta.output)
-    time.fn <- "Constant over time"
-   } else {
-    coef.fixed <- c(coef.fixed, rep(FALSE, 2))
-    theta0 <- c(theta0, rep(0, 2))
-    model.no <- "``"
-    names(theta0) <- c(coef.names.full.no.eta, paste0(c("d","e"),model.no))
-    coef.names.output <- c(coef.names.full.no.eta.output,paste0(c("d","e"),model.no) )
-    time.fn <- "1 + d*(t-T_i) + e*(t-T_i)^2"
+   
+   if(model == "K1990modified"){
+    if(eff.time.invariant) {
+     coef.fixed <- c(coef.fixed, rep(TRUE, 2))
+     model.no <- "0"
+     coef.names.output <- c(coef.names.full.no.eta.output)
+     time.fn <- "Constant over time"
+    } else {
+     coef.fixed <- c(coef.fixed, rep(FALSE, 2))
+     theta0 <- c(theta0, rep(0, 2))
+     model.no <- "``"
+     names(theta0) <- c(coef.names.full.no.eta, paste0(c("d","e"),model.no))
+     coef.names.output <- c(coef.names.full.no.eta.output,paste0(c("d","e"),model.no) )
+     time.fn <- "1 + d*(t-T_i) + e*(t-T_i)^2"
+    }
    }
-  }
-  
-  if(model == "BC1992"){
-   if(eff.time.invariant) {
-    coef.fixed <- c(coef.fixed, rep(TRUE, 1))
-    model.no <- "0"
-    coef.names.output <- c(coef.names.full.no.eta.output)
-    time.fn <- "Constant over time"
-   } else {
-    coef.fixed <- c(coef.fixed, rep(FALSE, 1))
-    theta0 <- c(theta0, rep(0, 1))
-    model.no <- "```"
-    names(theta0) <- c(coef.names.full.no.eta, paste0("f",model.no))
-    coef.names.output <- c(coef.names.full.no.eta.output,paste0(c("f"),model.no) )
-    time.fn <- "exp( -f*(t-T_i) )"
+   
+   if(model == "BC1992"){
+    if(eff.time.invariant) {
+     coef.fixed <- c(coef.fixed, rep(TRUE, 1))
+     model.no <- "0"
+     coef.names.output <- c(coef.names.full.no.eta.output)
+     time.fn <- "Constant over time"
+    } else {
+     coef.fixed <- c(coef.fixed, rep(FALSE, 1))
+     theta0 <- c(theta0, rep(0, 1))
+     model.no <- "```"
+     names(theta0) <- c(coef.names.full.no.eta, paste0("f",model.no))
+     coef.names.output <- c(coef.names.full.no.eta.output,paste0(c("f"),model.no) )
+     time.fn <- "exp( -f*(t-T_i) )"
+    }
    }
-  }
-  
-  if(mean.u.0i.zero) coef.fixed[Kb+Kvi+Ku0+Kdeli] <- TRUE
-  
-  theta0 <- theta0[!coef.fixed]
-  coef.names.output <- coef.names.output[!coef.fixed]
-  
-  # cat("3\n")
-  # print(theta0)
-  
-  Ktheta <- length(theta0)
-  
-  # cat("4\n")
-  # print(theta0)
-  # cat("2\n")
-  # print(theta0)
-  # print(rownames(theta0))
-  
-  if(!is.null(start.val)){
-   # if start.val partially available
-   if(length(theta0) != length(start.val)){
-    warning("\nLength of 'start.val' is not appropriate: trying to deal with it", call. = FALSE,immediate. = TRUE)
-    theta2 <- rep(0, length(theta0))
-    # print(theta2)
-    # print(as.vector(rownames(theta0)))
-    # print(as.vector(rownames(start.val)))
-    # print(as.vector(rownames(theta0)) %in% as.vector(rownames(start.val)))
-    # theta2[as.vector(rownames(theta0)) %in% as.vector(rownames(start.val))] <- start.val
-    # print(names(theta0))
-    # print(names(start.val))
-    # cat("2.5\n")
-    # print(theta0)
-    # print(start.val)
-    # cat("2.6\n")
-    theta2[names(theta0) %in% names(start.val)] <- start.val
-    # print(theta2)
-    names(theta2) <- names(theta0)
-    theta0 <- theta2
-    # if(model == "K1990" | model == "K1990modified"){
-    #  if(theta0["eta1*"] == 0) theta0["eta1*"] <- -1e-3
-    #  if(theta0["eta2*"] == 0) theta0["eta2*"] <- 1e-3
-    # }
-    # if(model == "BC1992"){
-    #  if(theta0["eta1*"] == 0) theta0["eta1*"] <- 1e-3
-    # }
-   } else {
-    theta0 <- start.val
+   
+   if(mean.u.0i.zero) coef.fixed[Kb+Kvi+Ku0+Kdeli] <- TRUE
+   
+   theta0 <- theta0[!coef.fixed]
+   coef.names.output <- coef.names.output[!coef.fixed]
+   
+   # cat("3\n")
+   # print(theta0)
+   
+   Ktheta <- length(theta0)
+   
+   # cat("4\n")
+   # print(theta0)
+   # cat("2\n")
+   # print(theta0)
+   # print(rownames(theta0))
+   
+   if(!is.null(start.val)){
+    # if start.val partially available
+    if(length(theta0) != length(start.val)){
+     warning("\nLength of 'start.val' is not appropriate: trying to deal with it", call. = FALSE,immediate. = TRUE)
+     theta2 <- rep(0, length(theta0))
+     # print(theta2)
+     # print(as.vector(rownames(theta0)))
+     # print(as.vector(rownames(start.val)))
+     # print(as.vector(rownames(theta0)) %in% as.vector(rownames(start.val)))
+     # theta2[as.vector(rownames(theta0)) %in% as.vector(rownames(start.val))] <- start.val
+     # print(names(theta0))
+     # print(names(start.val))
+     # cat("2.5\n")
+     # print(theta0)
+     # print(start.val)
+     # cat("2.6\n")
+     theta2[names(theta0) %in% names(start.val)] <- start.val
+     # print(theta2)
+     names(theta2) <- names(theta0)
+     theta0 <- theta2
+     # if(model == "K1990" | model == "K1990modified"){
+     #  if(theta0["eta1*"] == 0) theta0["eta1*"] <- -1e-3
+     #  if(theta0["eta2*"] == 0) theta0["eta2*"] <- 1e-3
+     # }
+     # if(model == "BC1992"){
+     #  if(theta0["eta1*"] == 0) theta0["eta1*"] <- 1e-3
+     # }
+    } else {
+     theta0 <- start.val
+    }
    }
-  }
-  
-  # cat("3\n")
-  # print(theta0)
-  
-  # obj10 <- eval(parse(text = paste(" optim(par = theta0, fn = .ll.panel, gr = .gr.panel, prod = prod, my.n = n, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = my.t, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('Nelder-Mead'), control = list(reltol  = 1e-16, maxit = maxit^2, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 7, -1), fnscale = -1), hessian = FALSE)", sep = "")))
-  # print(obj10$par)
-  
-  
-  # time.05 <- proc.time()
-  # obj20 <- eval(parse(text = paste(" optim(par = theta0, fn = .ll.panel, gr = .gr.panel, coef.fixed = coef.fixed, prod = prod, my.n = n, Ktheta = Ktheta, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, mean.u.0i.zero = mean.u.0i.zero, model = model, timevar = my.t, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('BFGS'), control = list(reltol  = 1e-16, maxit = maxit, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, report.ll.optim, -1), fnscale = -1), hessian = TRUE)", sep = "")))
-  # co_ <- obj20$par
-  # sd_ <- suppressWarnings( sqrt(diag(solve(-obj20$hessian))) )
-  # ts_ <- co_ / sd_
-  # pv_ <- pt(abs(ts_), n-length(theta0), lower.tail = FALSE) * 2
-  # printCoefmat(cbind(co_,sd_,ts_,pv_), digits = digits)           
-  # # print(cbind(obj20$par, 1))
-  # time.06 <- proc.time()
-  # est.time.sec <- (time.06-time.05)[1]
-  # names(est.time.sec) <- "sec"
-  # if(print.level >= 2){
-  #  .timing(est.time.sec, "\n Log likelihood maximization completed in ")
-  #  # cat("___________________________________________________\n")
-  # }
-  
-  
-  # obj30 <- eval(parse(text = paste(" optim(par = obj20$par, fn = .ll.panel, gr = .gr.panel, prod = prod, my.n = n, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('Nelder-Mead'), control = list(reltol  = 1e-16, maxit = maxit, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 7, -1), fnscale = -1), hessian = FALSE)", sep = "")))
-  # 
-  # obj40 <- eval(parse(text = paste(" optim(par = obj30$par, fn = .ll.panel, gr = .gr.panel, prod = prod, my.n = n, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('BFGS'), control = list(reltol  = 1e-32, maxit = maxit, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 7, -1), fnscale = -1), hessian = FALSE)", sep = "")))
-  # 
-  # obj50 <- eval(parse(text = paste(" optim(par = obj40$par, fn = .ll.panel, gr = .gr.panel, prod = prod, my.n = n, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('Nelder-Mead'), control = list(reltol  = 1e-16, maxit = maxit, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 7, -1), fnscale = -1), hessian = FALSE)", sep = "")))
-  # 
-  # print(cbind(obj10$par,obj20$par,obj30$par,obj40$par,obj50$par))
-  # print(c(obj10$value,obj20$value,obj30$value,obj40$value,obj50$value))
-  
-  # obj  <- obj10
-  
-  # optimization -------------------------------------------------------------
+   
+   # cat("3\n")
+   # print(theta0)
+   
+   # obj10 <- eval(parse(text = paste(" optim(par = theta0, fn = .ll.panel, gr = .gr.panel, prod = prod, my.n = n, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = my.t, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('Nelder-Mead'), control = list(reltol  = 1e-16, maxit = maxit^2, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 7, -1), fnscale = -1), hessian = FALSE)", sep = "")))
+   # print(obj10$par)
+   
+   
+   # time.05 <- proc.time()
+   # obj20 <- eval(parse(text = paste(" optim(par = theta0, fn = .ll.panel, gr = .gr.panel, coef.fixed = coef.fixed, prod = prod, my.n = n, Ktheta = Ktheta, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, mean.u.0i.zero = mean.u.0i.zero, model = model, timevar = my.t, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('BFGS'), control = list(reltol  = 1e-16, maxit = maxit, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, report.ll.optim, -1), fnscale = -1), hessian = TRUE)", sep = "")))
+   # co_ <- obj20$par
+   # sd_ <- suppressWarnings( sqrt(diag(solve(-obj20$hessian))) )
+   # ts_ <- co_ / sd_
+   # pv_ <- pt(abs(ts_), n-length(theta0), lower.tail = FALSE) * 2
+   # printCoefmat(cbind(co_,sd_,ts_,pv_), digits = digits)           
+   # # print(cbind(obj20$par, 1))
+   # time.06 <- proc.time()
+   # est.time.sec <- (time.06-time.05)[1]
+   # names(est.time.sec) <- "sec"
+   # if(print.level >= 2){
+   #  .timing(est.time.sec, "\n Log likelihood maximization completed in ")
+   #  # cat("___________________________________________________\n")
+   # }
+   
+   
+   # obj30 <- eval(parse(text = paste(" optim(par = obj20$par, fn = .ll.panel, gr = .gr.panel, prod = prod, my.n = n, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('Nelder-Mead'), control = list(reltol  = 1e-16, maxit = maxit, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 7, -1), fnscale = -1), hessian = FALSE)", sep = "")))
+   # 
+   # obj40 <- eval(parse(text = paste(" optim(par = obj30$par, fn = .ll.panel, gr = .gr.panel, prod = prod, my.n = n, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('BFGS'), control = list(reltol  = 1e-32, maxit = maxit, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 7, -1), fnscale = -1), hessian = FALSE)", sep = "")))
+   # 
+   # obj50 <- eval(parse(text = paste(" optim(par = obj40$par, fn = .ll.panel, gr = .gr.panel, prod = prod, my.n = n, k = Kb, kv = Kvi, ku = Ku0, kdel = Kdeli, yit = y, zvit = Zvi, zui = Zu0, xit = X, zdeli = Zdeli, eff.time.invariant = eff.time.invariant, model = model, timevar = timevar, maxT = maxT, ids = ids, idvar = idvar, t0 = t0, method = c('Nelder-Mead'), control = list(reltol  = 1e-16, maxit = maxit, trace = ifelse(print.level >=2, 1, -1), REPORT = ifelse(print.level >=2, 7, -1), fnscale = -1), hessian = FALSE)", sep = "")))
+   # 
+   # print(cbind(obj10$par,obj20$par,obj30$par,obj40$par,obj50$par))
+   # print(c(obj10$value,obj20$value,obj30$value,obj40$value,obj50$value))
+   
+   # obj  <- obj10
+
+  # optimization 1st and 2nd gen -------------------------------------------------------------
   
   if(print.level >= 2){
    my.message <- paste0(" Optimization using 'mlmaximize': ")
@@ -631,6 +645,8 @@ sf <- function(formula, data, it = NULL, subset,
   if(obj$converged == 0) return(obj)
   
   # print(obj$table)
+
+  # 1st and 2nd: auxiliary parameters ---------------------------------------
   
   if(is.null(ln.var.v.it) | is.null(ln.var.u.0i)){
    # auxiliary parameters
@@ -671,6 +687,8 @@ sf <- function(formula, data, it = NULL, subset,
   } else {
    my.message = "het"
   }
+  
+  # output estimation results -----------------------------------------------
   
   my.table <- obj$table[,1:4]
   # rownames(my.table)[1:(Kb+Kvi+Ku0+Kdeli)] <- coef.names.output
@@ -837,7 +855,11 @@ sf <- function(formula, data, it = NULL, subset,
   # colnames(obj$vcov)[1:(Kb+Kvi+Ku0+Kdeli)] <- rownames(obj$vcov)[1:(Kb+Kvi+Ku0+Kdeli)] <- names(theta0)#c(names_x, names_zv, names_zu, names_del)
   # colnames(obj$vcov) <- rownames(obj$vcov) <- names(theta0)#c(names_x, names_zv, names_zu, names_del)
   
-  temp <- list(call = match.call(), model = paste0("sf_p_2_",model), coef = obj$par, table = output, vcov = obj$vcov, ll = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = obj$converged, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, Kb = Kb, Kvi=Kvi,Ku0=Ku0,Kdeli =Kdeli, fitted = as.vector(unname(X%*%obj$par[1:Kb])), yobs = as.vector(y), xobs = X, esample = esample)
+  mymodel <- paste0("sf_p_2_", model)
+  if(eff.time.invariant)  mymodel <- "sf_p_1"
+  
+  temp <- list(call = match.call(), model = mymodel, coef = obj$par, table = output, assumptions = a1, vcov = obj$vcov, ll = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = obj$converged, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, Kb = Kb, Kvi = Kvi, Ku0 = Ku0, Kdeli = Kdeli, eff.time.invariant = eff.time.invariant,  mean.u.0i.zero = mean.u.0i.zero, ln.var.v.it = ln.var.v.it, ln.var.u.0i = ln.var.u.0i, model.no = model.no, time.fn = time.fn, fitted = as.vector(unname(X%*%obj$par[1:Kb])), yobs = as.vector(y), xobs = X, n = n, nt = nt, dat.descr = dat.descr, esample = esample)
+
   # print(temp)
   if (obj$converged == 2){
    temp$delta_rel <- obj$delta_rel
@@ -848,11 +870,419 @@ sf <- function(formula, data, it = NULL, subset,
    temp$steptol <- sqrt(.Machine$double.eps)
   }
   
+  } # end of if( model %in% c("K1990", "K1990modified", "BC1992")){
+
+ # model: 4comp ------------------------------------------------------------
+  
+  if(model == "4comp"){
+   
+   # drawing random deviates -------------------------------------------------
+   
+   myprimes <- c(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 
+                 59, 61, 67, 71, 73, 79, 83, 89, 97, 101)
+   if(length(simtype) != 1) simtype <- "halton"
+   if(length(simtype_GHK) != 1) simtype_GHK <- "halton"
+   if(simtype == "rnorm"){
+    V0 <- matrix(rnorm(R*n), nrow = n, ncol = R)
+    U0 <- abs( matrix(rnorm(R*n), nrow = n, ncol = R) )
+   } else {
+    if(initialize.halton){
+     # begin initiated sequence
+     # total number generated dimentions
+     tngdim <- floor(n*2)
+     # initialize Halton algorithm
+     # myrand0 <- randtoolbox::halton(R, dim = tngdim, init = TRUE, normal = TRUE)
+     myrand0 <- t( randtoolbox::halton(R, dim = tngdim, init = TRUE, normal = TRUE) )
+     # myrand1 <- t( randtoolbox::halton(R, dim = tngdim, init = FALSE, normal = TRUE) )
+     # set.seed(seed)
+     # smpl.v <- sample(seq_len(tngdim), n)
+     # smpl.u0 <- sample(seq_len(tngdim), n)
+     # smpl.u <- smpl.u0
+     # my.repeats <- 0
+     # while (any(smpl.v - smpl.u) == 0) {
+     #   smpl.u <- sample(smpl.u0)
+     #   my.repeats <- my.repeats + 1
+     #   print(my.repeats)
+     # }
+     # rm(my.repeats)
+     # V0 <-      myrand0[smpl.v,]
+     # U0 <- abs( myrand1[smpl.u,] )
+     # V0 <-      myrand0[(1:n),]
+     # U0 <- abs( myrand0[((n+1):(2*n)),] )
+     # rm(myrand0)
+     # another way to do this
+     myrand0 <- t( randtoolbox::halton(R, dim = 2*n, init = TRUE, normal = TRUE) )
+     V0 <-      myrand0[1:n,]
+     U0 <- abs( myrand0[(n+1):(2*n),] )
+     rm(myrand0)
+     # end initiated sequence
+    } else {
+     # begin noninitiated sequence
+     if(halton.base < 2 ){
+      stop("base for Halton draws should be >= 2")
+     } else {
+      if(halton.base > 101){
+       stop("pick a prime smaller or equal 101")
+      }
+      is.halton.base.prime <- sum(halton.base == myprimes) == 1
+      if(!is.halton.base.prime){
+       mydiff <- ifelse(halton.base-myprimes < 0, 102, halton.base-myprimes)
+       closest.prime <- which(mydiff == min(mydiff))
+       warning(paste0("halton.base must be a prime: picked ",myprimes[closest.prime]," as base"))
+      } else {
+       closest.prime <- which(myprimes == halton.base)
+      }
+      if(is.null(my.leap)) my.leap <- 1
+      V0 <- qnorm(matrix(sfsmisc::sHalton(R*n*my.leap, leap = my.leap, base = myprimes[closest.prime]), nrow = n, ncol = R, byrow = TRUE))
+      U0 <- abs( qnorm(matrix(sfsmisc::sHalton(R*n*my.leap, leap = my.leap, base = myprimes[closest.prime+7]), nrow = n, ncol = R, byrow = TRUE)) )
+     }
+     # end noninitiated sequence
+    }
+   }
+   
+   # starting values 4comp ---------------------------------------------------
+   
+   # run OLS anyways
+   ols <- lm(y ~ X - 1)
+   ols.r1 <- resid(ols)
+   ols.r1_mean <- as.vector(by(ols.r1, idvar, mean))
+   ols.r1_mean.sd <- sd(ols.r1_mean)
+   ols.coef <- c(coef(ols))
+   names(ols.coef)[1] <- "(Intercept)"
+   # print(model)
+   # cat("eff.time.invariant = ", eff.time.invariant,"\n")
+   theta0 <- c(1.0*ols.coef, ln_lmd = log(1), ln_sig = log(sqrt(2*ols.r1_mean.sd^2)), ln_sigv0 = log(ols.r1_mean.sd), ln_sigu0 = log(ols.r1_mean.sd))
+   names(theta0) <- c(coef.names.full)
+   
+   Ktheta <- length(theta0)
+   k <- Ktheta - 4
+   
+   if(!is.null(start.val)){
+    # if start.val partially available
+    if(length(theta0) != length(start.val)){
+     warning("\nLength of 'start.val' is not appropriate: trying to deal with it", call. = FALSE,immediate. = TRUE)
+     theta2 <- rep(0, length(theta0))
+     # print(theta2)
+     # print(as.vector(rownames(theta0)))
+     # print(as.vector(rownames(start.val)))
+     # print(as.vector(rownames(theta0)) %in% as.vector(rownames(start.val)))
+     # theta2[as.vector(rownames(theta0)) %in% as.vector(rownames(start.val))] <- start.val
+     # print(names(theta0))
+     # print(names(start.val))
+     # cat("2.5\n")
+     # print(theta0)
+     # print(start.val)
+     # cat("2.6\n")
+     theta2[names(theta0) %in% names(start.val)] <- start.val
+     # print(theta2)
+     names(theta2) <- names(theta0)
+     theta0 <- theta2
+     # if(model == "K1990" | model == "K1990modified"){
+     #  if(theta0["eta1*"] == 0) theta0["eta1*"] <- -1e-3
+     #  if(theta0["eta2*"] == 0) theta0["eta2*"] <- 1e-3
+     # }
+     # if(model == "BC1992"){
+     #  if(theta0["eta1*"] == 0) theta0["eta1*"] <- 1e-3
+     # }
+    } else {
+     theta0 <- start.val
+    }
+    
+    # optimize 4comp ----------------------------------------------------------
+
+    # optimize 4comp; start val provided --------------------------------------
+    
+    time.05 <- proc.time()
+
+    # obj <- tryCatch( mlmaximize(theta0 = theta0, ll = C_gtrelnls, gr = C_gtregrad, hess = C_gtrehess, BHHH = FALSE, alternate = FALSE, prod = prod, log.lmd = log.lmd, log.sig = log.sig, log.sigv0 = log.sigv0, log.sigu0 = log.sigu0, level = 0.99, step.back = step.back, reltol = reltol, lmtol = lmtol, steptol = steptol, digits = digits, when.backedup = when.backedup, max.backedup = max.backedup, only.maximize = only.maximize, print.level = print.level, n = nt, maxit = maxit), error = function(e) e )
+    obj <- eval(parse(text = paste("tryCatch(.mlmaximize.panel(theta0 = theta0, ll = .fourC_gtrelnls, gr = .fourC_gtregrad, hess = .fourC_gtrehess, gr.hess = .fourC_gtregr_gtrehess, alternate = NULL, BHHH = FALSE, prod = prod, V0=V0,U0=U0,yit=y,xit=X,ids=ids,idvar=idvar,nt=nt,my.n=n,n=n,R=R,idlenmax=dat.descr[5],Ktheta=Ktheta,n_threads=1, step.back = .Machine$double.eps^.5, reltol =  sqrt(.Machine$double.eps), lmtol =  lmtol, steptol =  .Machine$double.eps, digits = 4, when.backedup = sqrt(.Machine$double.eps), max.backedup = 17, print.level = print.level, only.maximize = FALSE, maxit = maxit), error = function(e) e )", sep = "")))
+    cannot.est.model1 <- inherits(obj, "error")
+    
+   } else {
+    # starting values are not provided
+    
+    time.05 <- proc.time()
+    
+    # optimize 4comp; start val not provided ----------------------------------
+
+    if(print.level >= 2){
+     my.message <- paste0(" Optimization using 'mlmaximize': ")
+     m.left <- floor( (max.name.length+42-nchar(my.message)-1) / 2 )
+     m.right <- max.name.length+42-nchar(my.message) -1- m.left
+     if(m.left <= 0) m.left <- 2
+     if(m.right <= 0) m.right <- 2
+     cat("\n",rep("-", m.left), my.message, rep("-", m.right),"\n\n", sep ="")
+    }
+    
+    
+    
+    # print(theta0)
+    # print(length(theta0))
+    
+    
+    # compare times in c and numDeriv: begin ----------------------------------
+    
+    
+    # t123 <- .fourC_gtrelnls(theta=theta0, prod = prod, V0=V0,U0=U0,yit=y,xit=X,ids=ids,idvar=idvar,nt=nt,my.n=n,R=R,idlenmax=dat.descr[5],Ktheta=Ktheta,n_threads=1)
+    # cat.print(t123)
+    
+    # cat("\n\n\nGradient\n\n\n")
+    # 
+    # q10 <- proc.time()
+    # t1234 <- .fourC_gtregrad(theta=theta0, prod = prod, V0=V0,U0=U0,yit=y,xit=X,ids=ids,idvar=idvar,nt=nt,my.n=n,R=R,idlenmax=dat.descr[5],Ktheta=Ktheta,n_threads=1)
+    # q11 <- proc.time()
+    # cat.print(q11 - q10)
+    # cat.print(t1234)
+    # q10 <- proc.time()
+    # t1234_num <- numDeriv::grad(func=.fourC_gtrelnls, x=theta0, prod = prod, V0=V0,U0=U0,yit=y,xit=X,ids=ids,idvar=idvar,nt=nt,my.n=n,R=R,idlenmax=dat.descr[5],Ktheta=Ktheta,n_threads=1)
+    # q11 <- proc.time()
+    # cat.print(q11 - q10)
+    # cat.print(t1234_num)
+    # cat.print(t1234 - t1234_num)
+    # 
+    # cat("\n\n\nHessian\n\n\n")
+    # 
+    # q10 <- proc.time()
+    # t1234 <- .fourC_gtregr_gtrehess(theta=theta0, prod = prod, V0=V0,U0=U0,yit=y,xit=X,ids=ids,idvar=idvar,nt=nt,my.n=n,R=R,idlenmax=dat.descr[5],Ktheta=Ktheta,n_threads=1)$hessian1
+    # q11 <- proc.time()
+    # cat.print(q11 - q10)
+    # cat.print(t1234)
+    # q10 <- proc.time()
+    # t1234_num <- hessian1(func=.fourC_gtrelnls, at=theta0, prod = prod, V0=V0,U0=U0,yit=y,xit=X,ids=ids,idvar=idvar,nt=nt,my.n=n,R=R,idlenmax=dat.descr[5],Ktheta=Ktheta,n_threads=1)
+    # q11 <- proc.time()
+    # cat.print(q11 - q10)
+    # cat.print(t1234_num)
+    # cat.print(t1234 - t1234_num)
+    
+    # stop("this")
+    
+    # compare times in c and numDeriv: end ------------------------------------
+    
+    # obj <- eval(parse(text = paste(".mlmaximize.panel(theta0 = theta0, ll = .fourC_gtrelnls, gr = .fourC_gtregrad, hess = .fourC_gtrehess, gr.hess = .fourC_gtregr_gtrehess, alternate = NULL, BHHH = FALSE, prod = prod, V0=V0,U0=U0,yit=y,xit=X,ids=ids,idvar=idvar,nt=nt,my.n=n,n=n,R=R,idlenmax=dat.descr[5],Ktheta=Ktheta,n_threads=1, step.back = .Machine$double.eps^.5, reltol =  sqrt(.Machine$double.eps) , lmtol =  sqrt(.Machine$double.eps) , steptol =  .Machine$double.eps, digits = 4, when.backedup = sqrt(.Machine$double.eps), max.backedup = 17, print.level = print.level, only.maximize = FALSE, maxit = maxit)", sep = "")))
+    # cat("I am here")
+    obj <- eval(parse(text = paste("tryCatch( .mlmaximize.panel(theta0 = theta0, ll = .fourC_gtrelnls, gr = .fourC_gtregrad, hess = .fourC_gtrehess, gr.hess = .fourC_gtregr_gtrehess, alternate = NULL, BHHH = FALSE, prod = prod, V0 = V0, U0 = U0, yit = y, xit = X, ids = ids, idvar = idvar, nt = nt, my.n = n, n = n, R = R, idlenmax = dat.descr[5], Ktheta = Ktheta, n_threads = 1, step.back = .Machine$double.eps^.5, reltol = sqrt(.Machine$double.eps), lmtol = lmtol, steptol = .Machine$double.eps, digits = 4, when.backedup = sqrt(.Machine$double.eps), max.backedup = 17, print.level = print.level, only.maximize = FALSE, maxit = maxit), error = function(e) e)", sep = "")))
+    
+    
+   } # end '# starting values are not provided'
+   
+   time.06 <- proc.time()
+   est.time.sec <- (time.06-time.05)[1]
+   names(est.time.sec) <- "sec"
+   if(print.level >= 2){
+    .timing(est.time.sec, "\n Log likelihood maximization completed in ")
+    # cat("___________________________________________________\n")
+   }
+   # print(obj)
+   if(obj$converged == 0) return(obj)
+
+
+   # output estimation results -----------------------------------------------
+
+   Kv0 <- Ku0 <- Kvi <- Kui <- 1
+   
+   if(print.level >= 1){
+    cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
+    cat("\nStochastic ",ifelse(prod, "production", "cost")," frontier 4 components model\n",  sep = "")
+    cat("\nDistributional assumptions\n\n", sep = "")
+    Assumptions <- rep("heteroskedastic",4)
+    if(Kv0==1) Assumptions[1] <- "homoskedastic"
+    if(Ku0==1) Assumptions[2] <- "homoskedastic"
+    if(Kvi==1) Assumptions[3] <- "homoskedastic"
+    if(Kui==1) Assumptions[4] <- "homoskedastic"
+    a1 <- data.frame(
+     Component = c("Random effects:","Persistent ineff.: ","Random noise:","Transient ineff.: "),
+     Distribution = c("normal", "half-normal  ","normal", "half-normal  "),
+     Assumption = Assumptions
+    )
+    toinclude <- rep(TRUE,4)
+    print(a1[toinclude,], quote = FALSE, right = FALSE)
+   }
+   
+   if(print.level >= 1){
+    est.spd.left <- floor( (max.name.length+42-29) / 2 )
+    est.spd.right <- max.name.length+42-29 - est.spd.left
+    # cat("\n------------")
+    # cat(" Summary of the panel data: ------------\n\n", sep = "")
+    # cat("\n------------ Summary of the panel data: ----------\n\n", sep = "")
+    cat("\n",rep("-", est.spd.left)," Summary of the panel data: ",rep("-", est.spd.right),"\n\n", sep ="")
+    cat("   Number of obs       (NT) =",nt,"", "\n")
+    cat("   Number of groups     (N) =",n,"", "\n")
+    cat("   Obs per group: (T_i) min =",dat.descr[3],"", "\n")
+    cat("                        avg =",dat.descr[4],"", "\n")
+    cat("                        max =",dat.descr[5],"", "\n")
+   }
+   
+   par <- c(obj$par)
+   names(par) <- coef.names.full
+   se <- c(sqrt(diag(obj$vcov)))
+   output <- cbind(round(par, digits = digits),
+                   round(se, digits = digits),
+                   round(par/se,digits = 2),
+                   round(pnorm(abs(par/se), lower.tail = FALSE)*2, digits = digits))
+   colnames(output) <- c("Coef.", "SE ", "z ",  "P>|z|")
+   
+   if(print.level >= 1){
+    # cat("\n---------------")
+    # max.name.length <- max(nchar(row.names(output)))
+    est.rez.left <- floor( (max.name.length+42-22) / 2 )
+    est.rez.right <- max.name.length+42-22 - est.rez.left
+    cat("\n",rep("-", est.rez.left)," Estimation results: ",rep("-", est.rez.right),"\n\n", sep ="")
+    # cat("\n--------------- Estimation results: --------------\n\n", sep = "")
+    .printgtresfhet(output, digits = digits, Kb, Kv0, Ku0, Kvi, Kui, na.print = "NA", max.name.length)
+   }
+   obj$results <- output
+   colnames(obj$vcov) <- rownames(obj$vcov) <- names(obj$par) <- names(obj$gr) <- rownames(obj$results) <- coef.names.full#[toincludetheta]
+   
+   # aux parms: 4comp --------------------------------------------------------
+   
+   my.sig   <- unname( exp( obj$par["ln_sig"] ) )
+   my.lmd   <- unname( exp( obj$par["ln_lmd"] ) )
+   my.sigv0 <- unname( exp( obj$par["lnVARv0"] ) )
+   my.sigu0 <- unname( exp( obj$par["lnVARu0"] ) )
+
+   sv <- my.sig / sqrt(1 + my.lmd * my.lmd)
+   su <- sv * my.lmd
+   
+   # prepare
+   # eit : NT x 1
+   # svi2 : Ti x 1
+   # sv02 :  1 x 1
+   # sui2 : Ti x 1
+   # su02 :  1 x 1
+   
+   # define indices
+   m.begin <- c(1,(cumsum(YXZ$t0)+1)[-n])
+   m.end <- cumsum(YXZ$t0)
+   
+   my.rez <- as.vector(y - X %*% obj$par[1:Kb])
+   obj$resid <- my.rez
+   
+   sui2 <- rep(su, nt)
+   svi2 <- rep(sv, nt)
+   sv02 <- rep(my.sigv0, n)
+   su02 <- rep(my.sigu0, n)
+   
+   # Calculate efficiencies --------------------------------------------------
+   
+   myeff <- ifelse(prod, "technical", "cost")
+   # ndots <- ifelse(prod, "....", ".........")
+   clceff <- paste0(" Calculating ",myeff," efficiencies: ")
+   # print(nchar(clceff))
+   if(print.level >= 1){
+    # cat("\n-----------")
+    # cat(" Calculating ",myeff," efficiencies: ",ndots,"", sep = "")
+    est.cle.left <- floor( (max.name.length+42-nchar(clceff)-1) / 2 )
+    est.cle.right <- max.name.length+42-nchar(clceff) -1- est.cle.left
+    # print(c(max.name.length+42, nchar(clceff),est.cle.left),est.cle.right)
+    cat("\n",rep("-", est.cle.left),clceff,rep("-", est.cle.right),"\n\n", sep ="")
+   }
+   
+   # cat.print(length(su02))
+   # cat.print(length(sv02))
+
+   time.15 <- proc.time()
+   
+   # te_i0 <- te_it <- NULL
+   # R1 <- ifelse(R < 500, 500, R)
+   te_i0 <- ghkReLmd <- rep(NA, n)
+   te_it <- rep(NA, nt)
+   for(i in seq_len(n) ){
+    sample.i <- (m.begin[i]):(m.end[i])
+    # cat("id is ",idvar[ (m.begin[i])],"\n", sep = "")
+    #    print(idvar[ (m.begin[i]):(m.end[i]) ])
+    #    if(i == 1){
+    #      print(svi2[ (m.begin[i]):(m.end[i]) ])
+    #    }
+    t1 <- tryCatch( .e_exp_tu (ei = my.rez[ sample.i ], id = ids[i], sui2=sui2[ sample.i ], svi2=svi2[ sample.i ], sv02=sv02[i], su02=su02[i], prod = prod, simtype = simtype_GHK, base.halton = halton.base, R = R_GHK, inv.tol = .Machine$double.eps, print.level = print.level ), error = function(e) e )
+    if (inherits(t1, "error")){
+     print(t1)
+     # te_i0 <- c(te_i0, NA )
+     # te_it <- c(te_it, rep(NA, YXZ$t0[i]) )
+     # nothing to do
+    } else {
+     # te_i0 <- c(te_i0, t1$te_pers )
+     # te_it <- c(te_it, t1$te_resi )
+     # if(!is.na(t1$range_star) & !is.na(t1$ghkReLmd)){
+     # if(t1$range_star < 0.5 & t1$ghkReLmd > 1e-7){
+     te_i0[i] <- t1$te_pers
+     ghkReLmd[i] <- t1$ghkReLmd
+     te_it[ sample.i ] <- t1$te_resi
+     # }
+     # }
+     # else remains NA
+    }
+    rm(t1)
+   }
+   # te_i0 <- ifelse(te_i0 > 1, NA, te_i0)
+   # te_it <- ifelse(te_it > 1, NA, te_it)
+   te_cs_long <- rep(te_i0, YXZ$t0)
+   ghkReLmd_long <- rep(ghkReLmd, YXZ$t0)
+   te_over <- te_cs_long * te_it
+   #  print(YXZ$t0)
+   #  print(sum(YXZ$t0))
+   #  print(length(te_i0))
+   #  print(te_i0)
+   #  print(length(te_it))
+   
+   
+   time.16 <- proc.time()
+   # timing((time.16-time.15)[1])
+   
+   if(print.level >= 1){
+    .timing((time.16-time.15)[3], paste("",clceff," completed in\n", sep = ""))
+    # cat("____________________________________________________\n")
+   }
+   
+   if(print.level >= 2){
+    
+    sum.te <- paste0(" Summary of ",myeff," efficiencies: ")
+    est.cle.left <- floor( (max.name.length+42-nchar(sum.te)-1) / 2 )
+    est.cle.right <- max.name.length+42-nchar(sum.te) -1- est.cle.left
+    if(est.cle.left <= 0) est.cle.left <- 1
+    if(est.cle.right <= 0) est.cle.right <- 1
+    cat("\n",rep("-", est.cle.left),sum.te,rep("-", est.cle.right),"\n\n", sep ="")
+    .su(list(te_i0,te_it,te_over), print = TRUE, width = 5, format = "fg", drop0trailing = FALSE, names = c("Persistent", "Transient", "Overall"))
+    
+   }
+   
+   # return eff --------------------------------------------------------------
+   
+   cond1 <- YXZ$old.sorted
+   
+   temp <- list(call = match.call(), model = paste0("sf_p_4comp_homosk"), coef = obj$par, table = output, vcov = obj$vcov, ll = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = obj$converged, esttime = est.time.sec, prod = prod, Kb = Kb, fitted = as.vector(unname(X%*%obj$par[1:Kb])), yobs = as.vector(y)[cond1], xobs = X[cond1,], n = n, nt = nt, dat.descr = dat.descr, esample = esample)
+   
+   
+   if(prod){
+    temp$efficiencies_i <- data.frame(id = ids, te_i = te_i0, su02, sv02)
+    temp$efficiencies_it <- data.frame(id = YXZ$itvar[,1], t = YXZ$itvar[,2], te_i = te_cs_long, te_it = te_it, te_over = te_over, svi2, sv02 = rep(sv02, YXZ$t0), sui2, su02 = rep(su02, YXZ$t0))
+    temp$te_i0 <- te_cs_long[cond1]
+    temp$te_it <- te_it[cond1]
+    temp$te_over <- te_over[cond1]
+   }
+   else {
+    temp$efficiencies_i <- data.frame(id = ids, ce_i = te_i0, su02, sv02)
+    temp$efficiencies_it <- data.frame(id = YXZ$itvar[,1], t = YXZ$itvar[,2], ce_i = te_cs_long, ce_it = te_it, ce_over = te_over, svi2, sv02 = rep(sv02, YXZ$t0), sui2, su02 = rep(su02, YXZ$t0))
+    temp$ce_i0 <- te_cs_long[cond1]
+    temp$ce_it <- te_it[cond1]
+    temp$ce_over <- te_over[cond1]
+   }
+   
+   # print(temp)
+   
+   if (obj$converged == 2){
+    temp$delta_rel <- obj$delta_rel
+    temp$ltol <- obj$ltol
+   }
+   if (obj$converged == 3){
+    temp$theta_rel_ch <- obj$theta_rel_ch
+    temp$steptol <- sqrt(.Machine$double.eps)
+   }
+   
+  }
+  
   class(temp) <- "npsf"
   
   return(temp)
-  
-  # Panel data models 1st and 2nd gen end -----------------------------------
   
  }
  

@@ -3622,7 +3622,7 @@
  # stop("argument x is not a symmetric matrix")
  # if (!is.numeric(x))
  # stop("argument x is not a numeric matrix")
- eigenvalues <- eigen(x, only.values = TRUE)$values
+ eigenvalues <- eigen(x, only.values = TRUE, symmetric = TRUE)$values
  # cat("Eigenvalues\n")
  # print(eigenvalues)
  n <- nrow(x)
@@ -3682,9 +3682,11 @@
  return(qq)
 }
 
-.mlmaximize.panel <- function(theta0, ll, gr = NULL, hess = NULL, gr.hess = NULL, alternate = NULL, BHHH = F, level = 0.99, step.back = .Machine$double.eps^.5, reltol =  sqrt(.Machine$double.eps) , lmtol =  sqrt(.Machine$double.eps) , steptol =  .Machine$double.eps, digits = 4, when.backedup = sqrt(.Machine$double.eps), max.backedup = 17, print.level = 6, only.maximize = FALSE, maxit = 150, n = 100, ...){
+.mlmaximize.panel <- function(theta0, ll, gr = NULL, hess = NULL, gr.hess = NULL, alternate = NULL, BHHH = FALSE, level = 0.99, step.back = .Machine$double.eps^.5, reltol =  sqrt(.Machine$double.eps), lmtol =  sqrt(.Machine$double.eps), steptol =  .Machine$double.eps, digits = 4, when.backedup = sqrt(.Machine$double.eps), max.backedup = 17, print.level = 6, only.maximize = FALSE, maxit = 150, n = 100, ...){
  
  theta00 <- theta0
+ 
+ # cat.print(lmtol)
  
  k4 <- length(theta0)
  
@@ -3700,6 +3702,8 @@
  # }
  
  # step.back = 2^-217
+ 
+ # cat.print(n)
  
  ll0 <- ll(theta0, ...)
  ltol <- reltol * (abs(ll0) + reltol)
@@ -3835,7 +3839,7 @@
   # gradient and hessian together
   g1_h0 <- gr.hess(theta0, ...)
   g1 <- g1_h0$grad
-  h0 <- g1_h0$hessian
+  h0 <- g1_h0$hessian1
   
   
   # gradient and hessian separately
@@ -4603,3 +4607,376 @@
  return(tymch)
 }
 
+
+# 4comp -------------------------------------------------------------------
+
+.fourC_gtrelnls <- function(theta, prod = TRUE,
+                       V0,U0,yit,xit,
+                       ids,idvar,nt,my.n,R,idlenmax,
+                       Ktheta,n_threads=1){
+ do.prod <- ifelse( prod, 1, -1 )
+ k <- Ktheta - 4
+ log.lmd <- log.sig <- log.sigv0 <- log.sigu0 <- TRUE
+ if(log.lmd)   theta[k+1] <- exp( theta[k+1] )
+ if(log.sig)   theta[k+2] <- exp( theta[k+2] )
+ if(log.sigv0) theta[k+3] <- exp( theta[k+3] )
+ if(log.sigu0) theta[k+4] <- exp( theta[k+4] )
+ t51 <- .C("gtre_ll", prod = as.integer(do.prod), V = as.double(V0), U = as.double(U0), N = as.integer(my.n), R = as.integer(R), Z = as.double(xit), NT = as.integer(nt), C = as.double(yit), ids = as.double(ids), idvar = as.double(idvar), idlenmax = as.integer(idlenmax), theta = as.double(theta), K4  = as.integer(Ktheta), lnls = as.double(1) )
+ # t51 <- tryCatch( .C("gtre_ll", prod = as.integer(do.prod), V = as.double(V0), U = as.double(U0), N = as.integer(n), R = as.integer(R), Z = as.double(xit), NT = as.integer(nt), C = as.double(yit), ids = as.double(ids), idvar = as.double(idvar), idlenmax = as.integer(idlenmax), theta = as.double(theta), K4  = as.integer(Ktheta), lnls = as.double(1) ), error = function(e) e )
+ if(inherits(t51, "error")){
+  return(NA)
+ } else {
+  return(t51$lnls)
+ }
+}
+
+
+.fourC_gtregrad <- function(theta, prod = TRUE,
+                       V0,U0,yit,xit,
+                       ids,idvar,nt,my.n,R,idlenmax,
+                       Ktheta,n_threads=1){
+ do.prod <- ifelse( prod, 1, -1 )
+ k <- Ktheta - 4
+ log.lmd <- log.sig <- log.sigv0 <- log.sigu0 <- TRUE
+ if(log.lmd)   theta[k+1] <- exp( theta[k+1] )
+ if(log.sig)   theta[k+2] <- exp( theta[k+2] )
+ if(log.sigv0) theta[k+3] <- exp( theta[k+3] )
+ if(log.sigu0) theta[k+4] <- exp( theta[k+4] )
+ # tt <- length(theta)
+ t51 <- tryCatch( .C("gtre_grad", prod = as.integer(do.prod), V = as.double(V0), U = as.double(U0), N = as.integer(my.n), R = as.integer(R), Z = as.double(xit), NT = as.integer(nt), C = as.double(yit), ids = as.double(ids), idvar = as.double(idvar), idlenmax = as.integer(idlenmax), theta = as.double(theta), K4  = as.integer(Ktheta), lnls = as.double(1), grad = as.double(rep(17, Ktheta)) ), error = function(e) e )
+ # t51 <- .C("gtre_grad", prod = as.integer(do.prod), V = as.double(V0), U = as.double(U0), N = as.integer(my.n), R = as.integer(R), Z = as.double(xit), NT = as.integer(nt), C = as.double(yit), ids = as.double(ids), idvar = as.double(idvar), idlenmax = as.integer(idlenmax), theta = as.double(theta), K4  = as.integer(Ktheta), lnls = as.double(1), grad = as.double(rep(17, Ktheta)) )
+ if(inherits(t51, "error")){
+  return(rep(NA,Ktheta))
+ } else {
+  mygrad <- t51$grad
+  if(log.lmd) mygrad[k+1] <- mygrad[k+1] * theta[k+1]
+  if(log.sig) mygrad[k+2] <- mygrad[k+2] * theta[k+2]
+  if(log.sigv0) mygrad[k+3] <- mygrad[k+3] * theta[k+3]
+  if(log.sigu0) mygrad[k+4] <- mygrad[k+4] * theta[k+4]
+  # names(mygrad) <- mynames
+  return(mygrad)
+ }
+}
+
+.lower2full <- function(lower.tri.vec, names = NULL){
+ kk <- sqrt(0.5^2 + 2 * length(lower.tri.vec) ) - 0.5
+ full.m <- matrix(0, nrow = kk, ncol = kk)
+ full.m[lower.tri(full.m, diag = TRUE)] <- lower.tri.vec
+ full.m <- full.m + t(full.m)
+ for(i in seq_len(kk)) full.m[i,i] <- full.m[i,i]/2
+ if(!is.null(names)) colnames(full.m) <- rownames(full.m) <- names
+ full.m
+}
+
+.fourC_gtrehess <- function(theta, BHHH = FALSE, prod = TRUE,
+                       V0,U0,yit,xit,
+                       ids,idvar,nt,my.n,R,idlenmax,
+                       Ktheta,n_threads=1, 
+                       grad.log = rep(0, length(theta)), ... ){
+ # if(log.lmd)   theta[k+1] <- exp( theta[k+1] )
+ # if(log.sig)   theta[k+2] <- exp( theta[k+2] )
+ # if(log.sigv0) theta[k+3] <- exp( theta[k+3] )
+ # if(log.sigu0) theta[k+4] <- exp( theta[k+4] )
+ do.prod <- ifelse( prod, 1, -1 )	
+ do.BHHH <- ifelse( BHHH, 1, 0)
+ k <- Ktheta - 4
+ log.lmd <- log.sig <- log.sigv0 <- log.sigu0 <- TRUE
+ if(log.lmd)   theta[k+1] <- exp( theta[k+1] )
+ if(log.sig)   theta[k+2] <- exp( theta[k+2] )
+ if(log.sigv0) theta[k+3] <- exp( theta[k+3] )
+ if(log.sigu0) theta[k+4] <- exp( theta[k+4] )
+ tt <- length(theta)
+ len.tri.tt <- ( tt^2 + tt ) / 2
+ t51 <- tryCatch( .C("gtre", prod = as.integer(do.prod), V = as.double(V0), U = as.double(U0), N = as.integer(my.n), R = as.integer(R), Z = as.double(xit), NT = as.integer(nt), C = as.double(yit), ids = as.double(ids), idvar = as.double(idvar), idlenmax = as.integer(idlenmax), theta = as.double(theta), K4  = as.integer(k+4), BHHH = as.integer(do.BHHH),lnls = as.double(1), grad = as.double(rep(17, tt)), hesstri = as.double(rep(17, len.tri.tt)) ), error = function(e) e )
+ # t51 <- .C("gtre", prod = as.integer(do.prod), V = as.double(V0), U = as.double(U0), N = as.integer(my.n), R = as.integer(R), Z = as.double(xit), NT = as.integer(nt), C = as.double(yit), ids = as.double(ids), idvar = as.double(idvar), idlenmax = as.integer(idlenmax), theta = as.double(theta), K4  = as.integer(k+4), BHHH = as.integer(do.BHHH), lnls = as.double(1), grad = as.double(rep(17, tt)), hesstri = as.double(rep(17, len.tri.tt)) )
+ if(inherits(t51, "error")){
+  return( matrix(NA,tt,tt) )
+ } else {
+  # grad
+  mygrad <- t51$grad
+  if(log.lmd) mygrad[k+1] <- mygrad[k+1] * theta[k+1]
+  if(log.sig) mygrad[k+2] <- mygrad[k+2] * theta[k+2]
+  if(log.sigv0) mygrad[k+3] <- mygrad[k+3] * theta[k+3]
+  if(log.sigu0) mygrad[k+4] <- mygrad[k+4] * theta[k+4]
+  # cat.print(mygrad)
+  # hess
+  myhess <- .lower2full( t51$hesstri, names = NULL )
+  grad.log <- mygrad
+  # cat.print(grad.log)
+  if(log.lmd){
+   myhess[k+1,] <- myhess[,k+1] <- myhess[k+1,] * theta[k+1]
+   myhess[k+1,k+1] <- 2*myhess[k+1,k+1] * theta[k+1]^2 + grad.log[k+1]
+  } 
+  if(log.sig){
+   myhess[k+2,] <- myhess[,k+2] <- myhess[k+2,] * theta[k+2]
+   myhess[k+2,k+2] <- 2*myhess[k+2,k+2] * theta[k+2]^2 + grad.log[k+2]
+  }
+  if(log.sigv0){
+   myhess[k+3,] <- myhess[,k+3] <- myhess[k+3,] * theta[k+3]
+   myhess[k+3,k+3] <- 2*myhess[k+3,k+3] * theta[k+3]^2 + grad.log[k+3]
+  }
+  if(log.sigu0){
+   myhess[k+4,] <- myhess[,k+4] <- myhess[k+4,] * theta[k+4]
+   myhess[k+4,k+4] <- 2*myhess[k+4,k+4] * theta[k+4]^2 + grad.log[k+4]
+  }
+  return(myhess)
+ }
+}
+
+.fourC_gtregr_gtrehess <- function(theta, BHHH = FALSE, prod = TRUE,
+                            V0,U0,yit,xit,
+                            ids,idvar,nt,my.n,R,idlenmax,
+                            Ktheta,n_threads=1, 
+                            grad.log = rep(0, length(theta)), ... ){
+ # if(log.lmd)   theta[k+1] <- exp( theta[k+1] )
+ # if(log.sig)   theta[k+2] <- exp( theta[k+2] )
+ # if(log.sigv0) theta[k+3] <- exp( theta[k+3] )
+ # if(log.sigu0) theta[k+4] <- exp( theta[k+4] )
+ do.prod <- ifelse( prod, 1, -1 )	
+ do.BHHH <- ifelse( BHHH, 1, 0)
+ k <- Ktheta - 4
+ log.lmd <- log.sig <- log.sigv0 <- log.sigu0 <- TRUE
+ if(log.lmd)   theta[k+1] <- exp( theta[k+1] )
+ if(log.sig)   theta[k+2] <- exp( theta[k+2] )
+ if(log.sigv0) theta[k+3] <- exp( theta[k+3] )
+ if(log.sigu0) theta[k+4] <- exp( theta[k+4] )
+ tt <- length(theta)
+ len.tri.tt <- ( tt^2 + tt ) / 2
+ t51 <- tryCatch( .C("gtre", prod = as.integer(do.prod), V = as.double(V0), U = as.double(U0), N = as.integer(my.n), R = as.integer(R), Z = as.double(xit), NT = as.integer(nt), C = as.double(yit), ids = as.double(ids), idvar = as.double(idvar), idlenmax = as.integer(idlenmax), theta = as.double(theta), K4  = as.integer(k+4), BHHH = as.integer(do.BHHH), lnls = as.double(1), grad = as.double(rep(17, tt)), hesstri = as.double(rep(17, len.tri.tt)) ), error = function(e) e )
+ # t51 <- .C("gtre", prod = as.integer(do.prod), V = as.double(V0), U = as.double(U0), N = as.integer(my.n), R = as.integer(R), Z = as.double(xit), NT = as.integer(nt), C = as.double(yit), ids = as.double(ids), idvar = as.double(idvar), idlenmax = as.integer(idlenmax), theta = as.double(theta), K4  = as.integer(k+4), BHHH = as.integer(do.BHHH), lnls = as.double(1), grad = as.double(rep(17, tt)), hesstri = as.double(rep(17, len.tri.tt)) )
+ if(inherits(t51, "error")){
+  return( matrix(NA,tt,tt) )
+ } else {
+  # grad
+  mygrad <- t51$grad
+  if(log.lmd) mygrad[k+1] <- mygrad[k+1] * theta[k+1]
+  if(log.sig) mygrad[k+2] <- mygrad[k+2] * theta[k+2]
+  if(log.sigv0) mygrad[k+3] <- mygrad[k+3] * theta[k+3]
+  if(log.sigu0) mygrad[k+4] <- mygrad[k+4] * theta[k+4]
+  # cat.print(mygrad)
+  # hess
+  myhess <- .lower2full( t51$hesstri, names = NULL )
+  grad.log <- mygrad
+  # cat.print(grad.log)
+  if(log.lmd){
+   myhess[k+1,] <- myhess[,k+1] <- myhess[k+1,] * theta[k+1]
+   myhess[k+1,k+1] <- 2*myhess[k+1,k+1] * theta[k+1]^2 + grad.log[k+1]
+  } 
+  if(log.sig){
+   myhess[k+2,] <- myhess[,k+2] <- myhess[k+2,] * theta[k+2]
+   myhess[k+2,k+2] <- 2*myhess[k+2,k+2] * theta[k+2]^2 + grad.log[k+2]
+  }
+  if(log.sigv0){
+   myhess[k+3,] <- myhess[,k+3] <- myhess[k+3,] * theta[k+3]
+   myhess[k+3,k+3] <- 2*myhess[k+3,k+3] * theta[k+3]^2 + grad.log[k+3]
+  }
+  if(log.sigu0){
+   myhess[k+4,] <- myhess[,k+4] <- myhess[k+4,] * theta[k+4]
+   myhess[k+4,k+4] <- 2*myhess[k+4,k+4] * theta[k+4]^2 + grad.log[k+4]
+  }
+  # return(myhess)
+  return(list(grad = mygrad, hessian1 = myhess))
+ }
+}
+
+.ghk <- function(C, chol.vcov = TRUE,
+                 from = rep(-Inf, ncol(C)), to = rep(Inf, ncol(C)),
+                 draws = NULL,
+                 simtype = c("halton", "random"), R = 10000, base.halton = 2){
+ # if(R %% 2 == 1) R <- R+1
+ # if(use.halton){
+ # halton(17)
+ # }
+ if(!chol.vcov){
+  C <- t(chol(C))
+ }
+ K <- ncol(C)
+ z <- matrix(0, nrow = R, ncol = K-1)
+ a1 <- rep(from[1], R)
+ b1 <- rep(to[1], R)
+ pi <- rep(1, R)
+ # print(c(length(draws), R*(K-1), K))
+ # cat.print(dim(draws))
+ if(is.numeric(draws) & length(draws) >= R*(K-1)){
+  myrand <- draws
+  # cat("draws works\n")
+ } else {
+  if(simtype == "halton"){
+   # myrand <- sHalton(floor(R*(K-1)), base = base.halton)
+   myrand <- randtoolbox::halton(R, dim = K-1, init = TRUE, normal = FALSE, usetime = FALSE)
+   # cat("draws does not works\n")
+  } else {
+   # myrand <- runif(floor(R*(K-1)))
+   myrand <- matrix( runif(floor(R*(K-1))), ncol = K-1, nrow = R)
+  }
+ }
+ # cat("length in ghk = ",length(myrand),"\n")
+ # cat.print(dim(myrand))
+ for(k in seq_len(K)){
+  if(k > 1){
+   mysum <- z[, seq_len(k-1), drop = FALSE] %*% t(C[k, seq_len(k-1), drop = FALSE])
+   a1 <- rep(from[k], R) - mysum
+   b1 <- rep(to[k], R) - mysum
+  }
+  a1 <- pnorm( a1/C[k,k] )
+  b1 <- pnorm( b1/C[k,k] )
+  pi <- pi * (b1 - a1)
+  if( k < K ){
+   # myrand1 <- myrand[((k-1)*R+1) : (k*R)] #sHalton(floor(R/2), base = base.halton)
+   myrand1 <- myrand[,k]
+   # myrand <- c(myrand, 1 - myrand)
+   z[, k] <- qnorm( a1 +  myrand1 * (b1 - a1) )
+  }
+ }
+ mean(pi, na.rm = TRUE)
+}
+
+# svi2 : Ti x 1
+# sv02 :  1 x 1
+# sui2 : Ti x 1
+# su02 :  1 x 1
+
+.e_exp_tu <- function(ei, id, sui2, svi2, sv02, su02, prod = TRUE,
+                      simtype = c("halton", "random"),
+                      base.halton = 2, R = 500, 
+                      inv.tol = .Machine$double.eps, print.level = 4){
+ Ti <- length (ei)
+ do.prod <- ifelse( prod, 1, -1)
+ A <- -1 * do.prod * cbind (1, diag(Ti) )
+ if(Ti == 1){
+  Sig <- matrix(svi2 + sv02, 1, 1)
+ }
+ else {
+  Sig <- diag(svi2) +  matrix(sv02, nrow = Ti, ncol = Ti)
+ }
+ # cat.print(c( su02, sui2 ))
+ su02.zero <- FALSE
+ if(su02 == 0 | su02 < sqrt(.Machine$double.eps)){
+  su02 <- .Machine$double.eps
+  su02.zero <- TRUE
+ }
+ sui2.zero <- sui2 == 0
+ sui2 <- ifelse(sui2 == 0, .Machine$double.eps, sui2)
+ V_1 <- diag ( 1/c( su02, sui2 ) )
+ Sig_1 <- solve(Sig)
+ Lmd <- tryCatch( solve( V_1 + t(A) %*% Sig_1 %*% A, tol = inv.tol ), error = function(e) e )
+ # cat.print(Lmd)
+ some_error <- inherits(Lmd, "error")
+ if(!some_error){
+  R_ <- Lmd %*% t(A) %*% Sig_1
+  # cat("\n There was no error in the first type of LMD calculations\n")
+  # # begin check
+  # V <- diag ( c( su02, sui2 ) )
+  # SAVA_1 <- tryCatch( solve(Sig + A %*% V %*% t(A), tol = inv.tol ), error = function(e) e )
+  # if(inherits(Lmd, "error")){
+  #   stop("Cannot invert some matrix, so no efficiencies for this ID")
+  # }
+  # R. <- V %*% t(A) %*% SAVA_1
+  # Lmd. <- V - R. %*% A %*% V
+  # cat("\nLmd's are equal",all.equal(Lmd,Lmd.),"; R's are equal",all.equal(R_,R.),"\n")
+  # # end check
+ } else {
+  # cat("\n There was an error in the first type of LMD calculations\n")
+  V <- diag ( c( su02, sui2 ) )
+  SAVA_1 <- tryCatch( solve(Sig + A %*% V %*% t(A), tol = inv.tol ), error = function(e) e )
+  if(inherits(Lmd, "error")){
+   stop("Cannot invert some matrix, so no efficiencies for ID ",id," ", call. = FALSE)
+  }
+  R_ <- V %*% t(A) %*% SAVA_1
+  Lmd <- V - R_ %*% A %*% V
+  # Re <- R  %*% ei
+ }
+ Re <- R_ %*% ei
+ # print(Lmd)
+ # print(summary(Re))
+ CholLmd <- t(chol(Lmd))
+ # print(summary(CholLmd))
+ if(Ti == 1){
+  mydraws <- matrix(runif(R), ncol = 1)
+ } else {
+  if(simtype == "halton"){
+   mydraws <- randtoolbox::halton(n = R, dim = Ti, init = TRUE, normal = FALSE)
+  } else {
+   mydraws <- matrix( runif(floor(R*Ti)), nrow = R, ncol = Ti)
+  }
+ }
+ ghkReLmd <- .ghk(CholLmd, to = Re, simtype = simtype, draws = mydraws, R = R)
+ te_it <- NULL
+ for(tt in 1:(Ti+1) ){
+  t00 <- -Re[tt] + 0.5 * Lmd[tt,tt]
+  t11 <- exp( t00 )
+  t22 <- .ghk( CholLmd, to = Re - Lmd[ , tt], simtype = simtype, draws = mydraws, R = R )
+  temp <- t11 * t22 / ghkReLmd
+  te_it <- c(te_it, temp )
+ }
+ # check if approximation was OK, correct if it wasn't
+ te_it_finite <- is.finite(te_it)
+ # if(any(!te_it_finite)) cat.print(te_it)
+ te_it [!te_it_finite] <- NA
+ range_star <- te_max <- NA
+ if(sum(te_it_finite) > 0){
+  te_max <- max(te_it, na.rm = TRUE)
+  if(sum(te_it_finite) > 1) range_star <- te_max - sort(te_it [!te_it_finite])[2]
+ }
+ if(is.finite(te_max)){
+  if(!is.na(te_max) && te_max > 1){
+   # cat.print(id)
+   # cat.print(id1)
+   # cat.print(te_it)
+   if(print.level > 5) {
+    # cat.print(summary(te_it))
+    .su(list(te_it, sui2, svi2, sv02, su02, ei), print = TRUE, width = 5, format = "fg", drop0trailing = FALSE, names = c("te_it", "te_it_alt", "sui2", "svi2", "sv02", "su02", "rez"))
+    # cat.print(te_it)
+    cat("Range is ",max(te_it, na.rm = TRUE) - min(te_it, na.rm = TRUE),": (",max(te_it, na.rm = TRUE)," ",min(te_it, na.rm = TRUE),"), ghkReLmd = ",ghkReLmd,"\n", sep = "")
+    cat("Oops...\n")
+    # print(te_it)
+   }
+  }
+ }
+ te_pers <- te_it[1]
+ te_resi <- te_it[-1]
+ if(su02.zero) te_pers <- 1
+ te_resi <- ifelse(sui2.zero, 1, te_resi)
+ tymch <- list(te_pers = te_pers, te_resi = te_resi, ghkReLmd = ghkReLmd, range_star = range_star)
+ return(tymch)
+}
+
+# Print the estimation results
+.printgtresfhet = function(x, digits, kb, kv0, ku0, kvi, kui, na.print = "NA", max.name.length, mycutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1), mysymbols = c("***", "**", "*", ".", " ")){
+ Cf = cbind(ifelse(x[,1, drop = F]> 999, formatC(x[,1, drop = F], digits = 1, format = "e",width = 10), formatC(x[,1, drop = F], digits = digits, format = "f", width = 10)),
+            ifelse(x[,2, drop = F]>999, formatC(x[,2, drop = F], digits = 1, format = "e", width = 10), formatC(x[,2, drop = F], digits = digits, format = "f", width = 10)),
+            ifelse(x[,3, drop = F]>999, formatC(x[,3, drop = F], digits = 1, format = "e", width = 7), formatC(x[,3, drop = F], digits = 2, format = "f", width = 7)),
+            ifelse(x[,4, drop = F]>999, formatC(x[,4, drop = F], digits = 1, format = "e", width = 10), formatC(x[,4, drop = FALSE], digits = digits, format = "f", width = 10)),
+            formatC(mysymbols[findInterval(x = x[,4], vec = mycutpoints)], flag = "-"))
+ 
+ row.names(Cf) <- formatC(row.names(Cf), width = max(nchar(row.names(Cf))), flag = "-")
+ cat("",rep(" ", max.name.length+6),"Coef.        SE       z       P>|z|\n", sep = "")
+ dimnames(Cf)[[2]] <- rep("", dim(Cf)[[2]])
+ cat("",rep("_", max.name.length+42-1),"", "\n", "Frontier", "\n", sep = "")
+ print.default(Cf[1:kb,,drop=FALSE], quote = FALSE, right = TRUE, na.print = na.print)
+ 
+ # cat("____________________________________________________", "\n", "Frontier", "\n")
+ # cat("____________________________________________________", "\n", "Frontier")
+ # print.default(Cf[1:kb,,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
+ if(kv0 > 0){
+  # cat("----------------------------------------------------", "\n", "Random effects component: log(sigma_v0^2)", "\n")
+  cat("",rep("-", max.name.length+42-1),"", "\n", "log(lambda)", "\n", sep = "")
+  # dimnames(Cf)[[2]] <- rep("", dim(Cf)[[2]])
+  print.default(Cf[(kb+1):(kb+kv0),,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
+ }
+ if(ku0 > 0){
+  # cat("----------------------------------------------------", "\n", "Persistent inefficiency component: log(sigma_u0^2)", "\n")
+  cat("",rep("-", max.name.length+42-1),"", "\n", "log(sigma)", "\n", sep = "")
+  print.default(Cf[(kb+kv0+1):(kb+kv0+ku0),,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
+ }
+ # cat("----------------------------------------------------", "\n", "Random noise component: log(sigma_v^2)", "\n")
+ cat("",rep("-", max.name.length+42-1),"", "\n", "Random noise component: log(sigma_v^2)", "\n", sep = "")
+ print.default(Cf[(kb+kv0+ku0+1):(kb+kv0+ku0+kvi),,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
+ if(kui > 0){
+  # cat("----------------------------------------------------", "\n", "Transient inefficiency component: log(sigma_u^2)", "\n")
+  cat("",rep("-", max.name.length+42-1),"", "\n", "Persistent inefficiency component: log(sigma_u0^2)", "\n", sep = "")
+  print.default(Cf[(kb+kv0+ku0+kvi+1):(kb+kv0+ku0+kvi+kui),,drop=F], quote = FALSE, right = TRUE, na.print = na.print)
+ }
+ cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
+ invisible(x)
+}

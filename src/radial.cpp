@@ -216,7 +216,7 @@ void radial(double *yobs, double *xobs,
 		  D[*m + i] = 1;
 		}
 		/* Supplement constraint matrix */
-		for (int i = 0; i < *m; i++){
+		for (i = 0; i < *m; i++){
 //			values[i * ncol] = 0.;
 		  A[i * ncol] = 0.;
 		}

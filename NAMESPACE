@@ -5,7 +5,7 @@ importFrom("stats", "IQR", "as.formula", "bw.SJ", "coef", "cov",
             "runif", "sd", "var", "resid")
 importFrom("utils", "installed.packages")
 importFrom("stats", "nobs")
-import(Formula)
+import(Formula,randtoolbox,sfsmisc)
 export(teradial, tenonradial, teradialbc, nptestrts, nptestind, sf, truncreg)
 useDynLib(npsf, .registration = TRUE)
 S3method("coef", "npsf")
