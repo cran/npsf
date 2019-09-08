@@ -1,4 +1,9 @@
-npsf v0.5.0 (Release date: 2019-04-11)
+npsf v0.5.2 (Release date: 2019-09-18)
+
+* Fixed various bugs
+* truncreg is made run fast
+
+npsf v0.5.1 (Release date: 2019-04-12)
 
 * 4 components model is added
 * summary works for 1st and 2nd generation panel data models

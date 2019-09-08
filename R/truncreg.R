@@ -9,6 +9,13 @@ truncreg <- function(formula, data, subset,
  x <- YX$X
  a <- YX$LL
  b <- YX$UL
+ if(a[1] != -Inf & b[1] != Inf){
+   model <- "ab"
+ } else if (a[1] != -Inf) {
+   model <- "a"
+ } else if (b[1] != Inf) {
+   model <- "b"
+ }
  # sample size
  n <- YX$n
  n.full <- YX$n.full
@@ -21,8 +28,23 @@ truncreg <- function(formula, data, subset,
  sigma0 <- 1.000001*sqrt( sum((y - x %*% beta0)^2)/(n-ncol(x)) )
  names(sigma0) <- "/sigma"
  theta0 <- rbind( beta0, sigma0)
+ K1 <- length(theta0)
  # initial LL
- l_init <- .ll.trunc (y, x, beta0, sigma0, a, b)
+ XBeta     <- x %*% beta0
+ yXBeta    <- y - XBeta
+ if(model == "ab"){
+   aXBeta  <- a - XBeta
+   bXBeta  <- b - XBeta
+   hdenom  <- pnorm(bXBeta/sigma0) - pnorm(aXBeta/sigma0)
+ } else if (model == "a") {
+   aXBeta  <- a - XBeta
+   hdenom  <- 1 - pnorm(aXBeta/sigma0)
+ } else if (model == "b") {
+   bXBeta  <- b - XBeta
+   hdenom  <- pnorm(bXBeta/sigma0)
+ }
+ l_init    <- sum( -0.5*log(2*pi*sigma0^2) - 0.5/sigma0^2*yXBeta^2 - log( hdenom ) )
+#  # l_init <- .ll.trunc (y, x, beta0, sigma0, a, b)
  a0 <- a
  b0 <- b
  
@@ -30,49 +52,82 @@ truncreg <- function(formula, data, subset,
  # print(summary(b))
  
  Delta <- 1
- mylm <- 1
- step <- 0
+ mylm  <- 1
+ step  <- -1
  time.05 <- proc.time()
  while ( abs(mylm) > lmtol & step <= maxiter){
   # print(step)
   step <- step + 1
   # print(step)
-  XBeta <- x %*% beta0
-  aXBeta <- a - XBeta
-  bXBeta <- b - XBeta
-  yXBeta <- y - XBeta
-  h0 <- .h.trunc(al = aXBeta/sigma0, be = bXBeta/sigma0, a1 = 1, b1 = 1, a = a0, b = b0 )
-  h1 <- .h.trunc(al = aXBeta/sigma0, be = bXBeta/sigma0, a1 = aXBeta, b1 = bXBeta, a = a0, b = b0 )
-  h2 <- .h.trunc(al = aXBeta/sigma0, be = bXBeta/sigma0, a1 = aXBeta^2, b1 = bXBeta^2, a = a0, b = b0 )
-  h3 <- .h.trunc(al = aXBeta/sigma0, be = bXBeta/sigma0, a1 = aXBeta^3, b1 = bXBeta^3, a = a0, b = b0 )
-  h0 <- as.matrix(h0)
-  h1 <- as.matrix(h1)
-  h2 <- as.matrix(h2)
-  h3 <- as.matrix(h3)
   # gradient
+  if(model == "ab"){
+    normbxb <- dnorm(bXBeta/sigma0)
+    normaxb <- dnorm(aXBeta/sigma0)
+    h0      <- (         normbxb -          normaxb) / hdenom
+    h1      <- (  bXBeta*normbxb -   aXBeta*normaxb) / hdenom
+    h2      <- (bXBeta^2*normbxb - aXBeta^2*normaxb) / hdenom
+    h3      <- (bXBeta^3*normbxb - aXBeta^3*normaxb) / hdenom
+  } else if (model == "a") {
+    normaxb <- dnorm(aXBeta/sigma0)
+    h0      <- (         -normaxb) / hdenom
+    h1      <- (-aXBeta  *normaxb) / hdenom
+    h2      <- (-aXBeta^2*normaxb) / hdenom
+    h3      <- (-aXBeta^3*normaxb) / hdenom
+  } else if (model == "b") {
+    normbxb <- dnorm(bXBeta/sigma0)
+    h0      <- (         normbxb) / hdenom
+    h1      <- (  bXBeta*normbxb) / hdenom
+    h2      <- (bXBeta^2*normbxb) / hdenom
+    h3      <- (bXBeta^3*normbxb) / hdenom
+  }
+  # cat.print(h1)
+  # h0 <- .h.trunc(al = aXBeta/sigma0, be = bXBeta/sigma0, a1 = 1,        b1 = 1,        a = a0, b = b0 )
+  # h1 <- .h.trunc(al = aXBeta/sigma0, be = bXBeta/sigma0, a1 = aXBeta,   b1 = bXBeta,   a = a0, b = b0 )
+  # h2 <- .h.trunc(al = aXBeta/sigma0, be = bXBeta/sigma0, a1 = aXBeta^2, b1 = bXBeta^2, a = a0, b = b0 )
+  # h3 <- .h.trunc(al = aXBeta/sigma0, be = bXBeta/sigma0, a1 = aXBeta^3, b1 = bXBeta^3, a = a0, b = b0 )
+  # h0 <- as.matrix(h0)
+  # h1 <- as.matrix(h1)
+  # h2 <- as.matrix(h2)
+  # h3 <- as.matrix(h3)
   dl <- rbind(
    sigma0 ^ (-2) * t(x) %*% yXBeta + sigma0 ^ (-1) * t(x) %*% h0,
    -n * sigma0 ^ (-1) + sigma0 ^ (-3) * sum(yXBeta^2) + sigma0 ^
     (-2) * sum(h1)
   )
+  # cat.print(dl)
+  # KxN * Nx1
   # colnames(dl) <- "gradient"
   # print(dl)
   # Hessian
   # ddlA11 <- -sigma0^(-2)*t(x) %*% (diag( 1 - as.vector(sigma0^(-1) * h1 + h0^2) ) ) %*% x
   ddlA11 <- (-sigma0^(-2)*t(x * (1 - as.vector(sigma0^(-1) * h1 + h0^2) ) )  ) %*% x
   ddlA12 <- t(x) %*% (-2*sigma0^(-3)* yXBeta - sigma0^(-2)*h0 + sigma0^(-4)*h2 + sigma0^(-3)*h0*h1)
-  ddlA21 <- t(-2*sigma0^(-3)* yXBeta - sigma0^(-2)*h0 + sigma0^(-4)*h2 + sigma0^(-3)*h0*h1) %*% x
+  # ddlA21 <- t(-2*sigma0^(-3)* yXBeta - sigma0^(-2)*h0 + sigma0^(-4)*h2 + sigma0^(-3)*h0*h1) %*% x
   ddlA22 <- n*sigma0^(-2) - 3*sigma0^(-4)* sum(yXBeta^2) - 2*sigma0^(-3) * sum(h1) + sigma0^(-5) * sum(h3) + sigma0^(-4) * sum(h1^2)
-  ddl <- rbind( cbind(ddlA11, ddlA12), cbind(ddlA21, ddlA22) )
-  #print(ddl)
+  ddl <- rbind( cbind(ddlA11, ddlA12), cbind(t(ddlA12), ddlA22) )
+  # cat.print(ddl)
   iddl <- solve(ddl)
   theta0 <- theta0 - iddl %*% dl
   #print(theta0)
-  beta0 <- theta0[-length(theta0), , drop = FALSE]
-  sigma0 <- theta0[length(theta0)]
+  beta0 <- theta0[-K1, , drop = FALSE]
+  sigma0 <- theta0[K1]
   # sig0 <- sqrt(-diag(iddl))
   #print(cbind(dl, theta0))
-  likelihood <- .ll.trunc (y,x, beta0, sigma0,a,b)
+  XBeta   <- x %*% beta0
+  yXBeta  <- y - XBeta
+  if(model == "ab"){
+    aXBeta  <- a - XBeta
+    bXBeta  <- b - XBeta
+    hdenom  <- pnorm(bXBeta/sigma0) - pnorm(aXBeta/sigma0)
+  } else if (model == "a") {
+    aXBeta  <- a - XBeta
+    hdenom  <- 1 - pnorm(aXBeta/sigma0)
+  } else if (model == "b") {
+    bXBeta  <- b - XBeta
+    hdenom  <- pnorm(bXBeta/sigma0)
+  }
+  likelihood  <- sum( -0.5*log(2*pi*sigma0^2) - 0.5/sigma0^2*yXBeta^2 - log( hdenom ) )
+  # likelihood <- .ll.trunc (y,x, beta0, sigma0,a,b)
   # print(likelihood, digits = 4)
   mylm <- as.vector( t(dl)%*%-iddl%*%dl )
   if ( is.na(mylm) ) stop("cannot compute an improvement")

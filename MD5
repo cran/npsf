@@ -1,9 +1,9 @@
-7cceae3ab57bc18818d6379818235cd2 *ChangeLog
-825a26c7b650fc0bb730c19f4a6b51fd *DESCRIPTION
+00da01e8a76e26ae855ffcf2c558ae00 *ChangeLog
+8f30576c93f32c8cc97a28b26b65ed85 *DESCRIPTION
 d117e23f37be0f05c9eb88f802375843 *NAMESPACE
 a9851dc595511d3ab92feb91eae8037c *R/coef.npsf.R
 206c58ccc93b72e24baf50b7e47c4b41 *R/nobs.npsf.R
-4252af88a83a7ee8460c1e8acdd87533 *R/npsf-internal.R
+8030336bb6487c2de4d27ad60a16ea65 *R/npsf-internal.R
 a0958861438296725fcb29e54e665104 *R/nptestind.R
 e2434d8cdd8b2f3f5bfc3f332cdc3f4c *R/nptestrts.R
 343b49c797003a405f4bfc2c2a8a6a93 *R/print.npsf.R
@@ -13,7 +13,7 @@ d8b0fb860c6ab523d2b9d05879c3408c *R/sf.R
 630bad71e0f6756fcc46c1aa1050e2c0 *R/tenonradial.R
 cccbfb94882777324f5e7f9f732cd8a2 *R/teradial.R
 3c76f8fab152e024c5d24bd0472a2d17 *R/teradialbc.R
-e0b9b7cc74bfaaf8e1450680d049e0a9 *R/truncreg.R
+bf277dd3668455baa221640fba127c01 *R/truncreg.R
 b0ede4cafead7a9fc43c96b29780564f *R/vcov.npsf.R
 33040c1fdc716295be0e643f725aaa9f *data/banks00_07.txt.gz
 8e5def24617d2aeef050b1efce7f91e9 *data/banks05.txt.gz
@@ -32,7 +32,7 @@ a8ebbf2e3c8f7cccaedb58a78d652160 *man/coef.npsf.Rd
 e781297f122324d420dd9e5c1816284b *man/nptestind.Rd
 9ec447c795085f47e245a89492d3ec2b *man/nptestrts.Rd
 a872ac8e9757b9eacaf516b7edff64dd *man/pwt56.Rd
-208510710ecdcc57744b1a4fa146196d *man/sf.Rd
+7e253cf3e7bff8d4852b58e49fa832b9 *man/sf.Rd
 cff68c08273e603479e31369f070a66e *man/summary.npsf.Rd
 487f3a319456da02bd6bb7a4dd0a7873 *man/tenonradial.Rd
 d0c8dadcb23605e09fa0b716cd47f9c1 *man/teradial.Rd

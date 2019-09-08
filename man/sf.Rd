@@ -493,9 +493,21 @@ formu <- log(TC) ~ log(Y1) + log(Y2) + log(W1) + log(W2) + trend
 t_4comp <- sf(formu, data = banks00_07, it = my.it, 
               subset = year >= 2001 & year < 2006,
               prod = my.prod, model = "4comp",
-              R = 200, initialize.halton = TRUE, 
+              R = 500, initialize.halton = TRUE, 
               lmtol = 1e-5, maxit = 500, print.level = 4)
 
+# With R = 500, 'mlmaximize' required 124 iterations and
+# took 7 minutes.  
+# The time will increase with more data and more parameters.
+
+formu <- log(TC) ~ log(Y1) + log(Y2) + log(W1) + log(W2) + trend
+
+t_4comp_500 <- sf(formu, data = banks00_07, it = my.it, 
+              subset = year >= 2001 & year < 2006,
+              prod = my.prod, model = "4comp",
+              R = 500, initialize.halton = TRUE, 
+              lmtol = 1e-5, maxit = 500, print.level = 4)
+              
 # @e_i0, @e_it, and @e_over give efficiencies, 
 # where @ is either 'c' or 't' for cost or production function.
 # e.g., t_ntn_4comp$ce_i0 from last model, gives persistent cost efficiencies

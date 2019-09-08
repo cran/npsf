@@ -4359,12 +4359,12 @@
 # truncreg ---------------------------------------------------------------------
 
 # a and b are lower and upper truncations
-.h.trunc <- function(al, be, a1 = 1, b1 = 1, a = -Inf, b = Inf, print = FALSE)
- (ifelse( b == Inf, 0, b1*dnorm(be) ) - ifelse( a == -Inf, 0, a1*dnorm(al) )  ) /
- ( pnorm(be) - pnorm(al) )
+# .h.trunc <- function(al, be, a1 = 1, b1 = 1, a = -Inf, b = Inf, print = FALSE)
+ # (ifelse( b == Inf, 0, b1*dnorm(be) ) - ifelse( a == -Inf, 0, a1*dnorm(al) )  ) /
+ # ( pnorm(be) - pnorm(al) )
 
 # log likelihood
-.ll.trunc <- function(y, x, beta, sigma, a, b) - 0.5*length(y)*log(2*pi) - length(y)*log(sigma) - 0.5*sigma^(-2)*sum((y - x %*% beta)^2) - sum( log( pnorm((b - x %*% beta)/sigma, log.p = FALSE) - pnorm((a - x %*% beta)/sigma, log.p = FALSE) ) )
+# .ll.trunc <- function(y, x, beta, sigma, a, b) - 0.5*length(y)*log(2*pi) - length(y)*log(sigma) - 0.5*sigma^(-2)*sum((y - x %*% beta)^2) - sum( log( pnorm((b - x %*% beta)/sigma, log.p = FALSE) - pnorm((a - x %*% beta)/sigma, log.p = FALSE) ) )
 
 # function with formula or matrices ---------------------------------------
 .prepareYXllul <- function(formula, ll = -Inf, ul = Inf, data, subset, sysnframe = 1, ...) {
