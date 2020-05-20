@@ -2,12 +2,13 @@ tenonradial <- function(formula, data, subset,
                         rts = c("C", "NI", "V"), 
                         base = c("output", "input"), 
                         ref = NULL, data.ref = NULL, subset.ref = NULL,
+                        full.solution = TRUE,
                         print.level = 1)
 {
+  lmdConstr <- TRUE
  if( !is.null(ref) & is.null(data.ref) ){
   warning("If you use variable names in 'ref', 'data.ref' is required", call. = FALSE)
  }
- 
  
  if( is.null(ref) & !is.null(data.ref) ){
   stop("If you use 'data.ref', 'ref' is required", call. = FALSE)
@@ -39,12 +40,17 @@ tenonradial <- function(formula, data, subset,
  t1 <- .prepareYX(formula = formula, data = data, subset = subset, rts = rts,
                   base = base, ref = ref,	data.ref = data.ref, subset.ref = subset.ref,
                   print.level = print.level, type = "RM", winw = winw, sysnframe = sys.nframe())
- 
- te <- .teNonrad(t(t1$y), t(t1$x), ncol(t1$y), ncol(t1$x), nrow(t1$y),
+
+ te <- .teNonrad2(t(t1$y), t(t1$x), ncol(t1$y), ncol(t1$x), nrow(t1$y),
               t(t1$y.ref), t(t1$x.ref), nrow(t1$y.ref), t1$myrts, t1$mybase,
-              0, print.level = print.level)
- te <- ifelse(abs(te - 1) < 1e-12, 1, te)
- te <- ifelse(te == -999, NA, te)
+              ifqh = FALSE, print.level = print.level,
+              lmdConstr = lmdConstr, full.solution = full.solution)
+ # cat("\n Printing te \n")
+ # print(te)
+ # cat.print(cbind(te$te, colMeans(te$te.all)))
+ # return(te)
+ # te <- ifelse(abs(te - 1) < 1e-12, 1, te)
+ # te <- ifelse(te == -998, NA, te)
  if(print.level >= 3){
   cat("\n")
  }
@@ -53,7 +59,13 @@ tenonradial <- function(formula, data, subset,
   cat("Summary of efficiencies:\n\n", sep = "")
   .su(te, print = FALSE)
  }
- tymch <- list(call = match.call(), model = "tenonradial", K = nrow(t1$y), M = ncol(t1$y), N = ncol(t1$x), rts = t1$rts.string, base = t1$base.string, te = te, esample = t1$esample, esample.ref = t1$esample.ref)
+ if(full.solution){
+   tymch <- list(call = match.call(), model = "tenonradial", K = nrow(t1$y), M = ncol(t1$y), N = ncol(t1$x), Kref = nrow(t1$y.ref), rts = t1$rts.string, base = t1$base.string, te = te$te, te.detail = te$te.detail, intensity = te$intensity, esample = t1$esample, esample.ref = t1$esample.ref)
+ }
+ else {
+   tymch <- list(call = match.call(), model = "tenonradial", K = nrow(t1$y), M = ncol(t1$y), N = ncol(t1$x), Kref = nrow(t1$y.ref), rts = t1$rts.string, base = t1$base.string, te = te, esample = t1$esample, esample.ref = t1$esample.ref)
+ }
+ 
  class(tymch) <- "npsf"
  return(tymch)
 }

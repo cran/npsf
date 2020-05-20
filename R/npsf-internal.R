@@ -67,7 +67,8 @@
   # end get a logical vector equal TRUE if !missing
 
   # get the data
-  y <- as.matrix(model.part(Formula(formula), data = data[esample,], lhs = 1))
+  y <- tryCatch( as.matrix(model.part(Formula(formula), data = data[esample,], lhs = 1)), error = function(e) e )
+  if(inherits(y, "error")) stop("Most probably you supplied both matricies and data")
   x <- as.matrix(model.matrix(Formula(formula), data = data[esample,], rhs = 1)[,-1])
 
   # print(y)
@@ -85,7 +86,10 @@
   mf <- eval(mf, sys.frame(sys.parent(n = needed.frame)))
   mt <- attr(mf, "terms")
   y <- as.matrix(model.response(mf))
-  x <- as.matrix(model.matrix(mt, mf)[,-1])
+  # cat.print(y)
+  x <- as.matrix(model.matrix(mt, mf)[,-1, drop = FALSE])
+  # cat.print(x)
+  # cat.print(as.matrix(model.matrix(mt, mf)))
   # get a logical vector equal TRUE if !missing
   with.na <- model.frame(mt, na.action = na.pass)
   esample <- rownames(with.na) %in% rownames(x)
@@ -100,10 +104,14 @@
  if(type == "RM"){
   # check negative
   x.negative <- apply(x, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
+  # cat.print(x.negative)
+  # cat.print(x)
   if(sum(x.negative) == nrow(x)){
    stop("Negative values in at least one of the inputs for each data point", call. = FALSE)
   }
   y.negative <- apply(y, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
+  # cat.print(y.negative)
+  # cat.print(y)
   if(sum(y.negative) == nrow(y)){
    stop("Negative values in at least one of the outputs for each data point", call. = FALSE)
   }
@@ -124,7 +132,7 @@
   if(sum(x.nonpositive) == nrow(x)){
    stop("Nonpositive values in at least one of the inputs for each data point", call. = FALSE)
   }
-  y.nonpositive <- apply(y, MARGIN = 1, FUN = function(q) sum(q<00)) >= 1
+  y.nonpositive <- apply(y, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
   if(sum(y.nonpositive) == nrow(y)){
    stop("Nonpositive values in at least one of the outputs for each data point", call. = FALSE)
   }
@@ -198,14 +206,17 @@
   # if data are supplied
   if(datasupplied){
    N_all_ref <- nrow(data.ref)
-   if(N_all_ref == 0) warning("Provided data for reference set does not have a signle data point", call. = FALSE)
+   if(N_all_ref == 0) warning("Provided data for reference set does not have a single data point", call. = FALSE)
 
    # begin get a logical vector equal TRUE if !missing
 
    # first using data and subset to get x without NA
    mf <- mf0
+   # cat.print(mf)
    m <- match(c("ref", "data.ref", "subset.ref"), names(mf), 0L)
+   # cat.print(m)
    mf <- mf[c(1L, m)]
+   # cat.print(mf)
    # change the names for eval
    names(mf)[which(names(mf) == "ref")] <- "formula"
    names(mf)[which(names(mf) == "data.ref")] <- "data"
@@ -213,8 +224,11 @@
    mf[[1L]] <- as.name("model.frame")
    # mf$formula <- Formula( formula )
    mf <- eval(mf, parent.frame())
+   # cat.print(mf)
    mt <- attr(mf, "terms")
+   # cat.print(mt)
    x_ref <- as.matrix(model.matrix(mt, mf))
+   # cat.print(x_ref)
    if(length(x_ref) == 0){
     warning(" Given 'subset' reference set contains zero data points", call. = FALSE)
     # warning(" Reference set will be based on observations,")
@@ -224,14 +238,20 @@
     esample_ref <- NULL
    } else {
     # now get the names in the entire data
-    esample_ref <- seq_len( N_all_ref ) %in% as.numeric(rownames(x_ref))
+     esample_ref <- rownames(data.ref) %in% rownames(x_ref)
+    # esample_ref <- seq_len( N_all_ref ) %in% as.numeric(rownames(x_ref))
     # print(table(esample_ref))
     # end get a logical vector equal TRUE if !missing
+    # cat.print(ref)
+    # cat.print(formula)
+    # cat.print(data.ref[esample_ref,])
+    # cat.print(data[esample,])
     y_ref <- as.matrix(model.part(Formula(ref), data = data.ref[esample_ref,], lhs = 1))
+    # y_ref <- as.matrix(model.part(Formula(formula), data = data[esample,], lhs = 1))
     x_ref <- as.matrix(model.matrix(Formula(ref), data = data.ref[esample_ref,], rhs = 1)[,-1])
    }
-   # print(y_ref)
-   # print(x_ref)
+   # cat.print(y_ref)
+   # cat.print(x_ref)
   }
   # if data are not supplied
   else {
@@ -253,6 +273,8 @@
    esample_ref <- rownames(with.na) %in% rownames(x_ref)
    # print(table(esample_ref))
   }
+  # print(x_ref)
+  # print(y_ref)
   # if reference set not provided
   # for printing
   # 		if(print.level >= 1){
@@ -295,8 +317,9 @@
    if(sum(x.nonpositive) == nrow(x)){
     stop("Nonpositive values in at least one of the reference inputs for each data point", call. = FALSE)
    }
-   y.nonpositive <- apply(y_ref, MARGIN = 1, FUN = function(q) sum(q<00)) >= 1
+   y.nonpositive <- apply(y_ref, MARGIN = 1, FUN = function(q) sum(q<0)) >= 1
    if(sum(y.nonpositive) == nrow(y_ref)){
+     print(y_ref)
     stop("Nonpositive values in at least one of the reference outputs for each data point", call. = FALSE)
    }
    # deal with negative
@@ -730,24 +753,73 @@
  return(list(Y = t1$Y,X = t1$X,Yr = t1$Yr,Xr = t1$Xr))
 }
 
-.teNonrad <- function(Y,X,M,N,K,
-                      Yr,Xr,Kref,
-                      rts,base,ifqh,
-                      print.level=0){
- .C("nonradial",
-    as.double(Y),
-    as.double(X),
-    as.integer(M),
-    as.integer(N),
-    as.integer(K),
-    as.double(Yr),
-    as.double(Xr),
-    as.integer(Kref),
-    as.integer(rts),
-    as.integer(base),
-    as.integer(ifqh),
-    as.integer(print.level),
-    te = double(K) )$te
+# .teNonrad <- function(Y,X,M,N,K,
+#                       Yr,Xr,Kref,
+#                       rts,base,ifqh,
+#                       print.level=0, only.eff = TRUE){
+#  .C("nonradial",
+#     as.double(Y),
+#     as.double(X),
+#     as.integer(M),
+#     as.integer(N),
+#     as.integer(K),
+#     as.double(Yr),
+#     as.double(Xr),
+#     as.integer(Kref),
+#     as.integer(rts),
+#     as.integer(base),
+#     as.integer(ifqh),
+#     as.integer(print.level),
+#     te = double(K), 
+#     te.all = as.double(1), 
+#     as.integer(0) )$te
+# }
+
+
+.teNonrad2 <- function( Y,X,M,N,K,
+                        Yr,Xr,Kref, 
+                        lmdConstr = TRUE,
+                        full.solution = TRUE,
+                        rts, base,ifqh, 
+                        print.level = 0 )
+{
+  ncol1 <- ifelse(base == 1, N, M)
+  # if(base == 1){
+  #   sol.full <- K*N
+  # } else {
+  #   sol.full <- K*M
+  # }
+  sol.full <- ncol1*K
+  sol.z    <- Kref*K
+  te <- .C("nonradial",
+             as.double(Y),
+             as.double(X),
+             as.integer(M),
+             as.integer(N),
+             as.integer(K),
+             as.double(Yr),
+             as.double(Xr),
+             as.integer(Kref),
+             as.integer(rts),
+             as.integer(base),
+             as.integer(ifqh),
+             as.integer(print.level),
+             te    = double(K),
+             teall = double(sol.full),
+             zall  = double(sol.z),
+             as.integer(full.solution),
+             as.integer(lmdConstr))
+  if(full.solution){
+    rez <- list(te = te$te, 
+                te.detail = t(matrix(te$teall, nrow = ncol1)),
+                intensity  = matrix(te$zall, nrow = K, byrow = TRUE))
+    rez$te <- ifelse(rez$te < -998, NA, rez$te)
+    rez$te.detail[is.na(rez$te),] <- NA
+    rez$intensity[is.na(rez$te),] <- NA
+  } else {
+    rez <- ifelse(te$te < -998, NA, te$te)
+  }
+  return(rez)
 }
 
 .dots <- function(nrep, message = NULL, width = 50, character = "."){
@@ -1534,6 +1606,14 @@
 }
 
 # end parallel computing
+
+.findInterval <- function(x, vec){
+  inte <- NULL
+  for(i in seq_len(length(x))){
+    inte <- c(inte, which.min( ifelse(vec - x[i] < 0, +Inf, vec - x[i]) ))
+  }
+  return(inte)
+}
 
 .prepareYXZ.cs <- function(formula, ln.var.u.0i = NULL, ln.var.v.0i = NULL, mean.u.0i = NULL, data, subset, sysnframe = 1, ...) {
  # needed.frame <- sys.nframe() - 1

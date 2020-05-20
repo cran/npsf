@@ -94,12 +94,12 @@ Wilson P.W.  (2003), Testing Independence in Models of Productive Efficiency, \e
 }
 
 \author{
-Oleg Badunenko <oleg.badunenko@port.ac.uk>
+Oleg Badunenko <oleg.badunenko@brunel.ac.uk>
 
 }
 
 \seealso{
-\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{nptestrts}}, \code{\link{sf}}
+\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{sf}}
 }
 
 \examples{

@@ -111,11 +111,11 @@ truncreg(formula, data, subset,
 }
 
 \author{
- Oleg Badunenko <oleg.badunenko@port.ac.uk>
+ Oleg Badunenko <oleg.badunenko@brunel.ac.uk>
 }
 
 \seealso{
-\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{sf}}
+\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{sf}}
 }
 
 \examples{ 

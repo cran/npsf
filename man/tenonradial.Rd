@@ -11,6 +11,7 @@ tenonradial(formula, data, subset,
  rts = c("C", "NI", "V"), 
  base = c("output", "input"), 
  ref = NULL, data.ref = NULL, subset.ref = NULL,
+ full.solution = TRUE,
  print.level = 1)
 }
 \arguments{
@@ -38,6 +39,9 @@ an optional data frame containing the variables in the technology reference set.
 \item{subset.ref}{
 an optional vector specifying a subset of observations to define the technology reference set.
 }
+\item{full.solution}{
+ logical. The detailed solution is returned.  See \code{value} section.
+ }
 \item{print.level}{
 numeric. 0 - nothing is printed; 1 - print summary of the model and data. 2 - print summary of technical efficiency measures. 3 - print estimation results observation by observation. Default is 1.
 }
@@ -56,13 +60,16 @@ Results can be summarized using \code{\link{summary.npsf}}.
 string: model name.
 }
 \item{K}{
-numeric: number of data points.
+numeric: number of data points for which efficiency is estimated.
 }
 \item{M}{
 numeric: number of outputs.
 }
 \item{N}{
 numeric: number of inputs.
+}
+\item{Kref}{
+numeric: number of data points in the reference.
 }
 \item{rts}{
 string: RTS assumption.
@@ -72,6 +79,12 @@ string: base for efficiency measurement.
 }
 \item{te}{
 numeric: nonradial measure (Russell) of technical efficiency.
+}
+\item{te.detail}{
+numeric: \code{K x ncol} matrix containing thetas or lambdas for \code{ncol} outputs (output-based) or inputs (input-based). \code{ncol} is \code{M} for output- and \code{N} for input-based efficiency measurement.
+}
+\item{intensity}{
+numeric: \code{K x Kref} matrix containing the intensity variables \code{z}. These can be used to identify peers.
 }
 \item{esample}{
 logical: returns TRUE if the observation in user supplied data is in the estimation subsample and FALSE otherwise.
@@ -88,17 +101,19 @@ Results can be summarized using \code{\link{summary.npsf}}.
 }
 
 \references{
+Badunenko, Oleg and Mozharovskyi, Pavlo (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, https://doi.org/10.1080/01605682.2019.1599778
+
 Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162 
 
 Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press
 }
 
 \author{
-Oleg Badunenko <oleg.badunenko@port.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@ensai.fr>
+Oleg Badunenko <oleg.badunenko@brunel.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@telecom-paris.fr>
 }
 
 \seealso{
-\code{\link{teradial}}, \code{\link{teradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{sf}}, \code{\link{summary.npsf}} for printing summary results
+\code{\link{teradial}}, \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{sf}}, \code{\link{summary.npsf}} for printing summary results
 }
 \examples{
 

@@ -14,13 +14,11 @@ This package provides a variety of tools for nonparametric and parametric effici
 \details{
 The nonparametric models in \code{npsf} comprise nonradial efficiency measurement (\code{\link{tenonradial}}), where non-proportional reductions (expansions) in each positive input (output) are allowed, as well as popular radial efficiency measurement (\code{\link{teradial}}), where movements to the frontier are proportional.
 
-Using bootstrapping techniques,  \code{\link{teradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}} deal with statistical inference about the radial efficiency measurement. \code{\link{nptestind}} helps in deciding which type of the bootstrap to employ. Global return to scale and individual scale efficiency is tested by \code{\link{nptestrts}}.  Finally, \code{\link{teradialbc}} performs bias correction of the radial Debrue-Farrell input- or output-based measure of technical efficiency, computes bias and constructs confidence intervals.
+Using bootstrapping techniques,  \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}} deal with statistical inference about the radial efficiency measurement. \code{\link{nptestind}} helps in deciding which type of the bootstrap to employ. Global return to scale and individual scale efficiency is tested by \code{\link{nptestrts}}.  Finally, \code{\link{teradialbc}} and \code{\link{tenonradialbc}}, performs bias correction of the radial Debrue-Farrell and nonradial Russell input- or output-based measure of technical efficiency, computes bias and constructs confidence intervals.
 
 Computer intensive functions \code{\link{teradialbc}} and \code{\link{nptestrts}} allow making use of parallel computing, even on a single machine with multiple cores. Help files contain examples that are intended to introduce the usage.
 
-We use own LP solver for solving linear programming problems.
-
-The parametric stochastic frontier models in \code{npsf} can be estimated by \code{\link{sf}}, which performs maximum likelihood estimation of the frontier parameters and technical or cost efficiencies.  Inefficiency error component can be assumed to be have either half-normal or truncated normal distribution.  \code{\link{sf}} allows modelling multiplicative heteroskedasticity of either inefficiency or random noise component, or both.  Additionally, marginal effects of exogenous variable(s) on the expected value of inefficiency term can be computed.
+The parametric stochastic frontier models in \code{npsf} can be estimated by \code{\link{sf}}, which performs maximum likelihood estimation of the frontier parameters and technical or cost efficiencies.  Inefficiency error component can be assumed to be have either half-normal or truncated normal distribution.  \code{\link{sf}} allows modelling multiplicative heteroskedasticity of either inefficiency or random noise component, or both.  Additionally, marginal effects of determinants on the expected value of inefficiency term can be computed.
 
 For details of the respective method please see the reference at the end of this introduction and of the respective help file.
 
@@ -31,16 +29,18 @@ Results can be summarized using \code{\link{summary.npsf}}.
 }
 
 \author{
-Oleg Badunenko, <oleg.badunenko@port.ac.uk>
+Oleg Badunenko, <oleg.badunenko@brunel.ac.uk>
+
+Pavlo Mozharovskyi, <pavlo.mozharovskyi@telecom-paris.fr>
 
 Yaryna Kolomiytseva, <kolomiytseva@wiso.uni-koeln.de>
 
-Pavlo Mozharovskyi, <pavlo.mozharovskyi@ensai.fr>
-
-Maintainer: Oleg Badunenko <oleg.badunenko@port.ac.uk>
+Maintainer: Oleg Badunenko <oleg.badunenko@brunel.ac.uk>
 }
 
 \references{
+
+Badunenko, Oleg and Mozharovskyi, Pavlo (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \url{https://doi.org/10.1080/01605682.2019.1599778}.
 
 Bartelsman, E.J. and Gray, W. (1996), The NBER Manufacturing Productivity Database, \emph{National Bureau of Economic Research}, Technical Working Paper Series, \url{http://www.nber.org/papers/t0205}.
 

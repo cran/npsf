@@ -182,11 +182,11 @@ Wang, H.-J. (2002), Heteroskedasticity and non-monotonic efficiency effects of a
 }
 
 \author{
- Oleg Badunenko <oleg.badunenko@port.ac.uk>, Yaryna Kolomiytseva <yaryna.kolomiytseva@uni-koeln.de>
+ Oleg Badunenko <oleg.badunenko@brunel.ac.uk>
 }
 
 \seealso{
-\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}
+\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}
 }
 
 \examples{ 

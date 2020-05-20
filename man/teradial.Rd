@@ -91,12 +91,12 @@ Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers
 }
 
 \author{
-Oleg Badunenko <oleg.badunenko@port.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@ensai.fr>
+Oleg Badunenko <oleg.badunenko@brunel.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@telecom-paris.fr>
 
 }
 
 \seealso{
-\code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{sf}}
+\code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{sf}}
 }
 
 \examples{

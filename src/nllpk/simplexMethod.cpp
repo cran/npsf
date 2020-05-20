@@ -2,7 +2,7 @@
   File:             simplexMethod.cpp
   Created by:       Pavlo Mozharovskyi
   First published:  15.01.2018
-  Last revised:     15.01.2018
+  Last revised:     15.05.2020
  
   Implementation of the class "simplexMethod".
  
@@ -70,7 +70,7 @@ int simplexMethod::setProblem(){
       nSlacks++;
     }
   }
-  //  Rcout << nSlacks << " slacks introduced.\n";
+  // Rcout << nSlacks << " slacks introduced.\n";
   // Determine size and allocate structures
   AnRow = AinpnRow;
   AnCol = AinpnCol + nSlacks;
@@ -139,6 +139,7 @@ int simplexMethod::setTableauI(){
   // Determine size and allocate structures
   tInRow = AnRow;
   tInCol = AnCol + AnRow;
+  // Rcout << "AnRow = " << AnRow << " and AnCol = " << AnCol << std::endl;
   tIraw = new double[(tInRow + 1) * (tInCol + 1)];
   tI = asMatrix(tIraw, tInRow + 1, tInCol + 1); // new
   // Set zero row to zeros
@@ -147,8 +148,8 @@ int simplexMethod::setTableauI(){
   }
   // Fill artificial variables part with zeros/ones
   for (int i = 1; i <= tInRow; i++){
-    for (int j = tInRow + nSlacks + 1; j <= tInCol; j++){
-      if (j == i + tInRow + nSlacks){
+    for (int j = AinpnCol + nSlacks + 1; j <= tInCol; j++){
+      if (j == i + AinpnCol + nSlacks){
         tI[i][j] = 1;
       }else{
         tI[i][j] = 0;
@@ -159,7 +160,7 @@ int simplexMethod::setTableauI(){
   tInBasis = tInRow;
   tIbasis = new int[tInBasis];
   for (int i = 0; i < tInRow; i++){
-    tIbasis[i] = tInRow + nSlacks + 1 + i;
+    tIbasis[i] = AinpnCol + nSlacks + 1 + i;
   }
   // Fill the tableau
   for (int i = 0; i < AnRow; i++){
@@ -189,30 +190,54 @@ int simplexMethod::setTableauI(){
 // Print the simplex tableau
 int simplexMethod::printTableau(double** tableau, int nRow, int nCol){
   for (int i = 1; i <= nCol; i++){
-//    Rcout << round(tableau[0][i] * 10000) / 10000 << "\t";
+    if (tIInBasis == 0){
+      if (isInArray(i, tIbasis, tInBasis) > -1){
+        Rcout << round(tableau[0][i] * 10000) / 10000 << "\t";
+      }
+    }else{
+      if (isInArray(i, tIIbasis, tIInBasis) > -1){
+        Rcout << round(tableau[0][i] * 10000) / 10000 << "\t";
+      }
+    }
   }
-//  Rcout << "|" << round(tableau[0][0] * 10000) / 10000 << std::endl;
+  Rcout << "|" << round(tableau[0][0] * 10000) / 10000 << std::endl;
   for (int i = 1; i <= nCol; i++){
-//    Rcout << "--------";
+    if (tIInBasis == 0){
+      if (isInArray(i, tIbasis, tInBasis) > -1){
+        Rcout << "--------";
+      }
+    }else{
+      if (isInArray(i, tIIbasis, tIInBasis) > -1){
+        Rcout << "--------";
+      }
+    }
   }
-//  Rcout << "---------" << std::endl;
+  Rcout << "---------" << std::endl;
   for (int i = 1; i <= nRow; i++){
     for (int j = 1; j <= nCol; j++){
-//      Rcout << round(tableau[i][j] * 10000) / 10000 << "\t";
+      if (tIInBasis == 0){
+        if (isInArray(j, tIbasis, tInBasis) > -1){
+          Rcout << round(tableau[i][j] * 10000) / 10000 << "\t";
+        }
+      }else{
+        if (isInArray(j, tIIbasis, tIInBasis) > -1){
+          Rcout << round(tableau[i][j] * 10000) / 10000 << "\t";
+        }
+      }
     }
-//    Rcout << "|" << round(tableau[i][0] * 10000) / 10000 << std::endl;
+    Rcout << "|" << round(tableau[i][0] * 10000) / 10000 << std::endl;
   }
-//  Rcout << std::endl;
+  Rcout << std::endl;
   return 0;
 }
 
 int simplexMethod::printBasis(int* basis, int nBasis){
-//  Rcout << "Current basis: \t";
+  Rcout << "Current basis: \t";
   for (int i = 0; i < nBasis; i++){
-//    Rcout << basis[i] << "\t";
+    Rcout << basis[i] << "\t";
   }
-//  Rcout << std::endl;
-//  Rcout << std::endl;
+  Rcout << std::endl;
+  Rcout << std::endl;
   return 0;
 }
 
@@ -226,11 +251,11 @@ int simplexMethod::getPivotCol(double** tableau, int* basis, int nRow, int nCol,
     // If not in basis and negative
     if (isInArray(i, basis, nRow) < 0 && tableau[0][i] < -eps){
       // Consider for picking
-//      Rcout << "Pick " << i << " ";
+      // Rcout << "Pick " << i << " ";
       negNonBasis[nNegNonBasis++] = i;
     }
-//    Rcout << std::endl;
   }
+  // Rcout << std::endl;
   // Check whether the solution is already found
   if (nNegNonBasis == 0){
     delete[] negNonBasis;
@@ -287,9 +312,11 @@ int simplexMethod::doPivot(double** tableau, int nRow, int nCol,
                            int pivotCol, int pivotRow, int *basis){
   // For the pivot row, divide through the pivot element
   double mult = tableau[pivotRow][pivotCol];
+  // Rcout << "Pivot multiplier = " << mult;
   for (int j = 0; j <= nCol; j++){
     tableau[pivotRow][j] /= mult;
   }
+  // Rcout << " and further multipliers are: ";
   // Go through all rows and columns
   for (int i = 0; i <= nRow; i++){
     // If pivot row - skip, it has been just divided before
@@ -298,11 +325,13 @@ int simplexMethod::doPivot(double** tableau, int nRow, int nCol,
     }
     // Determine row multiplier
     double mult = tableau[i][pivotCol] / tableau[pivotRow][pivotCol];
+    // Rcout << mult << " ";
     // Do row operation, i.e. subtract pivot row multiplied with 'mult'
     for (int j = 0; j <= nCol; j++){
       tableau[i][j] -= tableau[pivotRow][j] * mult;
     }
   }
+  // Rcout << std::endl;
   // Change the basis record
   basis[pivotRow - 1] = pivotCol;
   return 0;
@@ -319,9 +348,12 @@ int simplexMethod::nullize(double** tableau, int nRow, int nCol){
   return 0;
 }
 
+// status = optimize(tI, tInRow, tInCol, tIbasis);
+
 int simplexMethod::optimize(double** tableau, int nRow, int nCol, int *basis){
   int iter = 0;
   while (iter < maxIter){
+    // Rcout << "Iteration " << iter << std::endl;
     iter++;
     int iPivotCol = -1;
     if (iter % (nRow > nCol ? nRow : nCol) == 0){
@@ -330,23 +362,99 @@ int simplexMethod::optimize(double** tableau, int nRow, int nCol, int *basis){
     }else{
       iPivotCol = getPivotCol(tableau, basis, nRow, nCol, false);
     }
+    
+    // if (tInBasis > 0){
+    //   if (coefs){
+    //     delete[] coefs;
+    //   }
+    //   coefs = new double[AinpnCol];
+    //   // Fill structure for coefficients with zeros
+    //   for (int i = 0; i < AinpnCol; i++){
+    //     coefs[i] = 0;
+    //   }
+    //   // Fill non-zero coefficients
+    //   for (int i = 0; i < tInBasis; i++){
+    //     if (basis[i] <= AinpnCol){
+    //       coefs[basis[i] - 1] = tableau[i + 1][0];
+    //     }
+    //   }
+    //   for (int i = 0; i < AinpnCol; i++){
+    //     Rcout << coefs[i] << " ";
+    //   }
+    //   Rcout << std::endl;
+    //   Rcout << "The zero row of the tableau:" << std::endl;
+    //   for (int i = 0; i <= nCol; i++){
+    //     Rcout << tableau[0][i] << " ";
+    //   }
+    //   Rcout << std::endl;
+    //   Rcout << "The zero column of the tableau:" << std::endl;
+    //   for (int i = 0; i <= nRow; i++){
+    //     Rcout << tableau[i][0] << " ";
+    //   }
+    //   Rcout << std::endl;
+    // }
+    
+    // if (tIInBasis > 0){
+    //   if (coefs){
+    //     delete[] coefs;
+    //   }
+    //   coefs = new double[AinpnCol];
+    //   // Fill structure for coefficients with zeros
+    //   for (int i = 0; i < AinpnCol; i++){
+    //     coefs[i] = 0;
+    //   }
+    //   // Fill non-zero coefficients
+    //   for (int i = 0; i < tIInBasis; i++){
+    //     if (basis[i] <= AinpnCol){
+    //       coefs[basis[i] - 1] = tableau[i + 1][0];
+    //     }
+    //   }
+    //   for (int i = 0; i < AinpnCol; i++){
+    //     Rcout << coefs[i] << " ";
+    //   }
+    //   Rcout << std::endl;
+    //   Rcout << "The zero row of the tableau:" << std::endl;
+    //   for (int i = 0; i <= nCol; i++){
+    //     Rcout << tableau[0][i] << " ";
+    //   }
+    //   Rcout << std::endl;
+    //   Rcout << "The zero column of the tableau:" << std::endl;
+    //   for (int i = 0; i <= nRow; i++){
+    //     Rcout << tableau[i][0] << " ";
+    //   }
+    //   Rcout << std::endl;
+    // }
+    
+    // Rcout << "iPivotCol = " << iPivotCol << std::endl;
+    
     if (iPivotCol == 0){
-//      Rcout << "Optimal solution found in " << iter << " iterations."<< std::endl;
+      // Rcout << "Optimal solution found in " << iter << " iterations."<< std::endl;
 //      printTableau(tableau, nRow, nCol);
 //      printBasis(basis, nRow);
       return 0; // optimal solution found
     }else{
 //      Rcout << "Pivot col: " << iPivotCol << std::endl;
       int iPivotRow = getPivotRow(tableau, nRow, nCol, iPivotCol);
-//      Rcout << "Pivot row: " << iPivotRow << std::endl;
+      // Rcout << "Pivot row: " << iPivotRow << std::endl;
 //      Rcout << std::endl;
       if (iPivotRow < 0){
-//        Rcout << "Problem unbounded!" << std::endl;
+        // Rcout << "Problem unbounded!" << std::endl;
 //        printTableau(tableau, nRow, nCol);
 //        printBasis(basis, nRow);
         return 1; // problem unbounded
       }else{
         doPivot(tableau, nRow, nCol, iPivotCol, iPivotRow, basis);
+        // Rcout << "The basis variables are: ";
+        if (tIInBasis == 0){
+          for (int i = 0; i < tInBasis; i++){
+            // Rcout << basis[i] << " ";
+          }
+        }else{
+          for (int i = 0; i < tIInBasis; i++){
+            // Rcout << basis[i] << " ";
+          }
+        }
+        // Rcout << std::endl;
         nullize(tableau, nRow, nCol);
       }
     }
@@ -368,8 +476,31 @@ int simplexMethod::solve(){
 //  printTableau(tI, tInRow, tInCol);
 //  printBasis(tIbasis, tInRow);
   status = optimize(tI, tInRow, tInCol, tIbasis);
+  // Printing solution of the first phase
+  if (coefs){
+    delete[] coefs;
+  }
+  coefs = new double[AinpnCol];
+  // Fill structure for coefficients with zeros
+  for (int i = 0; i < AinpnCol; i++){
+    coefs[i] = 0;
+  }
+  // Fill non-zero coefficients
+  for (int i = 0; i < tInBasis; i++){
+    if (tIbasis[i] <= AinpnCol){
+      coefs[tIbasis[i] - 1] = tI[i + 1][0];
+    }
+  }
+  // for (int i = 0; i < AinpnCol; i++){
+  //   Rcout << coefs[i] << " ";
+  // }
+  // Rcout << std::endl;
+  // Printing solution of the first phase (end)
+  // Rcout << "Status of the first phase: " << status << std::endl;
+  // Rcout << "The corner element: " << tI[0][0] << std::endl;
+  //if (status != 0 || fabs(tI[0][0]) > eps){
   if (status != 0 || fabs(tI[0][0]) > eps){
-//    Rcout << "Initial feasible solution not found" << std::endl;
+    // Rcout << "Initial feasible solution not found" << std::endl;
     if (status == 0){
       status = 3;
     }
@@ -377,10 +508,29 @@ int simplexMethod::solve(){
     return 0;
   }
   setTableauII();
+  if (coefs){
+    delete[] coefs;
+  }
+  coefs = new double[AinpnCol];
+  // Fill structure for coefficients with zeros
+  for (int i = 0; i < AinpnCol; i++){
+    coefs[i] = 0;
+  }
+  // Fill non-zero coefficients
+  for (int i = 0; i < tIInBasis; i++){
+    if (tIIbasis[i] <= AinpnCol){
+      coefs[tIIbasis[i] - 1] = tII[i + 1][0];
+    }
+  }
+  // for (int i = 0; i < AinpnCol; i++){
+  //   Rcout << coefs[i] << " ";
+  // }
+  // Rcout << std::endl;
 //  nullize(tII, tIInRow, tIInCol);
 //  printTableau(tII, tIInRow, tIInCol);
 //  printBasis(tIIbasis, tIInRow);
   status += optimize(tII, tIInRow, tIInCol, tIIbasis) * 10;
+//  Rcout << "Status of the second phase: " << status << std::endl;
   backScale();
   // Fill the solution
   optVal = -tII[0][0]; // read the optimal value
@@ -399,6 +549,10 @@ int simplexMethod::solve(){
       coefs[tIIbasis[i] - 1] = tII[i + 1][0];
     }
   }
+  // for (int i = 0; i < AinpnCol; i++){
+  //   Rcout << coefs[i] << " ";
+  // }
+  // Rcout << std::endl;
   PutRNGstate();
   return 0;
 }
@@ -411,7 +565,7 @@ int simplexMethod::setTableauII(){
   int nZeroBasis = 0;
   for (int i = 0; i < tInBasis; i++){
     if (tIbasis[i] > AnCol){ // if artificial variable
-//      Rcout << "Driving var " << tIbasis[i] << " out of basis." << std::endl;
+      // Rcout << "Driving var " << tIbasis[i] << " out of basis." << std::endl;
       // Search for a non-zero basis entry
       int iPivotCol = 0;
       for(int j = 1; j <= AnCol; j++){ // basis entries of this row
@@ -420,7 +574,7 @@ int simplexMethod::setTableauII(){
           break;
         }
       }
-//      Rcout << "Pivot col: " << iPivotCol << std::endl;
+      // Rcout << "Pivot col: " << iPivotCol << std::endl;
       if (iPivotCol > 0){ // if at least non-zero basis entry found - pivot it
         // Define pivoting multiplier
         double mult = tI[i + 1][iPivotCol];
@@ -602,7 +756,8 @@ int simplexMethod::scale(){
 int simplexMethod::backScale(){
   // Put into the initial scale (working on tII)
   for (int i = 1; i <= tIInRow; i++){
-    for (int j = 0; j <= tIInCol; j++){
+    //for (int j = 0; j <= tIInCol; j++){ // firsl column (coefs) = no rescaling
+    for (int j = 1; j <= tIInCol; j++){
       tII[i][j] *= abDen;
     }
   }

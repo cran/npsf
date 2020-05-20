@@ -69,6 +69,8 @@ public:
     tIIraw = 0;
     tIIbasis = 0;
     coefs = 0;
+    // Initialize variables
+    tIInBasis = 0;
     // Initialize constants
     maxIter = 100000;
     eps = 1e-8;

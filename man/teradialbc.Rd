@@ -158,12 +158,12 @@ Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Non
 }
 
 \author{
-Oleg Badunenko <oleg.badunenko@port.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@ensai.fr>
+Oleg Badunenko <oleg.badunenko@brunel.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@telecom-paris.fr>
 
 }
 
 \seealso{
-\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{sf}}
+\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{sf}}
 }
 
 \examples{

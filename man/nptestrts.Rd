@@ -161,12 +161,12 @@ Simar L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{E
 }
 
 \author{
-Oleg Badunenko <oleg.badunenko@port.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@ensai.fr>
+Oleg Badunenko <oleg.badunenko@brunel.ac.uk>, Pavlo Mozharovskyi <pavlo.mozharovskyi@telecom-paris.fr>
 
 }
 
 \seealso{
-\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{nptestind}}, \code{\link{sf}}
+\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestind}}, \code{\link{sf}}
 }
 
 \examples{
