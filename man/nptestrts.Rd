@@ -40,10 +40,10 @@ specifies the number of bootstrap replications to be performed.  The default is 
 sets significance level; default is \code{alpha=0.05}.
 }
 \item{core.count}{
-positive integer. Number of cluster nodes. If \code{core.count=1}, the process runs sequentially. See  \code{\link[snowFT]{performParallel}} for more details.
+positive integer. Number of cluster nodes. If \code{core.count=1}, the process runs sequentially. See  \code{performParallel} in package \code{snowFT} for more details.
 }
 \item{cl.type}{
-Character string that specifies cluster type (see \code{\link[snowFT]{makeClusterFT}}). Possible values are 'MPI' and 'SOCK' ('PVM' is currently not available). See  \code{\link[snowFT]{performParallel}} for more details.
+Character string that specifies cluster type (see \code{makeClusterFT} in package \code{snowFT}). Possible values are 'MPI' and 'SOCK' ('PVM' is currently not available). See \code{performParallel} in package \code{snowFT} for more details.
 }
 \item{dots}{
 logical. Relevant if \code{print.level>=1}. If TRUE, one dot character is displayed for each successful replication; if FALSE,  display of the replication dots is suppressed.
@@ -53,7 +53,7 @@ numeric. 0 - nothing is printed; 1 - print summary of the model and data. 2 - pr
 }
 }
 \details{
-Routine \code{nptestrts} \code{nptestrts} performs nonparametric tests the returns to scale of the underlying technology. 
+Routine \code{nptestrts} performs nonparametric tests the returns to scale of the underlying technology (see Simar L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{European Journal of Operational Research}, \bold{139}, 115--132, \doi{10.1016/S0377-2217(01)00167-9}).
 
 If \code{test.two} is not specified, \code{nptestrts} performs only Test #1, which consists of two parts. First, the null hypothesis that the technology is globally CRS (vs VRS) is tested. Second, the null hypothesis that the data point is scale efficient is tested.
 
@@ -153,11 +153,14 @@ Results can be summarized using \code{\link{summary.npsf}}.
 }
 
 \references{
+
+Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}
+
 Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162 
 
 Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press
 
-Simar L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{European Journal of Operational Research}, \bold{139}, 115--132
+Simar L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{European Journal of Operational Research}, \bold{139}, 115--132, \doi{10.1016/S0377-2217(01)00167-9}
 }
 
 \author{

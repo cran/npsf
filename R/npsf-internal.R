@@ -4883,7 +4883,7 @@
  } else {
   if(simtype == "halton"){
    # myrand <- sHalton(floor(R*(K-1)), base = base.halton)
-   myrand <- randtoolbox::halton(R, dim = K-1, init = TRUE, normal = FALSE, usetime = FALSE)
+   myrand <- npsf::halton(R, n.bases = K-1, scale.coverage = TRUE, shuffle = TRUE)
    # cat("draws does not works\n")
   } else {
    # myrand <- runif(floor(R*(K-1)))
@@ -4917,8 +4917,8 @@
 # su02 :  1 x 1
 
 .e_exp_tu <- function(ei, id, sui2, svi2, sv02, su02, prod = TRUE,
-                      simtype = c("halton", "random"),
-                      base.halton = 2, R = 500, 
+                      simtype = c("halton", "random"), seed = 17345168,
+                      R = 500, halton.base = NULL, random.primes = FALSE,
                       inv.tol = .Machine$double.eps, print.level = 4){
  Ti <- length (ei)
  do.prod <- ifelse( prod, 1, -1)
@@ -4974,12 +4974,25 @@
  if(Ti == 1){
   mydraws <- matrix(runif(R), ncol = 1)
  } else {
-  if(simtype == "halton"){
-   mydraws <- randtoolbox::halton(n = R, dim = Ti, init = TRUE, normal = FALSE)
-  } else {
-   mydraws <- matrix( runif(floor(R*Ti)), nrow = R, ncol = Ti)
-  }
+   if(simtype == "halton"){
+     set.seed(seed)
+     if(is.null(halton.base)){
+       # deviates for each ID come from own base, but then scaled
+       mydraws <- npsf::halton(R, n.bases = Ti, random.primes = random.primes, seed = seed, start = 1, scale.coverage = TRUE, shuffle = TRUE)
+     } else {
+       if(halton.base > 100008){
+         stop("halton.base should be smaller than 100,008")
+       } else {
+         # deviates for all ID come from a sequence with said base
+         mydraws <- matrix(  npsf::halton(R*Ti, bases = halton.base, random.primes = random.primes, seed = seed, start = 1, scale.coverage = TRUE, shuffle = TRUE), nrow = R, ncol = Ti)
+         # cat("some halton.base",halton.base,"  ")
+       }
+     }
+   } else {
+     mydraws <- matrix( runif(floor(R*Ti)), nrow = R, ncol = Ti)
+   }
  }
+ # cat.print(head(mydraws))
  ghkReLmd <- .ghk(CholLmd, to = Re, simtype = simtype, draws = mydraws, R = R)
  te_it <- NULL
  for(tt in 1:(Ti+1) ){
@@ -5059,4 +5072,8 @@
  }
  cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
  invisible(x)
+}
+
+rescale <- function(x, lb = min(x), ub = max(x)){
+  lb + ((x-min(x))/(max(x)-min(x)))*(ub-lb)
 }

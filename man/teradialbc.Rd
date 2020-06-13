@@ -53,13 +53,13 @@ relevant if \code{smoothed=TRUE}. 'kappa' sets the size of the subsample as K^ka
 specifies the number of bootstrap replications to be performed.  The default is 999.  The minimum is 100.  Adequate estimates of confidence intervals using bias-corrected methods typically require 1,000 or more replications.
 }
 \item{level}{
-sets confidence level for confidence intervals; default is \code{level=95}.
+sets confidence level for confidence intervals; default is \code{level = 95}.
 }
 \item{core.count}{
-positive integer. Number of cluster nodes. If \code{core.count=1}, the process runs sequentially. See  \code{\link[snowFT]{performParallel}} for more details.
+positive integer. Number of cluster nodes. If \code{core.count=1}, the process runs sequentially. See  \code{performParallel} in package \code{snowFT} for more details.
 }
 \item{cl.type}{
-Character string that specifies cluster type (see \code{\link[snowFT]{makeClusterFT}}). Possible values are 'MPI' and 'SOCK' ('PVM' is currently not available). See  \code{\link[snowFT]{performParallel}} for more details.
+Character string that specifies cluster type (see \code{makeClusterFT} in package \code{snowFT}). Possible values are 'MPI' and 'SOCK' ('PVM' is currently not available). See \code{performParallel} in package \code{snowFT} for more details.
 }
 \item{dots}{
 logical. Relevant if \code{print.level>=1}. If TRUE, one dot character is displayed for each successful replication; if FALSE,  display of the replication dots is suppressed.
@@ -69,7 +69,7 @@ numeric. 0 - nothing is printed; 1 - print summary of the model and data. 2 - pr
 }
 }
 \details{
-Routine \code{teradialbc} performs bias correction of the radial Debrue-Farrell input- or output-based measure of technical efficiency, computes bias and constructs confidence intervals via bootstrapping techniques.
+Routine \code{teradialbc} performs bias correction of the radial Debrue-Farrell input- or output-based measure of technical efficiency, computes bias and constructs confidence intervals via bootstrapping techniques. See Simar and Wilson (1998) \doi{10.1287/mnsc.44.1.49}, Simar and Wilson (2000) \doi{10.1080/02664760050081951}, Kneip, Simar, and Wilson (2008) \doi{10.1017/S0266466608080651}, and references with links below.
 
 Models for \code{teradialbc} are specified symbolically. A typical model has the form \code{outputs ~ inputs}, where \code{outputs} (\code{inputs}) is a series of (numeric) terms which specifies outputs (inputs). The same goes for reference set.  Refer to the examples.
 
@@ -150,11 +150,11 @@ Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of pro
 
 Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press
 
-Kneip, A., Simar L., and P.W. Wilson (2008), Asymptotics and Consistent Bootstraps for DEA Estimators in Nonparametric Frontier Models, \emph{Econometric Theory}, \bold{24}, 1663--1697
+Kneip, A., Simar L., and P.W. Wilson (2008), Asymptotics and Consistent Bootstraps for DEA Estimators in Nonparametric Frontier Models, \emph{Econometric Theory}, \bold{24}, 1663--1697, \doi{10.1017/S0266466608080651}
 
-Simar, L. and P.W. Wilson (1998), Sensitivity Analysis of Efficiency Scores: How to Bootstrap in Nonparametric Frontier Models, \emph{Management Science}, \bold{44}, 49--61
+Simar, L. and P.W. Wilson (1998), Sensitivity Analysis of Efficiency Scores: How to Bootstrap in Nonparametric Frontier Models, \emph{Management Science}, \bold{44}, 49--61, \doi{10.1287/mnsc.44.1.49}
 
-Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Nonparametric Frontier Models, \emph{Journal of Applied Statistics}, \bold{27}, 779--802
+Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Nonparametric Frontier Models, \emph{Journal of Applied Statistics}, \bold{27}, 779--802, \doi{10.1080/02664760050081951}
 }
 
 \author{

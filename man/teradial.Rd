@@ -43,7 +43,7 @@ numeric. 0 - nothing is printed; 1 - print summary of the model and data. 2 - pr
 }
 }
 \details{
-Routine \code{teradial} computes the radial output- or input-based measure of technical efficiency under assumption of constant, non-increasing, or variable returns to scale technology.
+Routine \code{teradial} computes the radial output- or input-based measure of technical efficiency under assumption of constant, non-increasing, or variable returns to scale technology. The details of the estimator can be found e.g., in Färe, Grosskopf, and Lovell (1994, especially section 3.1 on p.62 fot input-based and section 4.1 on p.96 for output-based efficiency measurement) or Badunenko and Mozharovskyi (2016) <\url{http://www.stata-journal.com/article.html?article=st0444}>.
 
 Models for \code{teradial} are specified symbolically. A typical model has the form \code{outputs ~ inputs}, where \code{outputs} (\code{inputs}) is a series of (numeric) terms which specifies outputs (inputs). The same goes for reference set.  Refer to the examples.
 
@@ -85,6 +85,8 @@ Results can be summarized using \code{\link{summary.npsf}}.
 }
 
 \references{
+Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}
+
 Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162 
 
 Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press

@@ -6,13 +6,14 @@ sf <- function(formula, data, it = NULL, subset,
                ln.var.u.0i        = NULL,
                ln.var.v.0i        = NULL,
                ln.var.v.it        = NULL,  
-               simtype = c("halton", "rnorm"), halton.base = 2, R = 500,
-               initialize.halton = TRUE, my.leap = NULL,
-               simtype_GHK = c("halton", "runif"), R_GHK = 1000,
+               simtype = c("halton", "rnorm"), halton.base = NULL, R = 500,
+               simtype_GHK = c("halton", "runif"), R_GHK = 500,
+               random.primes = FALSE,
                cost.eff.less.one  = FALSE, level = 95, marg.eff = FALSE,
                start.val = NULL, maxit = 199, report.ll.optim = 10, 
                reltol = 1e-8, lmtol = sqrt(.Machine$double.eps),
-               digits = 4, print.level = 4) {
+               digits = 4, print.level = 4, seed = 17345168,
+               only.data = FALSE) {
  
  # prefixes for the names will be:
  # lnVARu0i_
@@ -20,7 +21,13 @@ sf <- function(formula, data, it = NULL, subset,
  # lnVARv0i_
  # lnVARvit_
  # mean_u0i_
- 
+  
+ if(!is.null(halton.base)){
+   if(length(halton.base) != 1){
+     stop("Length of 'halton.base' must be one")
+   }
+ }
+  
  if (level < 0 | level > 99.99) {
   stop("'level' must be between 0 and 99.99 inclusive", call. = FALSE)
  }
@@ -386,6 +393,8 @@ sf <- function(formula, data, it = NULL, subset,
   }
   
   YXZ <- .prepareYXZ.panel.simple(formula = formula, data, it, subset, ln.var.v.it = ln.var.v.it, ln.var.u.0i = ln.var.u.0i, mean.u.0i = mean.u.0i, sysnframe = sys.nframe())
+  
+  if(only.data) return(YXZ)
   
   y <- YXZ$Y
   X <- YXZ$X
@@ -878,67 +887,88 @@ sf <- function(formula, data, it = NULL, subset,
    
    # drawing random deviates -------------------------------------------------
    
-   myprimes <- c(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 
-                 59, 61, 67, 71, 73, 79, 83, 89, 97, 101)
+   # myprimes <- c(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 
+                 # 59, 61, 67, 71, 73, 79, 83, 89, 97, 101)
    if(length(simtype) != 1) simtype <- "halton"
    if(length(simtype_GHK) != 1) simtype_GHK <- "halton"
    if(simtype == "rnorm"){
     V0 <- matrix(rnorm(R*n), nrow = n, ncol = R)
     U0 <- abs( matrix(rnorm(R*n), nrow = n, ncol = R) )
    } else {
-    if(initialize.halton){
-     # begin initiated sequence
-     # total number generated dimentions
-     tngdim <- floor(n*2)
-     # initialize Halton algorithm
-     # myrand0 <- randtoolbox::halton(R, dim = tngdim, init = TRUE, normal = TRUE)
-     myrand0 <- t( randtoolbox::halton(R, dim = tngdim, init = TRUE, normal = TRUE) )
-     # myrand1 <- t( randtoolbox::halton(R, dim = tngdim, init = FALSE, normal = TRUE) )
-     # set.seed(seed)
-     # smpl.v <- sample(seq_len(tngdim), n)
-     # smpl.u0 <- sample(seq_len(tngdim), n)
-     # smpl.u <- smpl.u0
-     # my.repeats <- 0
-     # while (any(smpl.v - smpl.u) == 0) {
-     #   smpl.u <- sample(smpl.u0)
-     #   my.repeats <- my.repeats + 1
-     #   print(my.repeats)
-     # }
-     # rm(my.repeats)
-     # V0 <-      myrand0[smpl.v,]
-     # U0 <- abs( myrand1[smpl.u,] )
-     # V0 <-      myrand0[(1:n),]
-     # U0 <- abs( myrand0[((n+1):(2*n)),] )
-     # rm(myrand0)
-     # another way to do this
-     myrand0 <- t( randtoolbox::halton(R, dim = 2*n, init = TRUE, normal = TRUE) )
-     V0 <-      myrand0[1:n,]
-     U0 <- abs( myrand0[(n+1):(2*n),] )
-     rm(myrand0)
-     # end initiated sequence
-    } else {
-     # begin noninitiated sequence
-     if(halton.base < 2 ){
-      stop("base for Halton draws should be >= 2")
+     set.seed(seed)
+     if(is.null(halton.base)){
+       # deviates for each ID come from own base, but then scaled
+       myrand0 <- t( npsf::halton(R, n.bases = 2*n, random.primes = random.primes, seed = seed, start = 1, scale.coverage = TRUE, shuffle = TRUE) )
      } else {
-      if(halton.base > 101){
-       stop("pick a prime smaller or equal 101")
-      }
-      is.halton.base.prime <- sum(halton.base == myprimes) == 1
-      if(!is.halton.base.prime){
-       mydiff <- ifelse(halton.base-myprimes < 0, 102, halton.base-myprimes)
-       closest.prime <- which(mydiff == min(mydiff))
-       warning(paste0("halton.base must be a prime: picked ",myprimes[closest.prime]," as base"))
-      } else {
-       closest.prime <- which(myprimes == halton.base)
-      }
-      if(is.null(my.leap)) my.leap <- 1
-      V0 <- qnorm(matrix(sfsmisc::sHalton(R*n*my.leap, leap = my.leap, base = myprimes[closest.prime]), nrow = n, ncol = R, byrow = TRUE))
-      U0 <- abs( qnorm(matrix(sfsmisc::sHalton(R*n*my.leap, leap = my.leap, base = myprimes[closest.prime+7]), nrow = n, ncol = R, byrow = TRUE)) )
+       if(halton.base > 100008){
+         stop("halton.base should be smaller than 100,008")
+       } else {
+         # deviates for all ID come from a sequence with said base
+         myrand0 <- t( matrix( npsf::halton(R*2*n, bases = halton.base, random.primes = random.primes, seed = seed, start = 1, scale.coverage = TRUE, shuffle = TRUE), nrow = R, ncol = 2*n) )
+       }
      }
-     # end noninitiated sequence
-    }
+     # apply qnorm
+     V0 <-      qnorm(myrand0[1:n,])
+     U0 <- abs( qnorm(myrand0[(n+1):(2*n),]) )
+     rm(myrand0)
    }
+     
+    # if(initialize.halton){
+    #   
+    #   
+    #   
+    #  # begin initiated sequence
+    #  # total number generated dimentions
+    #  tngdim <- floor(n*2)
+    #  # initialize Halton algorithm
+    #  # myrand0 <- randtoolbox::halton(R, dim = tngdim, init = TRUE, normal = TRUE)
+    #  myrand0 <- t( randtoolbox::halton(R, dim = tngdim, init = TRUE, normal = TRUE) )
+    #  # myrand1 <- t( randtoolbox::halton(R, dim = tngdim, init = FALSE, normal = TRUE) )
+    #  # set.seed(seed)
+    #  # smpl.v <- sample(seq_len(tngdim), n)
+    #  # smpl.u0 <- sample(seq_len(tngdim), n)
+    #  # smpl.u <- smpl.u0
+    #  # my.repeats <- 0
+    #  # while (any(smpl.v - smpl.u) == 0) {
+    #  #   smpl.u <- sample(smpl.u0)
+    #  #   my.repeats <- my.repeats + 1
+    #  #   print(my.repeats)
+    #  # }
+    #  # rm(my.repeats)
+    #  # V0 <-      myrand0[smpl.v,]
+    #  # U0 <- abs( myrand1[smpl.u,] )
+    #  # V0 <-      myrand0[(1:n),]
+    #  # U0 <- abs( myrand0[((n+1):(2*n)),] )
+    #  # rm(myrand0)
+    #  # another way to do this
+    #  myrand0 <- t( randtoolbox::halton(R, dim = 2*n, init = TRUE, normal = TRUE) )
+    #  V0 <-      myrand0[1:n,]
+    #  U0 <- abs( myrand0[(n+1):(2*n),] )
+    #  rm(myrand0)
+    #  # end initiated sequence
+    # } else {
+    #  # begin noninitiated sequence
+    #  if(halton.base < 2 ){
+    #   stop("base for Halton draws should be >= 2")
+    #  } else {
+    #   if(halton.base > 101){
+    #    stop("pick a prime smaller or equal 101")
+    #   }
+    #   is.halton.base.prime <- sum(halton.base == myprimes) == 1
+    #   if(!is.halton.base.prime){
+    #    mydiff <- ifelse(halton.base-myprimes < 0, 102, halton.base-myprimes)
+    #    closest.prime <- which(mydiff == min(mydiff))
+    #    warning(paste0("halton.base must be a prime: picked ",myprimes[closest.prime]," as base"))
+    #   } else {
+    #    closest.prime <- which(myprimes == halton.base)
+    #   }
+    #   if(is.null(my.leap)) my.leap <- 1
+    #   V0 <- qnorm(matrix(sfsmisc::sHalton(R*n*my.leap, leap = my.leap, base = myprimes[closest.prime]), nrow = n, ncol = R, byrow = TRUE))
+    #   U0 <- abs( qnorm(matrix(sfsmisc::sHalton(R*n*my.leap, leap = my.leap, base = myprimes[closest.prime+7]), nrow = n, ncol = R, byrow = TRUE)) )
+    #  }
+    #  # end noninitiated sequence
+    # }
+   # }
    
    # starting values 4comp ---------------------------------------------------
    
@@ -1193,7 +1223,7 @@ sf <- function(formula, data, it = NULL, subset,
     #    if(i == 1){
     #      print(svi2[ (m.begin[i]):(m.end[i]) ])
     #    }
-    t1 <- tryCatch( .e_exp_tu (ei = my.rez[ sample.i ], id = ids[i], sui2=sui2[ sample.i ], svi2=svi2[ sample.i ], sv02=sv02[i], su02=su02[i], prod = prod, simtype = simtype_GHK, base.halton = halton.base, R = R_GHK, inv.tol = .Machine$double.eps, print.level = print.level ), error = function(e) e )
+    t1 <- tryCatch( .e_exp_tu (ei = my.rez[ sample.i ], id = ids[i], sui2=sui2[ sample.i ], svi2 = svi2[ sample.i ], sv02 = sv02[i], su02 = su02[i], prod = prod, simtype = simtype_GHK, R = R_GHK, inv.tol = .Machine$double.eps, print.level = print.level, seed = seed, random.primes = random.primes, halton.base = halton.base ), error = function(e) e )
     if (inherits(t1, "error")){
      print(t1)
      # te_i0 <- c(te_i0, NA )

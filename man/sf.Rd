@@ -15,13 +15,14 @@ sf(formula, data, it = NULL, subset,
  ln.var.u.0i        = NULL,
  ln.var.v.0i        = NULL,
  ln.var.v.it        = NULL,  
- simtype = c("halton", "rnorm"), halton.base = 2, R = 500,
- initialize.halton = TRUE, my.leap = NULL,
- simtype_GHK = c("halton", "runif"), R_GHK = 1000,
+ simtype = c("halton", "rnorm"), halton.base = NULL, R = 500,
+ simtype_GHK = c("halton", "runif"), R_GHK = 500,
+ random.primes = FALSE,
  cost.eff.less.one  = FALSE, level = 95, marg.eff = FALSE,
  start.val = NULL, maxit = 199, report.ll.optim = 10, 
  reltol = 1e-8, lmtol = sqrt(.Machine$double.eps),
- digits = 4, print.level = 4)
+ digits = 4, print.level = 4, seed = 17345168,
+ only.data = FALSE)
 }
 \arguments{
  \item{formula}{
@@ -67,22 +68,19 @@ sf(formula, data, it = NULL, subset,
  character. Type of random deviates for the 4 components model. 'halton' draws are default.  One can specify 'rnorm.'
  }
  \item{halton.base}{
- numeric.  The prime number which is the base for the Halton draws. Should be less then 102.  Default is 2.
+ numeric.  The prime number which is the base for the Halton draws. If not used, different bases are used for each id.
  }
  \item{R}{
  numeric.  Number of draws.  Default is 500.  Can be time consuming.
- }
- \item{initialize.halton}{
- logical.  If TRUE, the Halton draws use different base for each id.  Then \code{halton.base} is ignored.  Function \code{\link{halton}} from \code{\link{randtoolbox}} package is used.  Otherwise, N*R Halton draws come from the same base. Function \code{\link{sHalton}} from \code{sfsmisc} package is used.
- }
- \item{my.leap}{
- if \code{initialize.halton} is FALSE, \code{my.leap} draws are skipped. See \code{\link{sHalton}}.  By default none are skipped.
  }
  \item{simtype_GHK}{
  character. Type of random deviates for use in GHK for efficiency estimating by approximation. 'halton' draws are default.  One can specify 'runif.'
  }
  \item{R_GHK}{
- numeric.  Number of draws for GHK.  Default is 1000.  Can be time consuming.
+ numeric.  Number of draws for GHK.  Default is 500.  Can be time consuming.
+ }
+  \item{random.primes}{
+ logical. If \code{TRUE}, and \code{halton.base = NULL}, the primes are chosen on a random basis for each ID from 100008 available prime numbers.
  }
  \item{cost.eff.less.one}{
  logical. If \code{TRUE}, and \code{prod = FALSE}, reported cost efficiencies are larger than one. Interpretation: by what factor is total cost larger than the potential total cost.
@@ -114,6 +112,12 @@ sf(formula, data, it = NULL, subset,
  \item{print.level}{
   numeric. 1 - print estimation results. 2 - print optimization details. 3 - print summary of point estimates of technical or cost efficiencies. 7 - print unit-specific point and interval estimates of technical or cost efficiencies. Default is 4.
  }
+ \item{seed}{
+ set seed for replicability. Default is 17345168.
+ }
+ \item{only.data}{
+ logical. If \code{TRUE}, only data are returned. Default is \code{FALSE}
+ }
 }
   
   
@@ -123,6 +127,8 @@ sf(formula, data, it = NULL, subset,
 Options \code{ln.var.u.0i} and \code{ln.var.v.0i} can be used if multiplicative heteroskedasticity of either inefficiency or random noise component (or both) is assumed; i.e. if their variances can be expressed as exponential functions of (e.g. size-related) exogenous variables (including intercept) (see Caudill et al. 1995).
 
 If \code{marg.eff = TRUE} and \code{distribution = "h"}, the marginal effect of \emph{k}th exogenous variable on the expected value of inefficiency term of unit \emph{i} is computed as: \eqn{\gamma[k]\sigma[i]/\sqrt2\pi}, where \eqn{\sigma_u[i] = \sqrt exp(z[i]'\gamma)}. If \code{distribution = "t"}, marginal effects are returned if either \code{mean.u.0i} or \code{ln.var.u.0i} are not \code{NULL}. If the same exogenous variables are specified under both options, (non-monotonic) marginal effects are computed as explained in Wang (2002).
+
+See references and links below.
 
 }
 
@@ -160,7 +166,7 @@ If \code{marg.eff = TRUE} and \code{distribution = "h"}, the marginal effect of 
 
 \references{
 
-Badunenko, O. and Kumbhakar, S.C. (2016), When, Where and How to Estimate Persistent and Transient Efficiency in Stochastic Frontier Panel Data Models, \emph{European Journal of Operational Research}, \bold{255}(1), 272--287.
+Badunenko, O. and Kumbhakar, S.C. (2016), When, Where and How to Estimate Persistent and Transient Efficiency in Stochastic Frontier Panel Data Models, \emph{European Journal of Operational Research}, \bold{255}(1), 272--287, \doi{10.1016/j.ejor.2016.04.049}.
 
 Battese, G., Coelli, T. (1988), Prediction of firm-level technical effiiencies with a generalized frontier production function and panel data. \emph{Journal of Econometrics}, \bold{38}, 387--399.
 
@@ -186,7 +192,7 @@ Wang, H.-J. (2002), Heteroskedasticity and non-monotonic efficiency effects of a
 }
 
 \seealso{
-\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}
+\code{\link{teradial}}, \code{\link{tenonradial}}, \code{\link{teradialbc}}, \code{\link{tenonradialbc}}, \code{\link{nptestrts}}, \code{\link{nptestind}}, \code{\link{halton}}, \code{\link{primes}}
 }
 
 \examples{ 
@@ -525,5 +531,6 @@ t_4comp_500 <- sf(formu, data = banks00_07, it = my.it,
 \keyword{ Truncated normal }
 \keyword{ Half normal }
 \keyword{ Halton draws }
+\keyword{ Prime numbers }
 \keyword{ Parametric efficiency analysis }
 \keyword{ summary }

@@ -44,7 +44,7 @@ numeric. 0 - nothing is printed; 1 - print summary of the model and data. 2 - pr
 \details{
 In output based efficiency measurement, routine \code{nptestind} perform test that radial (Debreu-Farrell) output-based measure of technical efficiency under chosen assumption about the technology and mix of outputs are independent. In input-based efficiency measurement, routine \code{nptestind} perform test that radial (Debreu-Farrell) input-based measure of technical efficiency under chosen assumption about the technology and mix of inputs are independent.
 
-Testing is performed using bootstrap technique.
+Testing is performed using bootstrap technique (see Wilson (2003) \doi{10.1023/A:1027355917855}).
 
 Results can be summarized using \code{\link{summary.npsf}}.
 }
@@ -90,7 +90,7 @@ Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of pro
 
 Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press
 
-Wilson P.W.  (2003), Testing Independence in Models of Productive Efficiency, \emph{Journal of Productivity Analysis}, \bold{20}, 361--390
+Wilson P.W. (2003), Testing Independence in Models of Productive Efficiency, \emph{Journal of Productivity Analysis}, \bold{20}, 361--390, \doi{10.1023/A:1027355917855}
 }
 
 \author{

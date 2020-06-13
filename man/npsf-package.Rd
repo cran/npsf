@@ -40,7 +40,11 @@ Maintainer: Oleg Badunenko <oleg.badunenko@brunel.ac.uk>
 
 \references{
 
-Badunenko, Oleg and Mozharovskyi, Pavlo (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \url{https://doi.org/10.1080/01605682.2019.1599778}.
+Badunenko, O. and Kumbhakar, S.C. (2016), When, Where and How to Estimate Persistent and Transient Efficiency in Stochastic Frontier Panel Data Models, \emph{European Journal of Operational Research}, \bold{255}(1), 272--287, \doi{10.1016/j.ejor.2016.04.049}.
+
+Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}.
+
+Badunenko, O. and Mozharovskyi, P. (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \doi{10.1080/01605682.2019.1599778}.
 
 Bartelsman, E.J. and Gray, W. (1996), The NBER Manufacturing Productivity Database, \emph{National Bureau of Economic Research}, Technical Working Paper Series, \url{http://www.nber.org/papers/t0205}.
 
@@ -66,7 +70,7 @@ Horrace, W. and Schmidt, P. (1996), On ranking and selection from independent tr
 
 Jondrow, J., Lovell, C., Materov, I., Schmidt, P. (1982), On estimation of technical inefficiency in the stochastic frontier production function model. \emph{Journal of Econometrics}, \bold{19}, 233--238.
 
-Kneip, A., Simar L., and P.W. Wilson (2008), Asymptotics and Consistent Bootstraps for DEA Estimators in Nonparametric Frontier Models, \emph{Econometric Theory}, \bold{24}, 1663--1697
+Kneip, A., Simar L., and P.W. Wilson (2008), Asymptotics and Consistent Bootstraps for DEA Estimators in Nonparametric Frontier Models, \emph{Econometric Theory}, \bold{24}, 1663--1697, \doi{10.1017/S0266466608080651}
 
 Koetter, M., Kolari, J., and Spierdijk, L. (2012), Enjoying the quiet life under deregulation? Evidence from adjusted Lerner indices for U.S. banks. \emph{Review of Economics and Statistics}, \bold{94}, 2, 462--480.
 
@@ -76,15 +80,15 @@ Kumbhakar, S. and Lovell, C. (2003), \emph{Stochastic Frontier Analysis.} Cambri
 
 Restrepo-Tobon, D. and Kumbhakar, S. (2014), Enjoying the quiet life under deregulation? Not Quite. \emph{Journal of Applied Econometrics}, \bold{29}, 2, 333--343.
 
-Simar, L. and P.W. Wilson (1998), Sensitivity Analysis of Efficiency Scores: How to Bootstrap in Nonparametric Frontier Models, \emph{Management Science}, \bold{44}, 49--61
+Simar, L. and P.W. Wilson (1998), Sensitivity Analysis of Efficiency Scores: How to Bootstrap in Nonparametric Frontier Models, \emph{Management Science}, \bold{44}, 49--61, \doi{10.1287/mnsc.44.1.49}
 
-Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Nonparametric Frontier Models, \emph{Journal of Applied Statistics}, \bold{27}, 779--802
+Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Nonparametric Frontier Models, \emph{Journal of Applied Statistics}, \bold{27}, 779--802, \doi{10.1080/02664760050081951}
 
 Simar, L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{European Journal of Operational Research}, \bold{139}, 115--132
 
 Wang, H.-J. (2002), Heteroskedasticity and non-monotonic efficiency effects of a stochastic frontier model. \emph{Journal of Productivity Analysis}, \bold{18}, 241--253.
 
-Wilson P.W.  (2003), Testing Independence in Models of Productive Efficiency, \emph{Journal of Productivity Analysis}, \bold{20}, 361--390
+Wilson P.W.  (2003), Testing Independence in Models of Productive Efficiency, \emph{Journal of Productivity Analysis}, \bold{20}, 361--390, \doi{10.1023/A:1027355917855}
 
 }
 

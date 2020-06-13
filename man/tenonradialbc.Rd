@@ -65,7 +65,7 @@ an object of class ``formula'' (or one that can be coerced to that class): a sym
 }
 }
 \details{
- Routine \code{tenonradialbc} performs bias correction of the nonradial Russell input- or output-based measure of technical efficiency, computes bias and constructs confidence intervals via bootstrapping techniques.
+ Routine \code{tenonradialbc} performs bias correction of the nonradial Russell input- or output-based measure of technical efficiency, computes bias and constructs confidence intervals via bootstrapping techniques (see Badunenko and Mozharovskyi (2020), \doi{10.1080/01605682.2019.1599778}).
  
  Models for \code{tenonradialbc} are specified symbolically. A typical model has the form \code{outputs ~ inputs}, where \code{outputs} (\code{inputs}) is a series of (numeric) terms which specifies outputs (inputs). The same goes for reference set.  Refer to the examples.
  
@@ -136,7 +136,7 @@ an object of class ``formula'' (or one that can be coerced to that class): a sym
 }
 
 \references{
- Badunenko, Oleg and Mozharovskyi, Pavlo (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, https://doi.org/10.1080/01605682.2019.1599778
+Badunenko, O. and Mozharovskyi, P. (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \doi{10.1080/01605682.2019.1599778}
 }
 
 \author{
