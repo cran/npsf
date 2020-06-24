@@ -182,7 +182,7 @@ Jondrow, J., Lovell, C., Materov, I., Schmidt, P. (1982), On estimation of techn
 
 Kumbhakar, S. (1990),  Production Frontiers, Panel Data, and Time-varying Technical Inefficiency. \emph{Journal of Econometrics}, \bold{46}, 201--211.
 
-Kumbhakar, S. and Lovell, C. (2003), \emph{Stochastic Frontier Analysis.} Cambridge: Cambridge University Press.
+Kumbhakar, S. and Lovell, C. (2003), \emph{Stochastic Frontier Analysis.} Cambridge: Cambridge University Press, \doi{10.1017/CBO9781139174411}.
 
 Wang, H.-J. (2002), Heteroskedasticity and non-monotonic efficiency effects of a stochastic frontier model. \emph{Journal of Productivity Analysis}, \bold{18}, 241--253.
 }

@@ -729,7 +729,9 @@
     as.integer(base),
     as.integer(ifqh),
     as.integer(print.level),
-    te = double(K) )$te
+    te = double(K),
+    ifsintensities = as.integer(0),
+    intensities = double(Kref*K) ) $te
 }
 
 .teRad1 <- function(Y,X,M,N,K,
@@ -749,8 +751,16 @@
     as.integer(base),
     as.integer(ifqh),
     as.integer(print.level),
-    te = double(K) )
- return(list(Y = t1$Y,X = t1$X,Yr = t1$Yr,Xr = t1$Xr))
+    te = double(K),
+    ifsintensities = as.integer(1),
+    intensities = double(Kref*K) )
+ tymch <- list(te = t1$te, 
+               Y = t1$Y,X = t1$X,
+               Yr = t1$Yr,Xr = t1$Xr, 
+               intensity = matrix(t1$intensities, nrow = K, byrow = TRUE))
+ tymch$te <- ifelse(tymch$te < -998, NA, tymch$te)
+ tymch$intensity[is.na(tymch$te),] <- NA
+ return(tymch)
 }
 
 # .teNonrad <- function(Y,X,M,N,K,

@@ -102,13 +102,13 @@ Results can be summarized using \code{\link{summary.npsf}}.
 
 \references{
 
-Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}
+Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}.
 
-Badunenko, O. and Mozharovskyi, P. (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \doi{10.1080/01605682.2019.1599778}
+Badunenko, O. and Mozharovskyi, P. (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \doi{10.1080/01605682.2019.1599778}.
 
-Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162 
+Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162.
 
-Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press
+Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}.
 }
 
 \author{

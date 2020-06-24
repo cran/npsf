@@ -136,7 +136,10 @@ an object of class ``formula'' (or one that can be coerced to that class): a sym
 }
 
 \references{
-Badunenko, O. and Mozharovskyi, P. (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \doi{10.1080/01605682.2019.1599778}
+Badunenko, O. and Mozharovskyi, P. (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \doi{10.1080/01605682.2019.1599778}.
+
+Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}.
+
 }
 
 \author{

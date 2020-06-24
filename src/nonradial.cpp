@@ -2,7 +2,7 @@
  File:             nonradial.cpp
  Created by:       Pavlo Mozharovskyi, Oleg Badunenko
  First published:  2015-09-20
- Last revised:     2019-10-14
+ Last revised:     2020-06-24
  
  Solves LPs
  */

@@ -2,7 +2,7 @@
   File:             radial.cpp
   Created by:       Pavlo Mozharovskyi, Oleg Badunenko
   First published:  2015-09-20
-  Last revised:     2018-01-16
+  Last revised:     2020-06-24
 
   Solves LPs
 */
@@ -21,7 +21,8 @@ extern "C" {
 
 void radial(double *yobs, double *xobs, 
             int *m, int *n, int *nobs, double *yref, double *xref, int *nref, 
-            int *rts, int *ort, int *ifqh, int *printlevel, double *sol){
+            int *rts, int *ort, int *ifqh, int *printlevel, double *sol, 
+            int *ifsintensities, double *intensities){
 //void radial(double *yobs, double *xobs, int *m, int *n, int *nobs, 
 //			double *yref, double *xref, int *nref, int *rts, int *ort, int *ifqh, 
 //			int *printlevel, double *sol){
@@ -288,6 +289,18 @@ void radial(double *yobs, double *xobs,
 			/* Save solution */
 //			sol[index] = glp_get_obj_val(lp);
       sol[index] = optVal;
+      if (*ifsintensities){
+        // save intensities
+        for(i = 0; i < *_nref; i++){
+          // begin matter of double precision
+          if( fabs ( coefs[i + 1] ) < 1e-8 ){
+            intensities[index * *_nref + i] = 0.0;
+          } else {
+            intensities[index * *_nref + i] = coefs[i + 1];
+          }
+          // end matter of double precision
+        }
+      }
 		}else{
 			/* No solution found */
 			sol[index] = 0./0.; // TODO!!!???

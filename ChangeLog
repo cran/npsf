@@ -1,3 +1,8 @@
+npsf v0.7.1 (Release date: 2020-06-24)
+
+* added detailed solution to teradial
+  * intendity variables for DEA (to obtain peers)
+
 npsf v0.7.0 (Release date: 2020-06-13)
 
 * improved sf function, especially "4comp" model

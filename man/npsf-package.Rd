@@ -60,7 +60,7 @@ Debreu, G. 1951. The Coefficient of Resource Utilization. \emph{Econometrica} \b
 
 Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162.
 
-Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press.
+Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}.
 
 Farrell, M. J. 1957. The Measurement of Productive Efficiency. \emph{Journal of the Royal Statistical Society. Series A (General)} \bold{120}(3): 253--290.
 
@@ -76,7 +76,7 @@ Koetter, M., Kolari, J., and Spierdijk, L. (2012), Enjoying the quiet life under
 
 Kumbhakar, S. (1990),  Production Frontiers, Panel Data, and Time-varying Technical Inefficiency. \emph{Journal of Econometrics}, \bold{46}, 201--211.
 
-Kumbhakar, S. and Lovell, C. (2003), \emph{Stochastic Frontier Analysis.} Cambridge: Cambridge University Press.
+Kumbhakar, S. and Lovell, C. (2003), \emph{Stochastic Frontier Analysis.} Cambridge: Cambridge University Press, \doi{10.1017/CBO9781139174411}.
 
 Restrepo-Tobon, D. and Kumbhakar, S. (2014), Enjoying the quiet life under deregulation? Not Quite. \emph{Journal of Applied Econometrics}, \bold{29}, 2, 333--343.
 

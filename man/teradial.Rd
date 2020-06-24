@@ -11,6 +11,7 @@ teradial(formula, data, subset,
  rts = c("C", "NI", "V"),
  base = c("output", "input"),
  ref = NULL, data.ref = NULL, subset.ref = NULL,
+ intensity = FALSE,
  print.level = 1)
 }
 \arguments{
@@ -37,6 +38,9 @@ an optional data frame containing the variables in the technology reference set.
 }
 \item{subset.ref}{
 an optional vector specifying a subset of observations to define the technology reference set.
+}
+\item{intensity}{
+logical.  If set to TRUE, the value \code{intensity} will contain \code{K x Kref} matrix with intensity variables, which can be used to for example identify the peers. Default is \code{FALSE} as the matris is potentially large.
 }
 \item{print.level}{
 numeric. 0 - nothing is printed; 1 - print summary of the model and data. 2 - print summary of technical efficiency measures. 3 - print estimation results observation by observation. Default is 1.
@@ -70,6 +74,9 @@ string: base for efficiency measurement.
 \item{te}{
 numeric: radial measure (Debrue-Farrell) of technical efficiency.
 }
+\item{intensity}{
+numeric: if the option \code{intensity} is set to TRUE, the value \code{intensity} will contain \code{K x Kref} matrix with intensity variables, which can be used to for example identify the peers (see example with \code{t3} in the example section). Is \code{NULL} if option \code{intensity} is set to \code{FALSE}, which is a default.
+}
 \item{esample}{
 logical: returns TRUE if the observation in user supplied data is in the estimation subsample and FALSE otherwise.
 }
@@ -85,11 +92,11 @@ Results can be summarized using \code{\link{summary.npsf}}.
 }
 
 \references{
-Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}
+Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}.
 
-Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162 
+Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162.
 
-Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press
+Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}.
 }
 
 \author{
@@ -149,7 +156,18 @@ base = "in", print.level = 2)
 # Using a subset
 
 t3 <- teradial ( Y ~ K + L, data = pwt56, subset = year == 1965,
-	rts = "VRS", base = "in", print.level = 3 )
+	rts = "VRS", base = "in", print.level = 3, intensity = TRUE )
+
+# VRS constraint is satisfied, which is easy to varify 
+# by checking the sums of intensity variables
+rowSums(t3$intensity)
+
+# to obtain peers create a list that will contain order numers of peers
+t3.peers <- list()
+# now fill this list
+for(i in seq.int(sum(t3$esample))){
+  t3.peers[[i]] <- which( t3$intensity[i,] != 0 )
+}
 
 t4 <- teradial ( Y ~ K + L, data = pwt56, subset = Nu < 10,
 	rts = "vrs", base = "I" )
