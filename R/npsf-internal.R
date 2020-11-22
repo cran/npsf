@@ -1986,7 +1986,221 @@
  return(H)
 }
 
+# :: N-Exp ----------------------------------------------------------------
 
+.ll.en <- function(theta, prod, y, X, Zv, Zu, n.ids, k, kv, ku, ...){
+  myprod <- ifelse(prod, 1, -1)
+  # k:    betas
+  # kv:  noise, scale/variance
+  # ku:  inefficiency: scale/variance
+  
+  # eps0  <- y - X %*%    theta[1                    : k]
+  # # cat.print(2)
+  # sv    <- sqrt( exp( Zv %*% theta[(k + 1)        : (k + kv)]) )
+  # # cat.print(sv2)
+  # su    <- sqrt( exp( Zu %*% theta[(k + kv  + 1) : (k + kv + ku)] ) )
+  # # cat.print(su2)
+  # 
+  # ll    <- -log(su) + myprod*eps0/su + sv^2/2/su^2 + 
+  #   pnorm(-sv/su - myprod*eps0/sv, log.p = TRUE)
+  e  <- y - X %*%    theta[1                    : k]
+  # cat.print(2)
+  lnsigv2    <- Zv %*% theta[(k + 1)        : (k + kv)]
+  # cat.print(sv2)
+  lnsigu2    <- Zu %*% theta[(k + kv  + 1) : (k + kv + ku)]
+  # cat.print(su2)
+  
+  z  <- -myprod * e * exp(-lnsigv2/2) - exp((lnsigv2-lnsigu2)/2)
+  
+  ll <- -1/2 * lnsigu2 + 0.5 * exp(lnsigv2-lnsigu2) + pnorm(z, log.p = TRUE) + myprod * e *exp(-lnsigu2/2) 
+  
+  return( sum(ll, na.rm = FALSE) )
+}
+
+# grad --------------------------------------------------------------------
+
+.g.en <- function(theta, prod, y, X, Zv, Zu, n.ids, k, kv, ku, ...) {
+  myprod <- ifelse(prod, 1, -1)
+  e  <- y - X %*%    theta[1                    : k]
+  # cat.print(2)
+  lnsigv2    <- Zv %*% theta[(k + 1)        : (k + kv)]
+  # cat.print(sv2)
+  lnsigu2    <- Zu %*% theta[(k + kv  + 1) : (k + kv + ku)]
+  # cat.print(su2)
+  
+  z  <- -myprod * e * exp(-lnsigv2/2) - exp((lnsigv2-lnsigu2)/2)
+  
+  zr = dnorm(z)/pnorm(z)
+  # cat.print(length(zr))
+  ztd1 = myprod*exp(-lnsigv2/2)
+  # cat.print(length(ztd1))
+  ztd2 = 1/2*myprod*e*exp(-lnsigv2/2)- 1/2*exp((lnsigv2-lnsigu2)/2)
+  # cat.print(length(ztd2))
+  ztd3 = 0.5*exp((lnsigv2-lnsigu2)/2)
+  # cat.print(length(ztd3))
+  g1 = zr * ztd1 - myprod*exp(-lnsigu2/2)
+  # cat.print(dim(g1))
+  g2 = 1/2*exp(lnsigv2-lnsigu2) + zr*ztd2
+  g3 = -1/2-1/2*exp(lnsigv2-lnsigu2) + zr*ztd3-1/2*myprod*e*exp(-lnsigu2/2)
+  # cat.print(dim(x))
+  g  = cbind(X*as.vector(g1), Zv*as.vector(g2), Zu*as.vector(g3))
+  return(colSums(g))
+}
+
+# hess --------------------------------------------------------------------
+
+.hess.en <- function(theta, prod, y, X, Zv, Zu, n.ids, k, kv, ku, ...) {
+  myprod <- ifelse(prod, 1, -1)
+  e  <- y - X %*%    theta[1                    : k]
+  # cat.print(2)
+  lnsigv2    <- Zv %*% theta[(k + 1)        : (k + kv)]
+  # cat.print(sv2)
+  lnsigu2    <- Zu %*% theta[(k + kv  + 1) : (k + kv + ku)]
+  # cat.print(su2)
+  
+  z  <- -myprod * e * exp(-lnsigv2/2) - exp((lnsigv2-lnsigu2)/2)
+  
+  zr = dnorm(z)/pnorm(z)
+  # cat.print(length(zr))
+  ztd1 = myprod*exp(-lnsigv2/2)
+  # cat.print(length(ztd1))
+  ztd2 = 1/2*myprod*e*exp(-lnsigv2/2)- 1/2*exp((lnsigv2-lnsigu2)/2)
+  # cat.print(length(ztd2))
+  ztd3 = 0.5*exp((lnsigv2-lnsigu2)/2)
+  
+  ztd = zr*(zr+z)
+  d11 = ztd*ztd1*ztd1#, eq(1)
+  # cat.print(dim(d11))
+  d12 = ztd*ztd2*ztd1  - zr*(-1/2*myprod*exp(-lnsigv2/2))#, eq(1,2)
+  d13 = ztd*ztd3*ztd1  - 1/2*myprod*exp(-lnsigu2/2)#, eq(1,3)
+  d22 = ztd*ztd2*ztd2  - zr*(-1/4*myprod*e*exp(-lnsigv2/2) - 1/4*exp((lnsigv2-lnsigu2)/2))  - 1/2*exp(lnsigv2-lnsigu2)#, eq(2)
+  d23 = ztd*ztd2*ztd3 - zr*(1/4*exp((lnsigv2-lnsigu2)/2))  + 1/2*exp(lnsigv2-lnsigu2)#, eq(2,3)
+  d33 = ztd*ztd3*ztd3  - zr*(-1/4*exp((lnsigv2-lnsigu2)/2)) - 1/2*exp(lnsigv2-lnsigu2) - 1/4*myprod*e*exp(-lnsigu2/2)#, eq(3)
+  
+  d12 <- as.vector(d12)
+  d13 <- as.vector(d13)
+  
+  h0 <- matrix(0,k + kv + ku,k + kv + ku)
+  for(q in 1:length(y)){
+    # cat.print(tcrossprod(X[q,])*d11[q])
+    # cat.print(X[q,]*d12[q])
+    # cat.print(X[q,]*d13[q])
+    # cat.print(c( X[q,]*d12[q], d22[q], d23[q] ))
+    # cat.print(c( X[q,]*d13[q], d22[q], d33[q] ))
+    # cat.print(cbind( tcrossprod(X[q,])*d11[q], X[q,]*d12[q], X[q,]*d13[q] ))
+    # hoq <- rbind()
+    # cat.print(crossprod(X[q,,drop=FALSE],Zv[q,,drop=FALSE])*d12[q])
+    # cat.print(crossprod(X[q,,drop=FALSE],Zu[q,,drop=FALSE])*d13[q])
+    dd11 <- tcrossprod(X[q,])*d11[q]
+    dd12 <- crossprod(X[q,,drop=FALSE],Zv[q,,drop=FALSE])*d12[q]
+    dd13 <- crossprod(X[q,,drop=FALSE],Zu[q,,drop=FALSE])*d13[q]
+    dd22 <- tcrossprod(Zv[q,])*d22[q]
+    dd33 <- tcrossprod(Zu[q,])*d33[q]
+    dd23 <- crossprod(Zv[q,,drop=FALSE],Zu[q,,drop=FALSE])*d23[q]
+    # cat.print(dd11)
+    # cat.print(dd12)
+    # cat.print(dd13)
+    # cat.print(dd22)
+    # cat.print(dd23)
+    # cat.print(dd33)
+    h0 <- h0 - 
+      rbind( 
+        cbind(dd11, dd12, dd13),
+        cbind(t(dd12), dd22, dd23),
+        cbind(t(dd13), t(dd23), dd33)
+      )
+  }
+  # cat.print(h0)
+  return(h0)
+  
+  # negH = (d11, d12, d13 \ d12, d22, d23 \ d13, d23, d33)
+  
+  # h0 <- hessian1(func = .ll.n.exp, at = theta, myprod=myprod, y=y, x=x, Zv=Zv, Zu=Zu, n.ids=n.ids, k=k, kv=kv, ku=ku)
+  # return(ifelse(is.na(h0) | is.infinite(h0), 0, h0) )
+  
+}
+
+# grad + hess -------------------------------------------------------------
+
+.gr.hess.en <- function(theta, prod, y, X, Zv, Zu, n.ids, k, kv, ku, ...) {
+  myprod <- ifelse(prod, 1, -1)
+  e  <- y - X %*%    theta[1                    : k]
+  # cat.print(2)
+  lnsigv2    <- Zv %*% theta[(k + 1)        : (k + kv)]
+  # cat.print(sv2)
+  lnsigu2    <- Zu %*% theta[(k + kv  + 1) : (k + kv + ku)]
+  # cat.print(su2)
+  
+  z  <- -myprod * e * exp(-lnsigv2/2) - exp((lnsigv2-lnsigu2)/2)
+  
+  zr = dnorm(z)/pnorm(z)
+  # cat.print(length(zr))
+  ztd1 = myprod*exp(-lnsigv2/2)
+  # cat.print(length(ztd1))
+  ztd2 = 1/2*myprod*e*exp(-lnsigv2/2)- 1/2*exp((lnsigv2-lnsigu2)/2)
+  # cat.print(length(ztd2))
+  ztd3 = 0.5*exp((lnsigv2-lnsigu2)/2)
+  # cat.print(length(ztd3))
+  g1 = zr * ztd1 - myprod*exp(-lnsigu2/2)
+  # cat.print(dim(g1))
+  g2 = 1/2*exp(lnsigv2-lnsigu2) + zr*ztd2
+  g3 = -1/2-1/2*exp(lnsigv2-lnsigu2) + zr*ztd3-1/2*myprod*e*exp(-lnsigu2/2)
+  # cat.print(dim(x))
+  g  = cbind(X*as.vector(g1), Zv*as.vector(g2), Zu*as.vector(g3))
+  g0 <- colSums(g)
+  
+  ztd=zr*(zr+z)
+  d11=ztd*ztd1*ztd1#, eq(1)
+  # cat.print(dim(d11))
+  d12=ztd*ztd2*ztd1  - zr*(-1/2*myprod*exp(-lnsigv2/2))#, eq(1,2)
+  d13=ztd*ztd3*ztd1  - 1/2*myprod*exp(-lnsigu2/2)#, eq(1,3)
+  d22=ztd*ztd2*ztd2  - zr*(-1/4*myprod*e*exp(-lnsigv2/2) - 1/4*exp((lnsigv2-lnsigu2)/2))  - 1/2*exp(lnsigv2-lnsigu2)#, eq(2)
+  d23=ztd*ztd2*ztd3 - zr*(1/4*exp((lnsigv2-lnsigu2)/2))  + 1/2*exp(lnsigv2-lnsigu2)#, eq(2,3)
+  d33=ztd*ztd3*ztd3  - zr*(-1/4*exp((lnsigv2-lnsigu2)/2)) - 1/2*exp(lnsigv2-lnsigu2) - 1/4*myprod*e*exp(-lnsigu2/2)#, eq(3)
+  
+  d12 <- as.vector(d12)
+  d13 <- as.vector(d13)
+  
+  h0 <- matrix(0,k + kv + ku,k + kv + ku)
+  # for(q in 1:length(y)){
+  #   h0 <- h0 - rbind( cbind( tcrossprod(X[q,])*d11[q], X[q,]*d12[q], X[q,]*d13[q] ),
+  #                     c( X[q,]*d12[q], d22[q], d23[q] ),
+  #                     c( X[q,]*d13[q], d23[q], d33[q] ))
+  # }
+  for(q in 1:length(y)){
+    # cat.print(tcrossprod(X[q,])*d11[q])
+    # cat.print(X[q,]*d12[q])
+    # cat.print(X[q,]*d13[q])
+    # cat.print(c( X[q,]*d12[q], d22[q], d23[q] ))
+    # cat.print(c( X[q,]*d13[q], d22[q], d33[q] ))
+    # cat.print(cbind( tcrossprod(X[q,])*d11[q], X[q,]*d12[q], X[q,]*d13[q] ))
+    # hoq <- rbind()
+    # cat.print(crossprod(X[q,,drop=FALSE],Zv[q,,drop=FALSE])*d12[q])
+    # cat.print(crossprod(X[q,,drop=FALSE],Zu[q,,drop=FALSE])*d13[q])
+    dd11 <- tcrossprod(X[q,])*d11[q]
+    dd12 <- crossprod(X[q,,drop=FALSE],Zv[q,,drop=FALSE])*d12[q]
+    dd13 <- crossprod(X[q,,drop=FALSE],Zu[q,,drop=FALSE])*d13[q]
+    dd22 <- tcrossprod(Zv[q,])*d22[q]
+    dd33 <- tcrossprod(Zu[q,])*d33[q]
+    dd23 <- crossprod(Zv[q,,drop=FALSE],Zu[q,,drop=FALSE])*d23[q]
+    # cat.print(dd11)
+    # cat.print(dd12)
+    # cat.print(dd13)
+    # cat.print(dd22)
+    # cat.print(dd23)
+    # cat.print(dd33)
+    h0 <- h0 - 
+      rbind( 
+        cbind(dd11, dd12, dd13),
+        cbind(t(dd12), dd22, dd23),
+        cbind(t(dd13), t(dd23), dd33)
+      )
+  }
+  
+  
+  list( grad = ifelse(is.na(g0) | is.infinite(g0), 0, g0),  hessian1 = ifelse(is.na(h0) | is.infinite(h0), 0, h0) )
+  
+}
 
 # Technical efficiencies and prediction intervals
 

@@ -146,15 +146,17 @@ Results can be summarized using \code{\link{summary.npsf}}.
 }
 
 \references{
-Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162.
+Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \doi{10.1177/1536867X1601600302}
 
-Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}.
+Färe, R. and Lovell, C. A. K. (1978), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162, \doi{10.1016/0022-0531(78)90060-1}
 
-Kneip, A., Simar L., and P.W. Wilson (2008), Asymptotics and Consistent Bootstraps for DEA Estimators in Nonparametric Frontier Models, \emph{Econometric Theory}, \bold{24}, 1663--1697, \doi{10.1017/S0266466608080651}.
+Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}
 
-Simar, L. and P.W. Wilson (1998), Sensitivity Analysis of Efficiency Scores: How to Bootstrap in Nonparametric Frontier Models, \emph{Management Science}, \bold{44}, 49--61, \doi{10.1287/mnsc.44.1.49}.
+Kneip, A., Simar L., and P.W. Wilson (2008), Asymptotics and Consistent Bootstraps for DEA Estimators in Nonparametric Frontier Models, \emph{Econometric Theory}, \bold{24}, 1663--1697, \doi{10.1017/S0266466608080651}
 
-Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Nonparametric Frontier Models, \emph{Journal of Applied Statistics}, \bold{27}, 779--802, \doi{10.1080/02664760050081951}.
+Simar, L. and P.W. Wilson (1998), Sensitivity Analysis of Efficiency Scores: How to Bootstrap in Nonparametric Frontier Models, \emph{Management Science}, \bold{44}, 49--61, \doi{10.1287/mnsc.44.1.49}
+
+Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Nonparametric Frontier Models, \emph{Journal of Applied Statistics}, \bold{27}, 779--802, \doi{10.1080/02664760050081951}
 }
 
 \author{

@@ -24,15 +24,15 @@
 
 
 \details{
-	This data come from the National Bureau of Economic Research Center for Economic Studies manufacturing industry database, which was compiled by Randy A. Becker and Wayne B. Gray. This database is a joint effort between the National Bureau of Economic Research (NBER) and U.S. Census Bureau's Center for Economic Studies (CES), containing annual industry-level data from 1958-2009 on output, employment, payroll and other input costs, investment, capital stocks, TFP, and various industry-specific price indexes. Because of the change from SIC to NAICS industry definitions in 1997, the database is provided in two versions: one with 459 four-digit 1987 SIC industries and the other with 473 six-digit 1997 NAICS industries.
+These data come from the National Bureau of Economic Research Center for Economic Studies manufacturing industry database, which was compiled by Randy A. Becker and Wayne B. Gray. This database is a joint effort between the National Bureau of Economic Research (NBER) and U.S. Census Bureau's Center for Economic Studies (CES), containing annual industry-level data from 1958-2009 on output, employment, payroll and other input costs, investment, capital stocks, TFP, and various industry-specific price indexes. Because of the change from SIC to NAICS industry definitions in 1997, the database is provided in two versions: one with 459 four-digit 1987 SIC industries and the other with 473 six-digit 1997 NAICS industries.
 }
 
 \source{
-\url{http://www.nber.org/nberces/}.
+\url{https://www.nber.org/nberces/}.
 }
 
 \references{
-Bartelsman, E.J. and Gray, W. (1996), The NBER Manufacturing Productivity Database, \emph{National Bureau of Economic Research}, Technical Working Paper Series, \url{http://www.nber.org/papers/t0205}.
+Bartelsman, E.J. and Gray, W. (1996), The NBER Manufacturing Productivity Database, \emph{National Bureau of Economic Research}, Technical Working Paper Series, \doi{10.3386/t0205}
 
 }
 

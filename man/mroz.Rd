@@ -46,7 +46,7 @@ Datasets accessible from http://wooldridge.swcollege.com, http://courses.bus.msu
 }
 
 \references{
-Mroz, T.A. 1987. The Sensitiviy of an Empirical Model of Married Women's Hours of Work to Economic and Statistical Assumptions. \emph{Econometrica} \bold{55}: 765-799.
+Mroz, T.A. 1987. The Sensitiviy of an Empirical Model of Married Women's Hours of Work to Economic and Statistical Assumptions. \emph{Econometrica} \bold{55}: 765-799
 }
 
 \keyword{datasets}

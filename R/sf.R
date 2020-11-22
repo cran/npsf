@@ -22,6 +22,8 @@ sf <- function(formula, data, it = NULL, subset,
  # lnVARvit_
  # mean_u0i_
   
+ myprod <- ifelse(prod, 1, -1)
+  
  if(!is.null(halton.base)){
    if(length(halton.base) != 1){
      stop("Length of 'halton.base' must be one")
@@ -45,11 +47,11 @@ sf <- function(formula, data, it = NULL, subset,
    distribution <- tolower(substr(distribution, 1,1 ))
   }
   
-  if( !distribution %in% c("t","h") ){
+  if( !distribution %in% c("t","h","e") ){
    stop("'distribution' is invalid")
   }
   
-  if(is.null(mean.u.0i) == FALSE & distribution == "h"){
+  if(is.null(mean.u.0i) == FALSE & distribution != "t"){
    stop("Option 'mean.u.0i' can be used only when distribution of inefficiency term is truncated normal.")
   }
   
@@ -108,6 +110,7 @@ sf <- function(formula, data, it = NULL, subset,
   
   # starting values
   ols <- lm(y ~ 0 + X)
+  # print(summary(ols))
   beta0 <- as.matrix(coef(ols), nrow = length(coef(ols)), ncol = 1)
   olsResid <- y - X%*%beta0
   olsSkewness <- .skewness(olsResid)
@@ -115,12 +118,15 @@ sf <- function(formula, data, it = NULL, subset,
   # Moment estimators for sigma_u/v squared
   if(is.null(start.val) == TRUE){
    m3 <- sum(olsResid^3)/n
+   m3 <- ifelse(m3*myprod < 0, m3, -0.0001*myprod)
    m2 <- sum(olsResid^2)/n
    su2init <- ((m3/(sqrt(2/pi)*(1-4/pi)))^2)^(1/3)
    if(is.nan(su2init) | su2init < 0) su2init <- 0.1
    sv2init <- m2 - (1 - 2/pi)*su2init
    if(is.nan(sv2init) | sv2init < 0) sv2init <- 0.1
+   ou2 <- (-myprod*m3/2)^(2/3)
    beta0[1] <- beta0[1] + sqrt(2/pi)*sqrt(su2init)
+   # theta0[1] <- theta0[1] + myprod*(sqrt(2/pi))*sqrt(ou2)
    y1 <- 0.5*log(((olsResid^2 - sv2init)/(1 - 2/pi))^2)
    reg_hetu <- lm(y1 ~ 0 + Zu)
    gu0 <- as.matrix(coef(reg_hetu), nrow = length(coef(reg_hetu)), ncol = 1)
@@ -134,15 +140,53 @@ sf <- function(formula, data, it = NULL, subset,
    } else {
     theta0 <- rbind( beta0, gv0, gu0)
    }
+   if(distribution == "e"){
+     olsres2 <- olsResid^2; m2 = mean(olsres2)
+     olsres3 <- olsResid^3; m3 = mean(olsres3)
+     m3t     <- m3/sqrt(6*m2^3/n)
+     # /* negative skewness, so one-side test */
+     p_m3t   <- pnorm(myprod*m3t)
+     # /* correct 3rd moment to be negative */
+     m3      <- ifelse(m3*myprod < 0, m3, -0.0001*myprod)
+     theta0  <- coef(ols)
+     ou2 <- (-myprod*m3/2)^(2/3)
+     lnou2 <- log(ou2)
+     ov2 <- m2 - ou2
+     lnov2 <- ifelse(ov2>0, log(ov2), log(.0001))
+     theta0[1] <- theta0[1] + myprod*(sqrt(2/pi))*sqrt(ou2)
+     
+     # log SV2
+     if(kv == 1){
+       theta0 <- c(theta0, lnov2)
+     } else {
+       # cat.print(cbind(Zv[,-1,drop = FALSE],1))
+       theta0 <- c(theta0, coef(lm( rep(lnov2,n) ~ Zv[,-1,drop = FALSE])))
+       # cat.print(coef(lm( rep(lnov2,n) ~ Zv[,-1,drop = FALSE])))
+       # cat.print(theta0)
+     }
+     # log SU2
+     if(ku == 1){
+       theta0 <- c(theta0, lnou2)
+     } else {
+       theta0 <- c(theta0, coef(lm( rep(lnou2,n) ~ Zu[,-1,drop = FALSE] )))
+       # cat.print(coef(lm( rep(lnou2,n) ~ Zu[,-1,drop = FALSE] )))
+       # cat.print(theta0)
+     }
+     theta0 <- as.matrix(theta0)
+   }
   } else {
    theta0 <- start.val
   }
   rownames(theta0) <- coef.names.full#c(names_x, names_zv, names_zu, names_del)
+  
+  # cat.print(theta0)
 
   max.name.length <- max(nchar(rownames(theta0)))
   
   # print(theta0)
-  
+
+  # Optimization -----------------------------------------------------------
+
   time.05 <- proc.time()
   if(print.level >= 2){
    # cat("__________________________________________________")
@@ -152,6 +196,7 @@ sf <- function(formula, data, it = NULL, subset,
   # print(obj)
   
   if(inherits(obj, "error")){
+    print(obj)
    if(print.level >= 2){
     cat("",rep("_", max.name.length+42-1),"", "\n", sep = "")
     cat(" Failed, trying to optimize using 'optim':\n", sep = "")
@@ -257,6 +302,9 @@ sf <- function(formula, data, it = NULL, subset,
    Distribution = c("normal ", "half-normal ")
    if(distribution == "t"){
     Distribution[2] <- "truncated-normal "
+   }   
+   if(distribution == "e"){
+    Distribution[2] <- "exponential "
    }
    a1 <- data.frame(
     Component = c("Random noise: ","Inefficiency: "),
@@ -273,24 +321,63 @@ sf <- function(formula, data, it = NULL, subset,
    .printoutcs(output, digits = digits, k = k, kv = kv, ku = ku, kdel = kdel, na.print = "NA", dist = distribution, max.name.length = max.name.length)
   }
   
-  # Technical efficiencies
-  xbeta <- X%*%obj$par[1:k,]
-  e <- y - xbeta
-  sigmas_v <- sqrt(exp(Zv%*%obj$par[(k+1):(k+kv)]))
-  sigmas_u <- sqrt(exp(Zu%*%obj$par[(k+kv+1):(k+kv+ku)]))
-  
-  if(distribution == "h"){
-   # eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod), digits = digits)
-   eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod, cost.eff.less.one = cost.eff.less.one)
-   mu = NULL
+  # Technical efficiencies  -------------------------------
+  if(distribution == "e"){
+    sn1 <- ifelse(prod, 1, -1)
+    if(!prod & cost.eff.less.one) sn1 <- 1
+    
+    xbeta <- X %*%    obj$par[1                        :k]
+    eps0 <-       y - xbeta
+    sv   <- sigmas_v <- exp( 0.5 * Zv %*% obj$par[(k + 1)                  :(k + kv)])
+    su   <- sigmas_u <- exp( 0.5 * Zu %*% obj$par[(k + kv  + 1)     :(k + kv + ku)] )
+    
+    mu1  <- -myprod *eps0 - (sv^2/su)
+    s1   <- sv
+    z    <- mu1/s1
+    
+    # u = E(u|e)
+    u_JMLS  <- mu1 + s1 * dnorm(-z)/pnorm(z)
+    # colnames(u_JMLS) <- 'u_JMLS'
+    te_jlms_mean <- exp(-sn1*u_JMLS)
+    # colnames(te_JMLS) <- 'te_JMLS'
+    
+    # u = M(u|e)
+    m_JMLS  <- ifelse(mu1 >= 0, mu1, 0)
+    # colnames(m_JMLS) <- 'm_JMLS'
+    te_jlms_mode <- exp(-sn1*m_JMLS)
+    # colnames(te_JMLS_m) <- 'te_JMLS_m'
+    
+    # TE
+    te_bc   <- (pnorm(-sn1*s1+z)) /pnorm(z)  * exp(-sn1*mu1+1/2*s1^2)
+    colnames(te_bc) <- 'te_bc'
+    
+    zl    <- qnorm( 1 - alpha / 2 * pnorm(z) )
+    zu    <- qnorm( 1 - ( 1 - alpha/2 ) * pnorm(z) )
+    te_l  <- exp( -sn1*mu1 - sn1* zl * s1 )
+    te_u  <- exp( -sn1*mu1 - sn1* zu * s1 )
+    eff <- data.frame(te_u, te_jlms_mean, te_jlms_mode,te_bc,te_l)
+    colnames(eff) <- c("Lower bound","JLMS", "Mode", "BC","Upper bound" )
+    
   } else {
-   mu <- Zdel%*%obj$par[-c(1:(k+kv+ku))]
-   # eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod), digits = digits)
-   eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod, cost.eff.less.one = cost.eff.less.one)
+    xbeta <- X%*%obj$par[1:k,]
+    e <- y - xbeta
+    sigmas_v <- sqrt(exp(Zv%*%obj$par[(k+1):(k+kv)]))
+    sigmas_u <- sqrt(exp(Zu%*%obj$par[(k+kv+1):(k+kv+ku)]))
+    
+    if(distribution == "h"){
+      # eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod), digits = digits)
+      eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = 0, alpha = alpha, prod = prod, cost.eff.less.one = cost.eff.less.one)
+      mu = NULL
+    } else {
+      mu <- Zdel%*%obj$par[-c(1:(k+kv+ku))]
+      # eff <- round(.u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod), digits = digits)
+      eff <- .u2efftnm(e, sigmas_u, sigmas_v, mu = mu, alpha = alpha, prod = prod, cost.eff.less.one = cost.eff.less.one)
+    }
   }
+  # cat.print(eff)
   
   # Marginal effects
-  if(marg.eff){
+  if(marg.eff & distribution != "e"){
    meff = tryCatch(.me(obj$par[-c(1:(k+kv)),1,drop = FALSE], Zu = Zu, Zdel = Zdel, ku = ku, kdel = kdel, n = n, dist = distribution), error = function(e) { cat('In error handler\n'); print(e); e })
    if(inherits(meff, "error"))  {
     meff <- NULL
@@ -339,7 +426,11 @@ sf <- function(formula, data, it = NULL, subset,
   
   if(length(unique(sigmas_u)) == 1) sigmas_u = NULL
   if(length(unique(sigmas_v)) == 1) sigmas_v = NULL
-  if(length(unique(mu)) == 1) mu = NULL
+  if(distribution == "e"){
+    mu = NULL
+  } else {
+    if(length(unique(mu)) == 1) mu = NULL
+  }
   
   if(is.null(ln.var.u.0i) & is.null(ln.var.v.0i)){
    if (prod & olsSkewness > 0) {
@@ -351,7 +442,7 @@ sf <- function(formula, data, it = NULL, subset,
   
   colnames(obj$vcov) <- rownames(obj$vcov) <- c(names_x, names_zv, names_zu, names_del)
   
-  temp <- list(call = match.call(), model = "sf_sc", coef = par[names(par) %in% colnames(obj$vcov)], table = output, vcov = obj$vcov, loglik = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = convergence, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, sigmas_u = sigmas_u, sigmas_v = sigmas_v, n = n, mu = mu, k = k, kv = kv, ku = ku, kdel = kdel, distribution = distribution, fitted = as.vector(unname(xbeta)), yobs = y, xobs = X, esample = esample)
+  temp <- list(call = match.call(), model = "sf_sc", coef = par[names(par) %in% colnames(obj$vcov)], table = output, vcov = obj$vcov, loglik = obj$ll, lmtol = lmtol, LM = obj$gHg, convergence = convergence, olsSkewness = olsSkewness, esttime = est.time.sec, prod = prod, efficiencies = eff, marg.effects = meff, sigmas_u = sigmas_u, sigmas_v = sigmas_v, n = n, mu = mu, k = k, kv = kv, ku = ku, kdel = kdel, distribution = distribution, fitted = as.vector(unname(xbeta)), yobs = y, xobs = X, esample = esample)
   if (convergence == 2){
    temp$delta_rel <- obj$delta_rel
    temp$ltol <- obj$ltol

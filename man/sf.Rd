@@ -44,7 +44,7 @@ sf(formula, data, it = NULL, subset,
  character. Five panel data models are estimated for now. "K1990" and "K1990modified" (see Kumbhakar, 1990), "BC1992" (see Battese and Coelli, 1992), "4comp" (see Badunenko and Kumbhakar (2016) and Filippini and Greene, 2016). They specify common evolution of inefficiency.  Deffault is "K1990". The time functions are "( 1 + exp(b*t + c*t^2) )^-1", "1 + d*(t-T_i) + e*(t-T_i)^2", and "exp( -f*(t-T_i) )", respectively.
  }
  \item{distribution}{
- either \code{"h"} (half-normal) or \code{"t"} (truncated normal), specifying the distribution of inefficiency term.
+ either \code{"h"} (half-normal), \code{"t"} (truncated normal), or \code{"e"} (exponential, only crosssectional models), specifying the distribution of inefficiency term.
  }
  \item{eff.time.invariant}{
  logical. If \code{TRUE}, the 1st generation of panel data models is estimated, otherwise, the 2nd generation or 4 components panel data model is estimated.
@@ -217,6 +217,9 @@ pwt56 [4, "K"] <- NA
 m1 <- sf(log(Y) ~ log(L) + log(K), data = pwt56, 
          subset = year == 1965, distribution = "h")
 
+m1 <- sf(log(Y) ~ log(L) + log(K), data = pwt56, 
+         subset = year == 1965, distribution = "e")
+
 # Test CRS: 'car' package in required for that
 ## Not run: linearHypothesis(m1, "log(L) + log(K) = 1")
 
@@ -251,6 +254,10 @@ m3 <- sf(lnC ~ lnw1 + lnw2 + lny1 + lny2, ln.var.u.0i = ~ ER,
          ln.var.v.0i = ~ LA, data = banks05, distribution = "t", 
          prod = FALSE, print.level = 3)
 
+m3 <- sf(lnC ~ lnw1 + lnw2 + lny1 + lny2, ln.var.u.0i = ~ ER, 
+         ln.var.v.0i = ~ LA, data = banks05, distribution = "e", 
+         prod = FALSE, print.level = 3)
+         
 # Non-monotonic marginal effects of equity ratio on 
 # the mean of distribution of inefficiency term
 

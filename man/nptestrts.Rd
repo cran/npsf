@@ -154,11 +154,11 @@ Results can be summarized using \code{\link{summary.npsf}}.
 
 \references{
 
-Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}
+Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \doi{10.1177/1536867X1601600302}
 
-Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162 
+Färe, R. and Lovell, C. A. K. (1978), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162, \doi{10.1016/0022-0531(78)90060-1}
 
-Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press
+Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}
 
 Simar L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{European Journal of Operational Research}, \bold{139}, 115--132, \doi{10.1016/S0377-2217(01)00167-9}
 }

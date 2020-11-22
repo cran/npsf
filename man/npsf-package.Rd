@@ -40,45 +40,45 @@ Maintainer: Oleg Badunenko <oleg.badunenko@brunel.ac.uk>
 
 \references{
 
-Badunenko, O. and Kumbhakar, S.C. (2016), When, Where and How to Estimate Persistent and Transient Efficiency in Stochastic Frontier Panel Data Models, \emph{European Journal of Operational Research}, \bold{255}(1), 272--287, \doi{10.1016/j.ejor.2016.04.049}.
+Badunenko, O. and Kumbhakar, S.C. (2016), When, Where and How to Estimate Persistent and Transient Efficiency in Stochastic Frontier Panel Data Models, \emph{European Journal of Operational Research}, \bold{255}(1), 272--287, \doi{10.1016/j.ejor.2016.04.049}
 
-Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \url{http://www.stata-journal.com/article.html?article=st0444}.
+Badunenko, O. and Mozharovskyi, P. (2016), Nonparametric Frontier Analysis using Stata, \emph{Stata Journal}, \bold{16}3, 550--89, \doi{10.1177/1536867X1601600302}
 
-Badunenko, O. and Mozharovskyi, P. (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \doi{10.1080/01605682.2019.1599778}.
+Badunenko, O. and Mozharovskyi, P. (2020), Statistical inference for the Russell measure of technical efficiency, \emph{Journal of the Operational Research Society}, \bold{71}3, 517--527, \doi{10.1080/01605682.2019.1599778}
 
-Bartelsman, E.J. and Gray, W. (1996), The NBER Manufacturing Productivity Database, \emph{National Bureau of Economic Research}, Technical Working Paper Series, \url{http://www.nber.org/papers/t0205}.
+Bartelsman, E.J. and Gray, W. (1996), The NBER Manufacturing Productivity Database, \emph{National Bureau of Economic Research}, Technical Working Paper Series, \doi{10.3386/t0205}
 
-Battese, G., Coelli, T. (1988), Prediction of firm-level technical effiiencies with a generalized frontier production function and panel data. \emph{Journal of Econometrics}, \bold{38}, 387--399.
+Battese, G., Coelli, T. (1988), Prediction of firm-level technical effiiencies with a generalized frontier production function and panel data. \emph{Journal of Econometrics}, \bold{38}, 387--399
 
-Battese, G., Coelli, T. (1992), Frontier production functions, technical efficiency and panel data: With application to paddy farmers in India. \emph{Journal of Productivity Analysis}, \bold{3}, 153--169.
+Battese, G., Coelli, T. (1992), Frontier production functions, technical efficiency and panel data: With application to paddy farmers in India. \emph{Journal of Productivity Analysis}, \bold{3}, 153--169
 
-Charnes, A., W. W. Cooper, and E. Rhodes. 1981. Evaluating Program and Managerial Efficiency: An Application of Data Envelopment Analysis to Program Follow Through. \emph{Management Science} \bold{27}: 668--697.
+Charnes, A., W. W. Cooper, and E. Rhodes. 1981. Evaluating Program and Managerial Efficiency: An Application of Data Envelopment Analysis to Program Follow Through. \emph{Management Science} \bold{27}: 668--697
 
-Caudill, S., Ford, J., Gropper, D. (1995), Frontier estimation and firm-specific inefficiency measures in the presence of heteroscedasticity. \emph{Journal of Business and Economic Statistics}, \bold{13}, 105--111.
+Caudill, S., Ford, J., Gropper, D. (1995), Frontier estimation and firm-specific inefficiency measures in the presence of heteroscedasticity. \emph{Journal of Business and Economic Statistics}, \bold{13}, 105--111
 
-Debreu, G. 1951. The Coefficient of Resource Utilization. \emph{Econometrica} \bold{19}: 273--292.
+Debreu, G. 1951. The Coefficient of Resource Utilization. \emph{Econometrica} \bold{19}: 273--292
 
-Färe, R. and Lovell, C. A. K. (1994), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162.
+Färe, R. and Lovell, C. A. K. (1978), Measuring the technical efficiency of production, \emph{Journal of Economic Theory}, \bold{19}, 150--162, \doi{10.1016/0022-0531(78)90060-1}
 
-Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}.
+Färe, R., Grosskopf, S. and Lovell, C. A. K. (1994), \emph{Production Frontiers}, Cambridge U.K.: Cambridge University Press, \doi{10.1017/CBO9780511551710}
 
-Farrell, M. J. 1957. The Measurement of Productive Efficiency. \emph{Journal of the Royal Statistical Society. Series A (General)} \bold{120}(3): 253--290.
+Farrell, M. J. 1957. The Measurement of Productive Efficiency. \emph{Journal of the Royal Statistical Society. Series A (General)} \bold{120}(3): 253--290
 
-Heston, A., and R. Summers. 1991. The Penn World Table (Mark 5): An Expanded Set of International Comparisons, 1950-1988. \emph{The Quarterly Journal of Economics} \bold{106}: 327--368.
+Heston, A., and R. Summers. 1991. The Penn World Table (Mark 5): An Expanded Set of International Comparisons, 1950-1988. \emph{The Quarterly Journal of Economics} \bold{106}: 327--368
 
-Horrace, W. and Schmidt, P. (1996), On ranking and selection from independent truncated normal distributions. \emph{Journal of Productivity Analysis}, \bold{7}, 257--282.
+Horrace, W. and Schmidt, P. (1996), On ranking and selection from independent truncated normal distributions. \emph{Journal of Productivity Analysis}, \bold{7}, 257--282
 
-Jondrow, J., Lovell, C., Materov, I., Schmidt, P. (1982), On estimation of technical inefficiency in the stochastic frontier production function model. \emph{Journal of Econometrics}, \bold{19}, 233--238.
+Jondrow, J., Lovell, C., Materov, I., Schmidt, P. (1982), On estimation of technical inefficiency in the stochastic frontier production function model. \emph{Journal of Econometrics}, \bold{19}, 233--238
 
 Kneip, A., Simar L., and P.W. Wilson (2008), Asymptotics and Consistent Bootstraps for DEA Estimators in Nonparametric Frontier Models, \emph{Econometric Theory}, \bold{24}, 1663--1697, \doi{10.1017/S0266466608080651}
 
-Koetter, M., Kolari, J., and Spierdijk, L. (2012), Enjoying the quiet life under deregulation? Evidence from adjusted Lerner indices for U.S. banks. \emph{Review of Economics and Statistics}, \bold{94}, 2, 462--480.
+Koetter, M., Kolari, J., and Spierdijk, L. (2012), Enjoying the quiet life under deregulation? Evidence from adjusted Lerner indices for U.S. banks. \emph{Review of Economics and Statistics}, \bold{94}, 2, 462--480
 
-Kumbhakar, S. (1990),  Production Frontiers, Panel Data, and Time-varying Technical Inefficiency. \emph{Journal of Econometrics}, \bold{46}, 201--211.
+Kumbhakar, S. (1990),  Production Frontiers, Panel Data, and Time-varying Technical Inefficiency. \emph{Journal of Econometrics}, \bold{46}, 201--211
 
-Kumbhakar, S. and Lovell, C. (2003), \emph{Stochastic Frontier Analysis.} Cambridge: Cambridge University Press, \doi{10.1017/CBO9781139174411}.
+Kumbhakar, S. and Lovell, C. (2003), \emph{Stochastic Frontier Analysis.} Cambridge: Cambridge University Press, \doi{10.1017/CBO9781139174411}
 
-Restrepo-Tobon, D. and Kumbhakar, S. (2014), Enjoying the quiet life under deregulation? Not Quite. \emph{Journal of Applied Econometrics}, \bold{29}, 2, 333--343.
+Restrepo-Tobon, D. and Kumbhakar, S. (2014), Enjoying the quiet life under deregulation? Not Quite. \emph{Journal of Applied Econometrics}, \bold{29}, 2, 333--343
 
 Simar, L. and P.W. Wilson (1998), Sensitivity Analysis of Efficiency Scores: How to Bootstrap in Nonparametric Frontier Models, \emph{Management Science}, \bold{44}, 49--61, \doi{10.1287/mnsc.44.1.49}
 
@@ -86,7 +86,7 @@ Simar, L. and P.W. Wilson (2000), A General Methodology for Bootstrapping in Non
 
 Simar, L. and P.W. Wilson (2002), Nonparametric Tests of Return to Scale, \emph{European Journal of Operational Research}, \bold{139}, 115--132
 
-Wang, H.-J. (2002), Heteroskedasticity and non-monotonic efficiency effects of a stochastic frontier model. \emph{Journal of Productivity Analysis}, \bold{18}, 241--253.
+Wang, H.-J. (2002), Heteroskedasticity and non-monotonic efficiency effects of a stochastic frontier model. \emph{Journal of Productivity Analysis}, \bold{18}, 241--253
 
 Wilson P.W.  (2003), Testing Independence in Models of Productive Efficiency, \emph{Journal of Productivity Analysis}, \bold{20}, 361--390, \doi{10.1023/A:1027355917855}
 

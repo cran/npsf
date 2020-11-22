@@ -35,7 +35,7 @@ A. Charnes, W. W. Cooper and E. Rhodes (1981), Evaluating Program and Managerial
 }
 
 \references{
-Charnes, A., W. W. Cooper, and E. Rhodes. 1981. Evaluating Program and Managerial Efficiency: An Application of Data Envelopment Analysis to Program Follow Through. \emph{Management Science} \bold{27}: 668--697.
+Charnes, A., W. W. Cooper, and E. Rhodes. 1981. Evaluating Program and Managerial Efficiency: An Application of Data Envelopment Analysis to Program Follow Through. \emph{Management Science} \bold{27}: 668--697
 }
 
 \keyword{datasets}
